@@ -103,7 +103,7 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 </div>
                 
                 <button className="w-full px-4 py-3 bg-cyan-500 text-black hover:bg-cyan-400 font-mono text-xs uppercase font-bold rounded-lg transition-all shadow-lg">
-                    Start Trial
+                    Get Travel
                 </button>
             </div>
 

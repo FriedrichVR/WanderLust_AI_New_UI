@@ -791,6 +791,18 @@ const App: React.FC = () => {
         }
     }, [settings.theme]);
 
+    // Disable scroll when PricingModal is open
+    useEffect(() => {
+        if (showPricing) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showPricing]);
+
     const showToast = useCallback((msg: string, type: ToastType) => {
         setToast({ msg, type });
     }, []);
