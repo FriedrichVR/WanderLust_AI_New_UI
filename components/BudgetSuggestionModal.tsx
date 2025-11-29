@@ -72,7 +72,7 @@ const BudgetSuggestionModal: React.FC<Props> = ({
       <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="p-2 bg-acid/10 rounded-lg">
               <TrendingUp size={24} className="text-acid" />
             </div>
@@ -105,8 +105,16 @@ const BudgetSuggestionModal: React.FC<Props> = ({
             </div>
           )}
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="bg-panel/50 border border-border/50 rounded-lg p-8 flex flex-col items-center justify-center gap-3 animate-pulse">
+              <Loader2 size={32} className="animate-spin text-acid" />
+              <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.budgetModalAnalyzing}...</p>
+            </div>
+          )}
+
           {/* Suggestion */}
-          {suggestedBudget && (
+          {!isLoading && suggestedBudget && (
             <div className="bg-acid/5 border border-acid/30 rounded-lg p-4">
               <p className="text-dim text-sm mb-2">{t.budgetModalAISuggested}</p>
               <div className="text-4xl font-display font-bold text-acid">
