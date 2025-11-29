@@ -47,7 +47,7 @@ const DELETION_WINDOW_MS: number = (() => {
         raw = process.env.VITE_DELETION_WINDOW_MS;
     }
     const parsed = parseInt(raw, 10);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000; // fallback 1 minuto
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 3600_000; // fallback 2 minuto
 })();
 
 interface UserSession {
@@ -165,7 +165,8 @@ const TripDetailView: React.FC<{
     apiKey: string;
     showToast: (msg: string, type: ToastType) => void;
     initialTab?: 'overview' | 'itinerary' | 'budget' | 'documents';
-}> = ({ trip, updateTrip, goBack, lang, theme, onDeleteRequest, resizeImageUtil, handleCoverImageUploadUtil, allImages, onDeleteImage, apiKey, showToast, initialTab = 'overview' }) => {
+    isAuthenticated: boolean;
+}> = ({ trip, updateTrip, goBack, lang, theme, onDeleteRequest, resizeImageUtil, handleCoverImageUploadUtil, allImages, onDeleteImage, apiKey, showToast, initialTab = 'overview', isAuthenticated }) => {
     const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'budget' | 'documents'>(initialTab);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
@@ -336,14 +337,15 @@ const TripDetailView: React.FC<{
                             </button>
                             <button
                                 onClick={() => {
-                                    const expired = !trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS;
+                                    const enforceWindow = !isAuthenticated; // sólo modo free/demo
+                                    const expired = enforceWindow && (!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS);
                                     if (expired) {
                                         showToast('Deletion window expired.', 'info');
                                         return;
                                     }
                                     setShowDeleteTripConfirm(true);
                                 }}
-                                className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${(!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS)
+                                className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${((!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS) && !isAuthenticated)
                                     ? 'bg-red-500/10 text-red-500 cursor-not-allowed'
                                     : 'bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}
                                 title={t.deleteMission}
@@ -1037,8 +1039,9 @@ const App: React.FC = () => {
     const handleDeleteTrip = (tripId: string) => {
         if (!user) return;
         const target = trips.find(t => t.id === tripId);
-        // Enforce 1-minute deletion window. Trips without createdAt are treated as expired.
-        if (!target || !target.createdAt || Date.now() - new Date(target.createdAt).getTime() > DELETION_WINDOW_MS) {
+        // Enforce deletion window only for free/demo (no authenticated user). Authenticated users can delete anytime.
+        const enforceWindow = !user; // user presente => sin restricción
+        if (enforceWindow && (!target || !target.createdAt || Date.now() - new Date(target.createdAt).getTime() > DELETION_WINDOW_MS)) {
             showToast('El tiempo para eliminar este viaje ha expirado.', 'info');
             return;
         }
@@ -1207,6 +1210,7 @@ const App: React.FC = () => {
                     apiKey={apiKey}
                     showToast={showToast}
                     initialTab={initialTab}
+                    isAuthenticated={!!user}
                 />
             ) : currentTripId && !currentTrip ? (
                 <div className="fixed inset-0 z-[200] pointer-events-none">
@@ -1388,14 +1392,45 @@ const App: React.FC = () => {
                                 <div
                                     onClick={handleCreateTrip}
                                     className="group relative h-[380px] md:h-[450px] bg-surface/50 border-2 border-dashed border-dim/30 rounded-3xl overflow-hidden cursor-pointer hover:border-acid hover:bg-acid/5 transition-all hover:-translate-y-2 flex flex-col items-center justify-center gap-6"
+                                    title={t.initiateTrip}
+                                    aria-label={t.initiateTrip}
                                 >
-                                    <div className="w-20 h-20 rounded-full bg-surface border border-border flex items-center justify-center group-hover:scale-110 group-hover:border-acid transition-all shadow-lg">
-                                        <Plus size={32} className="text-dim group-hover:text-acid transition-colors" />
+                                    {/* Soft glow background on hover */}
+                                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[140%] h-64 bg-acid/10 blur-3xl rounded-full"></div>
                                     </div>
+
+                                    <div className="relative w-24 h-24 rounded-2xl bg-surface border border-border flex items-center justify-center group-hover:scale-110 group-hover:border-acid transition-all shadow-lg">
+                                        <Plus size={36} className="text-dim group-hover:text-acid transition-colors" />
+
+                                        {/* Animated plane overlay (shows on hover) */}
+                                        <div className="absolute -right-6 -top-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="relative w-12 h-12">
+                                                <Plane
+                                                    size={28}
+                                                    className="text-acid drop-shadow-[0_0_8px_rgba(0,0,0,0.6)] animate-[planeFly_1.6s_ease-in-out_infinite]"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="text-center">
                                         <h3 className="text-xl font-display font-bold text-text uppercase tracking-tight mb-2 group-hover:text-acid transition-colors">{t.initiateTrip}</h3>
                                         <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.createFirstTrip}</p>
                                     </div>
+
+                                    {/* Keyframes for plane animation */}
+                                    <style>
+                                        {`
+                                        @keyframes planeFly {
+                                            0% { transform: translate3d(0,0,0) rotate(-8deg); opacity: 0.0; }
+                                            15% { opacity: 1; }
+                                            50% { transform: translate3d(16px,-6px,0) rotate(-2deg); }
+                                            85% { transform: translate3d(28px,-12px,0) rotate(3deg); opacity: 1; }
+                                            100% { transform: translate3d(36px,-18px,0) rotate(8deg); opacity: 0.0; }
+                                        }
+                                        `}
+                                    </style>
                                 </div>
 
                                 {/* Trip Cards Only - No Sidebar */}
@@ -1412,15 +1447,16 @@ const App: React.FC = () => {
                                             <div className="absolute top-4 left-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
                                                 <button
                                                     onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const expired = !trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS;
+                    	                                e.stopPropagation();
+                                                        const enforceWindow = !user; // sólo modo free/demo
+                                                        const expired = enforceWindow && (!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS);
                                                         if (expired) {
                                                             showToast('El tiempo para eliminar este viaje ha expirado.', 'info');
                                                             return;
                                                         }
                                                         setTripToDelete(trip.id);
                                                     }}
-                                                    className={`p-2 rounded-full backdrop-blur-md transition-all ${(!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS)
+                                                    className={`p-2 rounded-full backdrop-blur-md transition-all ${((!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS) && !user)
                                                         ? 'bg-black/20 text-red-600 border border-red-600/30 cursor-not-allowed'
                                                         : 'bg-black/40 hover:bg-red-500/80 text-white'}`}
                                                     title={t.deleteMission}
