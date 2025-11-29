@@ -6,7 +6,12 @@ export const translations = {
     dashboard: "Dashboard",
     missionControl: "Mission Control",
     initiateTrip: "Initiate Trip",
-    dashboardOverview: "DASHBOARD // OVERVIEW",
+    createTripMode: "How would you like to create your trip?",
+    manualMode: "Manual",
+    manualModeDesc: "Fill in details yourself",
+    aiMode: "AI Suggestions",
+    aiModeDesc: "Let AI suggest days, location & budget",
+    selectOption: "Select an option",
     noActiveMissions: "No active missions found",
     
     // Dashboard Hero
@@ -225,7 +230,12 @@ export const translations = {
     dashboard: "Tablero",
     missionControl: "Centro de Mando",
     initiateTrip: "Iniciar Viaje",
-    dashboardOverview: "TABLERO // RESUMEN",
+    createTripMode: "¿Cómo deseas crear tu viaje?",
+    manualMode: "Manual",
+    manualModeDesc: "Rellena los detalles tú mismo",
+    aiMode: "Sugerencias de IA",
+    aiModeDesc: "Deja que la IA sugiera días, lugar y presupuesto",
+    selectOption: "Selecciona una opción",
     noActiveMissions: "No se encontraron misiones activas",
     
     // Dashboard Hero

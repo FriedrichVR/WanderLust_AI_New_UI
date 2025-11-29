@@ -27,6 +27,7 @@ const TestimonialsRolodex = lazy(() => import('../components/TestimonialsRolodex
 const PricingModal = lazy(() => import('../components/PricingModal'));
 const TripSuggestions = lazy(() => import('../components/TripSuggestions'));
 const WorldMapTracker = lazy(() => import('../components/WorldMapTracker'));
+const TripModeSelector = lazy(() => import('../components/TripModeSelector'));
 
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=60&w=800&auto=format&fit=crop';
 const PAGE_SIZE = 20;
@@ -739,6 +740,9 @@ const App: React.FC = () => {
     const [showBudgetSuggestion, setShowBudgetSuggestion] = useState(false);
     const [pendingNewTrip, setPendingNewTrip] = useState<Trip | null>(null);
 
+    // Trip Mode Selector State
+    const [showTripModeSelector, setShowTripModeSelector] = useState(false);
+
     useEffect(() => {
         const savedSettings = loadSettings();
         if (savedSettings) setSettings(savedSettings);
@@ -838,6 +842,13 @@ const App: React.FC = () => {
             return;
         }
 
+        // Show mode selector instead of directly creating trip
+        setShowTripModeSelector(true);
+    };
+
+    const handleCreateTripManual = () => {
+        if (!user) return;
+
         const newTrip: Trip = {
             id: crypto.randomUUID(),
             destination: 'New Adventure',
@@ -855,6 +866,36 @@ const App: React.FC = () => {
             documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
         };
         setPendingNewTrip(newTrip);
+        setShowTripModeSelector(false);
+        // Open the trip directly for manual editing
+        setCurrentTripId(newTrip.id);
+        const updatedTrips = [newTrip, ...trips];
+        setTrips(updatedTrips);
+        upsertTrip(user.id, newTrip);
+        showToast('Trip created! Fill in the details.', 'success');
+    };
+
+    const handleCreateTripWithAI = () => {
+        if (!user) return;
+
+        const newTrip: Trip = {
+            id: crypto.randomUUID(),
+            destination: 'New Adventure',
+            coverImage: DEFAULT_PLACEHOLDER,
+            startDate: new Date().toISOString(),
+            endDate: new Date().toISOString(),
+            budget: 0,
+            currency: Currency.USD,
+            status: TripStatus.PLANNING,
+            type: 'Leisure',
+            expenses: [],
+            itinerary: [],
+            checklist: [],
+            documents: [],
+            documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
+        };
+        setPendingNewTrip(newTrip);
+        setShowTripModeSelector(false);
         setShowBudgetSuggestion(true);
     };
 
@@ -1260,6 +1301,17 @@ const App: React.FC = () => {
             {showPricing && (
                 <Suspense fallback={null}>
                     <PricingModal onClose={() => setShowPricing(false)} />
+                </Suspense>
+            )}
+
+            {/* Trip Mode Selector Modal */}
+            {showTripModeSelector && (
+                <Suspense fallback={null}>
+                    <TripModeSelector
+                        onManualMode={handleCreateTripManual}
+                        onAIMode={handleCreateTripWithAI}
+                        onClose={() => setShowTripModeSelector(false)}
+                    />
                 </Suspense>
             )}
 
