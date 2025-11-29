@@ -116,7 +116,7 @@ const resizeImage = (file: File): Promise<string> => {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx?.drawImage(img, 0, 0, width, height);
-                
+
                 // Try WebP first (30-40% better compression), fallback to JPEG
                 try {
                     if (canvas.toDataURL('image/webp', 0.7).length < canvas.toDataURL('image/jpeg', 0.6).length) {
@@ -304,7 +304,7 @@ const TripDetailView: React.FC<{
                 </div>
 
                 {/* Refactored Header Content for Layout Stability */}
-                <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-4">
+                <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-4">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setShowEditModal(true)}
@@ -737,7 +737,7 @@ const App: React.FC = () => {
 
     // Delete Trip Confirmation State
     const [tripToDelete, setTripToDelete] = useState<string | null>(null);
-    
+
     // Budget Suggestion Modal State
     const [showBudgetSuggestion, setShowBudgetSuggestion] = useState(false);
     const [pendingNewTrip, setPendingNewTrip] = useState<Trip | null>(null);
@@ -817,12 +817,12 @@ const App: React.FC = () => {
     const handleLogin = async (userData: UserSession) => {
         setUser(userData);
         localStorage.setItem('wanderlust_last_user', JSON.stringify(userData));
-        
+
         // If user has a detected language (from signup), apply it
         if (userData.language) {
             setLanguage(userData.language);
         }
-        
+
         setLoading(true);
         const fetchedTrips = await getTrips(userData.id);
         setTrips(fetchedTrips);
@@ -883,7 +883,7 @@ const App: React.FC = () => {
 
         // generate quick suggestion locally
         const sug = generateQuickSuggestion();
-        const mappedType = (['Leisure','Adventure','Family','Romantic','Solo','Business'].includes(sug.tripType) ? (sug.tripType as any) : 'Leisure');
+        const mappedType = (['Leisure', 'Adventure', 'Family', 'Romantic', 'Solo', 'Business'].includes(sug.tripType) ? (sug.tripType as any) : 'Leisure');
 
         const newTrip: Trip = {
             id: crypto.randomUUID(),
@@ -919,30 +919,30 @@ const App: React.FC = () => {
 
     const handleBudgetSuggested = (budget: number) => {
         if (!user || !pendingNewTrip) return;
-                const tripWithBudget = { ...pendingNewTrip, budget };
-                const updatedTrips = [tripWithBudget, ...trips];
-                setTrips(updatedTrips);
-                upsertTrip(user.id, tripWithBudget);
-                setCurrentTripId(tripWithBudget.id);
+        const tripWithBudget = { ...pendingNewTrip, budget };
+        const updatedTrips = [tripWithBudget, ...trips];
+        setTrips(updatedTrips);
+        upsertTrip(user.id, tripWithBudget);
+        setCurrentTripId(tripWithBudget.id);
 
-                // Attempt to generate a custom cover image for the newly created trip
-                (async () => {
-                    try {
-                        const img = await generateTripImage(tripWithBudget.destination, tripWithBudget.type);
-                        if (img) {
-                            const updated = { ...tripWithBudget, coverImage: img };
-                            // update local state and persist
-                            setTrips((prev) => [updated, ...prev.filter(t => t.id !== updated.id)]);
-                            upsertTrip(user.id, updated);
-                            // If currently viewing this trip, set it so UI refreshes
-                            setCurrentTripId(updated.id);
-                            showToast('Cover image generated for your suggested trip.', 'success');
-                        }
-                    } catch (e: any) {
-                        // Non-fatal: user can regenerate visual manually
-                        console.warn('Auto-generate cover image failed', e);
-                    }
-                })();
+        // Attempt to generate a custom cover image for the newly created trip
+        (async () => {
+            try {
+                const img = await generateTripImage(tripWithBudget.destination, tripWithBudget.type);
+                if (img) {
+                    const updated = { ...tripWithBudget, coverImage: img };
+                    // update local state and persist
+                    setTrips((prev) => [updated, ...prev.filter(t => t.id !== updated.id)]);
+                    upsertTrip(user.id, updated);
+                    // If currently viewing this trip, set it so UI refreshes
+                    setCurrentTripId(updated.id);
+                    showToast('Cover image generated for your suggested trip.', 'success');
+                }
+            } catch (e: any) {
+                // Non-fatal: user can regenerate visual manually
+                console.warn('Auto-generate cover image failed', e);
+            }
+        })();
         setPendingNewTrip(null);
         setShowBudgetSuggestion(false);
         showToast('Trip created with suggested budget!', 'success');
@@ -1042,8 +1042,8 @@ const App: React.FC = () => {
 
     if (!user) {
         return (
-            <AuthScreen 
-                onLogin={handleLogin} 
+            <AuthScreen
+                onLogin={handleLogin}
                 lang={language}
                 toggleLanguage={toggleLanguage}
             />
@@ -1073,7 +1073,7 @@ const App: React.FC = () => {
             ) : (
                 <>
                     {/* Compact Navbar */}
-                    <div className="h-16 border-b border-border bg-obsidian/95 backdrop-blur-md sticky top-0 z-50 px-6 flex items-center justify-between">
+                    <div className="h-16 border-b border-border bg-obsidian/95 backdrop-blur-md sticky top-0 z-50 px-4 md:px-6 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-surface border border-border flex items-center justify-center rounded-lg shadow-sm">
                                 <Hexagon className="text-acid fill-acid/10" size={20} />
@@ -1109,6 +1109,18 @@ const App: React.FC = () => {
                             >
                                 <CreditCard size={14} className="group-hover:text-acid transition-colors" /> {t.pricing}
                             </button>
+                            <button
+                                onClick={() => setShowStories(true)}
+                                className="flex items-center gap-2 text-xs font-mono font-bold uppercase border border-border px-3 py-1.5 rounded-md hover:border-acid transition-colors text-dim hover:text-acid group whitespace-nowrap"
+                            >
+                                <Users size={14} className="group-hover:text-acid transition-colors" /> {t.travelerStories}
+                            </button>
+                            <button
+                                onClick={() => setShowDemo(true)}
+                                className="flex items-center gap-2 text-xs font-mono font-bold uppercase border border-border px-3 py-1.5 rounded-md hover:border-acid transition-colors text-dim hover:text-acid group whitespace-nowrap"
+                            >
+                                <Play size={14} className="group-hover:text-acid transition-colors" /> {t.watchDemo}
+                            </button>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -1138,9 +1150,9 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-8 max-w-7xl mx-auto animate-fade-in relative z-10">
+                    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in relative z-10">
                         {/* HERO SECTION - REFACTORED TO LEFT ALIGN & HEADER STYLE */}
-                        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 pt-8">
+                        <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-16 gap-6 pt-4 md:pt-8">
                             <div className="text-left">
                                 <h4 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-dim mb-4 opacity-60">
                                     {t.authority}
@@ -1157,12 +1169,7 @@ const App: React.FC = () => {
                             </div>
 
                             <div className="flex flex-col gap-4 items-end">
-                                <button
-                                    onClick={handleCreateTrip}
-                                    className="px-8 py-4 bg-white text-black hover:bg-acid hover:scale-105 transition-all rounded-xl font-mono text-sm font-bold uppercase tracking-widest flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] group"
-                                >
-                                    <Plane size={20} className="group-hover:-rotate-45 transition-transform" /> {t.initiateTrip}
-                                </button>
+
 
                                 <div className="flex items-center gap-4">
                                     <Tooltip content={t.freemiumTooltip} position="bottom">
@@ -1172,20 +1179,7 @@ const App: React.FC = () => {
                                     </Tooltip>
                                 </div>
 
-                                <div className="flex gap-4 mt-2">
-                                    <button
-                                        onClick={() => setShowStories(true)}
-                                        className="text-acid border border-acid/50 hover:border-acid hover:text-acid hover:bg-acid/10 transition-all opacity-100 flex items-center gap-2 text-xs font-mono uppercase tracking-wide font-bold px-3 py-1.5 rounded-md"
-                                    >
-                                        <Users size={14} /> {t.travelerStories}
-                                    </button>
-                                    <button
-                                        onClick={() => setShowDemo(true)}
-                                        className="text-dim hover:text-white transition-all opacity-80 hover:opacity-100 flex items-center gap-2 text-xs font-mono uppercase tracking-wide border-b border-transparent hover:border-acid pb-0.5"
-                                    >
-                                        {t.watchDemo}
-                                    </button>
-                                </div>
+
                             </div>
                         </div>
 
@@ -1204,13 +1198,27 @@ const App: React.FC = () => {
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                                {/* New Trip Card */}
+                                <div
+                                    onClick={handleCreateTrip}
+                                    className="group relative h-[380px] md:h-[450px] bg-surface/50 border-2 border-dashed border-dim/30 rounded-3xl overflow-hidden cursor-pointer hover:border-acid hover:bg-acid/5 transition-all hover:-translate-y-2 flex flex-col items-center justify-center gap-6"
+                                >
+                                    <div className="w-20 h-20 rounded-full bg-surface border border-border flex items-center justify-center group-hover:scale-110 group-hover:border-acid transition-all shadow-lg">
+                                        <Plus size={32} className="text-dim group-hover:text-acid transition-colors" />
+                                    </div>
+                                    <div className="text-center">
+                                        <h3 className="text-xl font-display font-bold text-text uppercase tracking-tight mb-2 group-hover:text-acid transition-colors">{t.initiateTrip}</h3>
+                                        <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.createFirstTrip}</p>
+                                    </div>
+                                </div>
+
                                 {/* Trip Cards Only - No Sidebar */}
                                 {filteredTrips.map(trip => (
                                     <div
                                         key={trip.id}
                                         onClick={() => setCurrentTripId(trip.id)}
-                                        className="group relative h-[450px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-2 border border-border flex flex-col"
+                                        className="group relative h-[380px] md:h-[450px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-2 border border-border flex flex-col"
                                     >
                                         <div className="h-[65%] relative overflow-hidden">
                                             <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -1299,7 +1307,7 @@ const App: React.FC = () => {
                 </>
             )}
 
-            <ChatAssistant 
+            <ChatAssistant
                 lang={language}
                 trip={currentTrip}
                 isOpen={false}

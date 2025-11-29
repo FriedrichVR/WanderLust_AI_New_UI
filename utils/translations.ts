@@ -21,8 +21,8 @@ export const translations = {
     heroEmotional: "Planning a trip should feel like traveling. Not like work.",
     freemiumNotice: "✨ Start for free: 3 full trips available.",
     freemiumTooltip: "Includes: Unlimited itinerary days, AI Chat, Budget Tracking, and up to 1GB of docs.",
-    watchDemo: "🎥 See how it works (12s)",
-    travelerStories: "Traveler Stories",
+    watchDemo: "Tutorial",
+    travelerStories: "Travelers",
 
     // Empty State
     emptyStateTitle: "Ready for your next adventure?",
@@ -260,8 +260,8 @@ export const translations = {
     heroEmotional: "Planear un viaje debería sentirse como viajar. No como trabajar.",
     freemiumNotice: "✨ Empezá gratis: tenés 3 viajes completos disponibles.",
     freemiumTooltip: "Incluye: Itinerario ilimitado, Chat IA, Gastos y hasta 1GB en documentos.",
-    watchDemo: "🎥 Ver cómo funciona (12s)",
-    travelerStories: "Historias de viajeros",
+    watchDemo: "Tutorial",
+    travelerStories: "Viajeros",
 
     // Empty State
     emptyStateTitle: "¿Todavía no empezaste?",
