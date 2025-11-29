@@ -13,7 +13,7 @@ export const translations = {
     aiModeDesc: "Let AI suggest days, location & budget",
     selectOption: "Select an option",
     noActiveMissions: "No active missions found",
-    
+
     // Dashboard Hero
     authority: "PLANNED BY TRAVELERS, DESIGNED WITH AI.",
     heroTitle: "Organize your trips without chaos.",
@@ -23,7 +23,7 @@ export const translations = {
     freemiumTooltip: "Includes: Unlimited itinerary days, AI Chat, Budget Tracking, and up to 1GB of docs.",
     watchDemo: "🎥 See how it works (12s)",
     travelerStories: "Traveler Stories",
-    
+
     // Empty State
     emptyStateTitle: "Ready for your next adventure?",
     emptyStateDesc: "You haven't started any trips yet. Launch your first mission to begin.",
@@ -36,12 +36,12 @@ export const translations = {
     budgetSuggestionTitle: "Budget Suggestion",
     travelSuggestionTitle: "Travel Suggestion",
     missionId: "Mission ID",
-    
+
     // Tabs
     overview: "Overview",
     itinerary: "Itinerary",
     documents: "Documents",
-    
+
     // Overview Tab
     telemetry: "Telemetry",
     duration: "Duration",
@@ -57,7 +57,7 @@ export const translations = {
     visualDiary: "Visual Diary",
     galleryEmpty: "// NO FIELD IMAGES CAPTURED",
     aiSummary: "AI Summary",
-    
+
     // Budget
     totalAllocation: "Total Allocation",
     depleted: "Depleted",
@@ -73,7 +73,7 @@ export const translations = {
     tag: "Tag",
     confirmDeleteTransactionTitle: "Delete Transaction?",
     confirmDeleteTransactionMsg: "Are you sure you want to remove this expense? This will affect your budget calculations.",
-    
+
     // Itinerary
     timelineEmpty: "Timeline Empty",
     addPoint: "Add Point",
@@ -101,7 +101,7 @@ export const translations = {
     exportPlan: "Export Plan",
     dueDate: "Due Date",
     sharePlan: "Share Plan",
-    
+
     // Documents
     uploadMatrix: "Upload Matrix",
     selectFiles: "Select Files",
@@ -135,17 +135,17 @@ export const translations = {
     confirmDeleteDocsMsg: "Are you sure you want to delete the selected documents? This action cannot be undone.",
     filter: "Filter",
     allCategories: "All Categories",
-    
+
     // Currency
     globalFx: "Converter $",
     baseValue: "Base Value",
-    
+
     // AI / Chat
     aiAdvisor: "AI ADVISOR",
     aiAdvisorDesc: "Optimize your itinerary using the Neural Assistant. Access via the floating terminal.",
     neuralLink: "Neural_Link",
     enterCommand: "ENTER_COMMAND...",
-    
+
     // Image Editor
     imageEditor: "Image Editor // Studio",
     filters: "Filters",
@@ -165,7 +165,7 @@ export const translations = {
     size: "Size",
     dragToPan: "Drag image to pan",
     clearSearch: "Clear search",
-    
+
     // Pricing
     pricing: "Pricing",
     pricingTitle: "Free trips limit reached.",
@@ -182,15 +182,9 @@ export const translations = {
     proPlanPrice: "4.99",
     proPlanDescHover: ["Unlimited trips", "Premium itineraries", "Download as PDF", "Advanced recommendations", "Priority generation"],
     proPlanDesc: "Best option if you travel often or want to plan without limits.",
-    
+
     // Budget Suggestion Modal
-    budgetModalTripDetails: "Detalles del viaje:",
-    budgetModalAISuggested: "Presupuesto sugerido por IA:",
-    budgetModalPerDay: "≈ {currency} {perDay} por día",
-    budgetModalGetSuggestion: "Obtener sugerencia",
-    budgetModalAnalyzing: "Analizando...",
-    budgetModalAccept: "Aceptar presupuesto",
-    budgetModalAdjustLater: "Siempre podés ajustar este presupuesto más tarde",
+
 
     // Budget Suggestion Modal
     budgetModalTripDetails: "Trip Details:",
@@ -200,7 +194,8 @@ export const translations = {
     budgetModalAnalyzing: "Analyzing...",
     budgetModalAccept: "Accept Budget",
     budgetModalAdjustLater: "You can always adjust this budget later",
-    
+    budgetModalSearching: "Searching for travel alternatives...",
+
     // General
     tripStatus: "Trip Status",
     tripType: "Trip Type",
@@ -216,7 +211,7 @@ export const translations = {
     saveChanges: "Save Changes",
     startDate: "Start Date",
     endDate: "End Date",
-    
+
     // Auth
     welcomeBack: "Welcome Back",
     createAccount: "Create Account",
@@ -257,7 +252,7 @@ export const translations = {
     aiModeDesc: "Deja que la IA sugiera días, lugar y presupuesto",
     selectOption: "Selecciona una opción",
     noActiveMissions: "No se encontraron misiones activas",
-    
+
     // Dashboard Hero
     authority: "PLANEADO POR VIAJEROS, DISEÑADO CON IA.",
     heroTitle: "Organizá tus viajes sin caos.",
@@ -280,12 +275,12 @@ export const translations = {
     budgetSuggestionTitle: "Sugerencia de Presupuesto",
     travelSuggestionTitle: "Sugerencia de Viaje",
     missionId: "ID Misión",
-    
+
     // Tabs
     overview: "Resumen",
     itinerary: "Itinerario",
     documents: "Documentos",
-    
+
     // Overview Tab
     telemetry: "Telemetría",
     duration: "Duración",
@@ -301,7 +296,7 @@ export const translations = {
     visualDiary: "Diario Visual",
     galleryEmpty: "// SIN IMÁGENES DE CAMPO CAPTURADAS",
     aiSummary: "Resumen IA",
-    
+
     // Budget
     totalAllocation: "Asignación Total",
     depleted: "Agotado",
@@ -317,7 +312,7 @@ export const translations = {
     tag: "Etiqueta",
     confirmDeleteTransactionTitle: "¿Eliminar Transacción?",
     confirmDeleteTransactionMsg: "¿Estás seguro de que deseas eliminar este gasto? Esto afectará los cálculos de tu presupuesto.",
-    
+
     // Itinerary
     timelineEmpty: "Línea de Tiempo Vacía",
     addPoint: "Agregar Punto",
@@ -345,7 +340,7 @@ export const translations = {
     exportPlan: "Exportar Plan",
     dueDate: "Fecha Límite",
     sharePlan: "Compartir Plan",
-    
+
     // Documents
     uploadMatrix: "Matriz de Carga",
     selectFiles: "Seleccionar Archivos",
@@ -379,17 +374,17 @@ export const translations = {
     confirmDeleteDocsMsg: "¿Estás seguro de que quieres eliminar los documentos seleccionados? Esta acción no se puede deshacer.",
     filter: "Filtrar",
     allCategories: "Todas las Categorías",
-    
+
     // Currency
     globalFx: "Convertidor $",
     baseValue: "Valor Base",
-    
+
     // AI / Chat
     aiAdvisor: "CONSEJERO IA",
     aiAdvisorDesc: "Optimiza tu itinerario usando el Asistente Neural. Accede vía la terminal flotante.",
     neuralLink: "Enlace_Neural",
     enterCommand: "INGRESAR_COMANDO...",
-    
+
     // Image Editor
     imageEditor: "Editor de Imagen // Estudio",
     filters: "Filtros",
@@ -409,7 +404,7 @@ export const translations = {
     size: "Tamaño",
     dragToPan: "Arrastra para mover",
     clearSearch: "Limpiar búsqueda",
-    
+
     // Pricing
     pricing: "Precios",
     pricingTitle: "Alcanzaste el límite de viajes gratis.",
@@ -426,7 +421,7 @@ export const translations = {
     proPlanPrice: "4.99",
     proPlanDescHover: ["Viajes ilimitados", "Itinerarios premium", "Descarga en PDF", "Recomendaciones avanzadas", "Prioridad en generación"],
     proPlanDesc: "La mejor opción si viajás seguido o querés planificar sin límites.",
-    
+
     // General
     tripStatus: "Estado del Viaje",
     tripType: "Tipo de Viaje",
@@ -442,7 +437,7 @@ export const translations = {
     saveChanges: "Guardar Cambios",
     startDate: "Fecha Inicio",
     endDate: "Fecha Fin",
-    
+
     // Auth
     welcomeBack: "Bienvenido",
     createAccount: "Crear Cuenta",
@@ -470,6 +465,7 @@ export const translations = {
     globalCoverage: "Cobertura Global",
     aiOnline: "IA En Línea",
     guestAccess: "Acceso Invitado // Demo",
+    budgetModalSearching: "Buscando alternativas de viaje...",
   }
 };
 

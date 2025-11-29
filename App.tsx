@@ -25,6 +25,7 @@ const ImageEditor = lazy(() => import('./components/ImageEditor'));
 const TestimonialsRolodex = lazy(() => import('./components/TestimonialsRolodex'));
 const PricingModal = lazy(() => import('./components/PricingModal'));
 const WorldMapTracker = lazy(() => import('./components/WorldMapTracker'));
+const TripModeSelector = lazy(() => import('./components/TripModeSelector'));
 
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=60&w=800&auto=format&fit=crop';
 const PAGE_SIZE = 20;
@@ -300,7 +301,7 @@ const TripDetailView: React.FC<{
                         <button
                             onClick={() => setShowEditModal(true)}
                             className={`px-3 py-1 font-mono text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/30' :
-                                    trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/30' : 'bg-black/60 text-amber-400 border-amber-500/30'
+                                trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/30' : 'bg-black/60 text-amber-400 border-amber-500/30'
                                 }`}>
                             {trip.status}
                         </button>
@@ -349,8 +350,8 @@ const TripDetailView: React.FC<{
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`flex items-center gap-2 px-6 py-3 font-mono text-xs uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
-                                ? 'border-acid text-acid font-bold'
-                                : 'border-transparent text-dim hover:text-text hover:border-dim'
+                            ? 'border-acid text-acid font-bold'
+                            : 'border-transparent text-dim hover:text-text hover:border-dim'
                             }`}
                     >
                         <tab.icon size={16} /> {tab.label}
@@ -681,6 +682,8 @@ const App: React.FC = () => {
     // Budget Suggestion Modal State
     const [showBudgetSuggestion, setShowBudgetSuggestion] = useState(false);
     const [pendingNewTrip, setPendingNewTrip] = useState<Trip | null>(null);
+    const [showModeSelector, setShowModeSelector] = useState(false);
+    const [autoFetchBudget, setAutoFetchBudget] = useState(false);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -760,6 +763,39 @@ const App: React.FC = () => {
 
     const handleCreateTrip = () => {
         if (!user) return;
+        setShowModeSelector(true);
+    };
+
+    const handleManualMode = () => {
+        if (!user) return;
+        const newTrip: Trip = {
+            id: crypto.randomUUID(),
+            destination: 'New Adventure',
+            coverImage: DEFAULT_PLACEHOLDER,
+            startDate: new Date().toISOString(),
+            endDate: new Date().toISOString(),
+            budget: 0,
+            currency: Currency.USD,
+            status: TripStatus.PLANNING,
+            type: 'Leisure',
+            expenses: [],
+            itinerary: [],
+            checklist: [],
+            documents: [],
+            documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
+        };
+        // For manual mode, we just create the trip and let them edit it
+        const updatedTrips = [newTrip, ...trips];
+        setTrips(updatedTrips);
+        upsertTrip(user.id, newTrip);
+        setCurrentTripId(newTrip.id);
+        setShowModeSelector(false);
+        showToast('New trip created. Edit details now.', 'success');
+        // Optionally open edit modal immediately? For now just showing the trip details is good.
+    };
+
+    const handleAIMode = () => {
+        if (!user) return;
         const newTrip: Trip = {
             id: crypto.randomUUID(),
             destination: 'New Adventure',
@@ -777,6 +813,8 @@ const App: React.FC = () => {
             documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
         };
         setPendingNewTrip(newTrip);
+        setAutoFetchBudget(true);
+        setShowModeSelector(false);
         setShowBudgetSuggestion(true);
     };
 
@@ -1071,12 +1109,12 @@ const App: React.FC = () => {
 
                                                 <div className="absolute top-4 right-4">
                                                     <span className={`px-3 py-1 text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1.5 shadow-sm ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/50' :
-                                                            trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/50' :
-                                                                'bg-black/60 text-amber-400 border-amber-500/50'
+                                                        trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/50' :
+                                                            'bg-black/60 text-amber-400 border-amber-500/50'
                                                         }`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'Completed' ? 'bg-emerald-400' :
-                                                                trip.status === 'Booked' ? 'bg-cyan-400' :
-                                                                    'bg-amber-400'
+                                                            trip.status === 'Booked' ? 'bg-cyan-400' :
+                                                                'bg-amber-400'
                                                             }`}></span>
                                                         {trip.status}
                                                     </span>
@@ -1133,8 +1171,8 @@ const App: React.FC = () => {
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
                                                     className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition-all ${currentPage === page
-                                                            ? 'bg-acid text-black'
-                                                            : 'border border-border text-text hover:bg-panel'
+                                                        ? 'bg-acid text-black'
+                                                        : 'border border-border text-text hover:bg-panel'
                                                         }`}
                                                 >
                                                     {page}
@@ -1215,6 +1253,17 @@ const App: React.FC = () => {
                 </Suspense>
             )}
 
+            {/* Trip Mode Selector */}
+            {showModeSelector && (
+                <Suspense fallback={null}>
+                    <TripModeSelector
+                        onManualMode={handleManualMode}
+                        onAIMode={handleAIMode}
+                        onClose={() => setShowModeSelector(false)}
+                    />
+                </Suspense>
+            )}
+
             {/* Budget Suggestion Modal */}
             {showBudgetSuggestion && pendingNewTrip && (
                 <BudgetSuggestionModal
@@ -1227,7 +1276,9 @@ const App: React.FC = () => {
                     onClose={() => {
                         setShowBudgetSuggestion(false);
                         setPendingNewTrip(null);
+                        setAutoFetchBudget(false);
                     }}
+                    autoFetch={autoFetchBudget}
                 />
             )}
         </div>

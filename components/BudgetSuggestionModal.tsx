@@ -14,6 +14,7 @@ interface Props {
   onClose: () => void;
   initialSuggestedBudget?: number | null;
   title?: string;
+  autoFetch?: boolean;
 }
 
 const BudgetSuggestionModal: React.FC<Props> = ({
@@ -24,18 +25,42 @@ const BudgetSuggestionModal: React.FC<Props> = ({
   currency,
   onBudgetSuggested,
   onClose,
-  initialSuggestedBudget
-  , title
+  initialSuggestedBudget,
+  title,
+  autoFetch = false
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(autoFetch);
   const [suggestedBudget, setSuggestedBudget] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   React.useEffect(() => {
     if (typeof initialSuggestedBudget === 'number') {
       setSuggestedBudget(initialSuggestedBudget);
     }
   }, [initialSuggestedBudget]);
+
+  const [progress, setProgress] = useState(0);
+
+  // Auto-fetch effect
+  React.useEffect(() => {
+    if (autoFetch && !suggestedBudget && !isLoading && !error) {
+      fetchBudgetSuggestion();
+    }
+  }, [autoFetch]);
+
+  React.useEffect(() => {
+    if (isLoading) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 95) return prev;
+          return prev + Math.random() * 5;
+        });
+      }, 150);
+      return () => clearInterval(interval);
+    }
+  }, [isLoading]);
 
   const { t } = useLanguage();
 
@@ -47,7 +72,12 @@ const BudgetSuggestionModal: React.FC<Props> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const budget = await generateBudgetSuggestion(destination, duration, tripType, currency);
+      // Minimum delay to ensure the user sees the searching UI
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 2000));
+      const budgetPromise = generateBudgetSuggestion(destination, duration, tripType, currency);
+
+      const [_, budget] = await Promise.all([delayPromise, budgetPromise]);
+
       if (budget) {
         setSuggestedBudget(budget);
       } else {
@@ -60,8 +90,11 @@ const BudgetSuggestionModal: React.FC<Props> = ({
     }
   };
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (suggestedBudget) {
+      setIsCreating(true);
+      // Simulate thinking/creation delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       onBudgetSuggested(suggestedBudget);
       onClose();
     }
@@ -107,9 +140,17 @@ const BudgetSuggestionModal: React.FC<Props> = ({
 
           {/* Loading State */}
           {isLoading && (
-            <div className="bg-panel/50 border border-border/50 rounded-lg p-8 flex flex-col items-center justify-center gap-3 animate-pulse">
-              <Loader2 size={32} className="animate-spin text-acid" />
-              <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.budgetModalAnalyzing}...</p>
+            <div className="bg-panel/50 border border-border/50 rounded-lg p-8 flex flex-col items-center justify-center gap-6">
+              <div className="w-full max-w-[240px] h-1.5 bg-dim/20 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-acid transition-all duration-300 ease-out shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <div className="flex items-center gap-3 animate-pulse">
+                <Loader2 size={14} className="animate-spin text-acid" />
+                <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.budgetModalSearching}</p>
+              </div>
             </div>
           )}
 
@@ -139,7 +180,7 @@ const BudgetSuggestionModal: React.FC<Props> = ({
               <button
                 onClick={fetchBudgetSuggestion}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-acid text-black hover:bg-white disabled:opacity-50 rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2"
+                className={`flex-1 px-4 py-2 bg-acid text-black hover:bg-white disabled:opacity-50 rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2 ${autoFetch && isLoading ? 'hidden' : ''}`}
               >
                 {isLoading ? (
                   <>
@@ -153,9 +194,17 @@ const BudgetSuggestionModal: React.FC<Props> = ({
             ) : (
               <button
                 onClick={handleAccept}
-                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all text-sm font-bold"
+                disabled={isCreating}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2"
               >
-                {t.budgetModalAccept}
+                {isCreating ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {t.processing}
+                  </>
+                ) : (
+                  t.budgetModalAccept
+                )}
               </button>
             )}
           </div>
