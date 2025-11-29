@@ -1097,7 +1097,7 @@ const App: React.FC = () => {
                                 <div className="flex gap-4 mt-2">
                                     <button
                                         onClick={() => setShowStories(true)}
-                                        className="text-dim hover:text-white transition-all opacity-80 hover:opacity-100 flex items-center gap-2 text-xs font-mono uppercase tracking-wide border-b border-transparent hover:border-acid pb-0.5"
+                                        className="text-acid border border-acid/50 hover:border-acid hover:text-acid hover:bg-acid/10 transition-all opacity-100 flex items-center gap-2 text-xs font-mono uppercase tracking-wide font-bold px-3 py-1.5 rounded-md"
                                     >
                                         <Users size={14} /> {t.travelerStories}
                                     </button>

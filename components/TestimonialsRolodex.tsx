@@ -20,7 +20,7 @@ const TESTIMONIALS = [
     quote: "Caos Organizado",
     desc: "WanderLust AI convirtió mis notas dispersas en un itinerario fluido. Nunca pierdo un vuelo ahora.",
     place: "Granada, España",
-    placeImage: "https://images.unsplash.com/photo-1505765050740-1c0c014b3a1d?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1505775701022-c3400ca199e7?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Viajes", value: "12" },
       { label: "Países", value: "8" },
@@ -37,7 +37,7 @@ const TESTIMONIALS = [
     quote: "Trabajo y Viaje",
     desc: "El seguimiento de presupuesto es esencial. Puedo gestionar gastos en 3 monedas fácilmente.",
     place: "Chiang Mai, Tailandia",
-    placeImage: "https://images.unsplash.com/photo-1543340713-6e6b5e2f8e4a?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Meses", value: "24" },
       { label: "Oficinas", value: "15" },
@@ -54,7 +54,7 @@ const TESTIMONIALS = [
     quote: "Sin Discusiones",
     desc: "Planear solía ser estresante. Ahora la IA sugiere paradas que a ambos nos encantan.",
     place: "Islas Azores, Portugal",
-    placeImage: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1455127754713-2bc59ccc63f2?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Rutas", value: "45" },
       { label: "Millas", value: "300+" },
@@ -71,7 +71,7 @@ const TESTIMONIALS = [
     quote: "Sabor y Cultura",
     desc: "La IA nos encontró joyas culinarias ocultas en Japón que ninguna guía turística mencionaba.",
     place: "Osaka, Japón",
-    placeImage: "https://images.unsplash.com/photo-1549693578-d683be217e58?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1540959375944-7049f642e9b5?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Restaurantes", value: "89" },
       { label: "Estrellas", value: "12" },
@@ -88,7 +88,7 @@ const TESTIMONIALS = [
     quote: "Capturando el Mundo",
     desc: "El mapa integrado es vital para planificar mis tomas al amanecer en lugares remotos.",
     place: "Islas Lofoten, Noruega",
-    placeImage: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Cámaras", value: "3" },
       { label: "Tomas", value: "50k" },
@@ -105,7 +105,7 @@ const TESTIMONIALS = [
     quote: "Viaje en el Tiempo",
     desc: "WanderLust me ayuda a organizar rutas temáticas históricas con una precisión increíble.",
     place: "Roma, Italia",
-    placeImage: "https://images.unsplash.com/photo-1505765050740-1c0c014b3a1d?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1552832860-cfb67165eaf0?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Museos", value: "120" },
       { label: "Libros", value: "200" },
@@ -123,7 +123,7 @@ const TESTIMONIALS = [
     quote: "Vida Local",
     desc: "Con WanderLust encontré hospedajes familiares y rutas menos turísticas. Ideal para viajar con bajo presupuesto.",
     place: "Valparaíso, Chile",
-    placeImage: "https://images.unsplash.com/photo-1505765635098-5f7a6b1f2f8b?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1478218143143-1c67f2b9fc59?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Hostales", value: "34" },
       { label: "Caminatas", value: "18" },
@@ -140,7 +140,7 @@ const TESTIMONIALS = [
     quote: "Calles con Historia",
     desc: "Me encanta explorar barrios y mercados locales; la IA sugiere rutas seguras y con buena comida.",
     place: "Marrakech, Marruecos",
-    placeImage: "https://images.unsplash.com/photo-1544213456-bc16d6f0b36d?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Mercados", value: "22" },
       { label: "Tés", value: "∞" },
@@ -157,7 +157,7 @@ const TESTIMONIALS = [
     quote: "Viajar con niños",
     desc: "Los itinerarios adaptativos y recomendaciones de actividades familiares nos salvaron las vacaciones.",
     place: "Parque Nacional Plitvice, Croacia",
-    placeImage: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=400&auto=format&fit=crop",
+    placeImage: "https://images.unsplash.com/photo-1507838871816-a85c3b9e5c03?q=80&w=400&auto=format&fit=crop",
     stats: [
       { label: "Niños", value: "2" },
       { label: "Rutas", value: "7" },
