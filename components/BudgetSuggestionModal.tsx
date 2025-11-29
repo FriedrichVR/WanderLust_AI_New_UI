@@ -27,7 +27,6 @@ const BudgetSuggestionModal: React.FC<Props> = ({
   initialSuggestedBudget
   , title
 }) => {
-  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedBudget, setSuggestedBudget] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +36,8 @@ const BudgetSuggestionModal: React.FC<Props> = ({
       setSuggestedBudget(initialSuggestedBudget);
     }
   }, [initialSuggestedBudget]);
+
+  const { t } = useLanguage();
 
   const duration = Math.ceil(
     (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -88,10 +89,10 @@ const BudgetSuggestionModal: React.FC<Props> = ({
         <div className="space-y-4">
           {/* Info */}
           <div className="bg-panel/50 border border-border/50 rounded-lg p-4 space-y-2 text-sm">
-            <p className="text-text font-medium">Trip Details:</p>
+            <p className="text-text font-medium">{t.budgetModalTripDetails}</p>
             <div className="text-dim space-y-1">
               <p>📍 {destination}</p>
-              <p>📅 {duration} days • {tripType}</p>
+              <p>📅 {duration} {t.days} • {tripType}</p>
               <p>💱 {currency}</p>
             </div>
           </div>
@@ -107,12 +108,12 @@ const BudgetSuggestionModal: React.FC<Props> = ({
           {/* Suggestion */}
           {suggestedBudget && (
             <div className="bg-acid/5 border border-acid/30 rounded-lg p-4">
-              <p className="text-dim text-sm mb-2">AI Suggested Budget:</p>
+              <p className="text-dim text-sm mb-2">{t.budgetModalAISuggested}</p>
               <div className="text-4xl font-display font-bold text-acid">
                 {currency} {suggestedBudget.toLocaleString()}
               </div>
               <p className="text-xs text-dim mt-2">
-                ≈ {currency} {Math.round(suggestedBudget / duration)} per day
+                {t.budgetModalPerDay.replace('{currency}', currency).replace('{perDay}', String(Math.round(suggestedBudget / duration)))}
               </p>
             </div>
           )}
@@ -123,7 +124,7 @@ const BudgetSuggestionModal: React.FC<Props> = ({
               onClick={onClose}
               className="flex-1 px-4 py-2 border border-border text-dim hover:text-text rounded-lg transition-colors text-sm font-medium"
             >
-              Cancel
+              {t.cancel}
             </button>
 
             {!suggestedBudget ? (
@@ -135,10 +136,10 @@ const BudgetSuggestionModal: React.FC<Props> = ({
                 {isLoading ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Analyzing...
+                    {t.budgetModalAnalyzing}
                   </>
                 ) : (
-                  'Get Suggestion'
+                  t.budgetModalGetSuggestion
                 )}
               </button>
             ) : (
@@ -146,13 +147,13 @@ const BudgetSuggestionModal: React.FC<Props> = ({
                 onClick={handleAccept}
                 className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all text-sm font-bold"
               >
-                Accept Budget
+                {t.budgetModalAccept}
               </button>
             )}
           </div>
 
           <p className="text-xs text-dim/60 text-center">
-            You can always adjust this budget later
+            {t.budgetModalAdjustLater}
           </p>
         </div>
       </div>

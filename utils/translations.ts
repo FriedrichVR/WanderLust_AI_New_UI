@@ -183,6 +183,24 @@ export const translations = {
     proPlanDescHover: ["Unlimited trips", "Premium itineraries", "Download as PDF", "Advanced recommendations", "Priority generation"],
     proPlanDesc: "Best option if you travel often or want to plan without limits.",
     
+    // Budget Suggestion Modal
+    budgetModalTripDetails: "Detalles del viaje:",
+    budgetModalAISuggested: "Presupuesto sugerido por IA:",
+    budgetModalPerDay: "≈ {currency} {perDay} por día",
+    budgetModalGetSuggestion: "Obtener sugerencia",
+    budgetModalAnalyzing: "Analizando...",
+    budgetModalAccept: "Aceptar presupuesto",
+    budgetModalAdjustLater: "Siempre podés ajustar este presupuesto más tarde",
+
+    // Budget Suggestion Modal
+    budgetModalTripDetails: "Trip Details:",
+    budgetModalAISuggested: "AI Suggested Budget:",
+    budgetModalPerDay: "≈ {currency} {perDay} per day",
+    budgetModalGetSuggestion: "Get Suggestion",
+    budgetModalAnalyzing: "Analyzing...",
+    budgetModalAccept: "Accept Budget",
+    budgetModalAdjustLater: "You can always adjust this budget later",
+    
     // General
     tripStatus: "Trip Status",
     tripType: "Trip Type",

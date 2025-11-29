@@ -1087,7 +1087,7 @@ const App: React.FC = () => {
                                             </div>
 
                                             <div className="absolute bottom-6 left-6 right-6">
-                                                <h3 className="text-4xl font-display font-bold text-white uppercase drop-shadow-lg truncate leading-none mb-1">{trip.destination}</h3>
+                                                <h3 className="text-2xl md:text-4xl font-display font-bold text-white uppercase drop-shadow-lg truncate leading-none mb-1">{trip.destination}</h3>
                                                 <p className="text-xs font-mono text-white/70 uppercase tracking-widest">{trip.type}</p>
                                             </div>
                                         </div>
