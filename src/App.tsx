@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense, lazy } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
+import { generateQuickSuggestion } from '../utils/aiTripSuggester';
+import { generateBudgetSuggestion } from '../services/geminiService';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
     ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign
@@ -742,6 +744,7 @@ const App: React.FC = () => {
 
     // Trip Mode Selector State
     const [showTripModeSelector, setShowTripModeSelector] = useState(false);
+    const [aiSuggestedBudget, setAiSuggestedBudget] = useState<number | null>(null);
 
     useEffect(() => {
         const savedSettings = loadSettings();
@@ -875,28 +878,43 @@ const App: React.FC = () => {
         showToast('Trip created! Fill in the details.', 'success');
     };
 
-    const handleCreateTripWithAI = () => {
+    const handleCreateTripWithAI = async () => {
         if (!user) return;
+
+        // generate quick suggestion locally
+        const sug = generateQuickSuggestion();
+        const mappedType = (['Leisure','Adventure','Family','Romantic','Solo','Business'].includes(sug.tripType) ? (sug.tripType as any) : 'Leisure');
 
         const newTrip: Trip = {
             id: crypto.randomUUID(),
-            destination: 'New Adventure',
+            destination: sug.destination,
             coverImage: DEFAULT_PLACEHOLDER,
-            startDate: new Date().toISOString(),
-            endDate: new Date().toISOString(),
+            startDate: sug.startDate,
+            endDate: sug.endDate,
             budget: 0,
             currency: Currency.USD,
             status: TripStatus.PLANNING,
-            type: 'Leisure',
+            type: mappedType,
             expenses: [],
             itinerary: [],
             checklist: [],
             documents: [],
             documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
         };
+
         setPendingNewTrip(newTrip);
         setShowTripModeSelector(false);
+
+        // Pre-fetch budget suggestion from AI service (best-effort)
+        setAiSuggestedBudget(null);
         setShowBudgetSuggestion(true);
+        try {
+            const computed = await generateBudgetSuggestion(sug.destination, sug.days, sug.tripType, sug.currency);
+            if (computed) setAiSuggestedBudget(computed);
+        } catch (e) {
+            // ignore — modal can let user trigger suggestion manually
+            console.warn('AI budget prefetch failed', e);
+        }
     };
 
     const handleBudgetSuggested = (budget: number) => {
@@ -1343,6 +1361,7 @@ const App: React.FC = () => {
                     tripType={pendingNewTrip.type}
                     currency={pendingNewTrip.currency}
                     onBudgetSuggested={handleBudgetSuggested}
+                    initialSuggestedBudget={aiSuggestedBudget}
                     onClose={() => {
                         setShowBudgetSuggestion(false);
                         setPendingNewTrip(null);

@@ -11,6 +11,7 @@ interface Props {
   currency: Currency;
   onBudgetSuggested: (budget: number) => void;
   onClose: () => void;
+  initialSuggestedBudget?: number | null;
 }
 
 const BudgetSuggestionModal: React.FC<Props> = ({
@@ -20,11 +21,18 @@ const BudgetSuggestionModal: React.FC<Props> = ({
   tripType,
   currency,
   onBudgetSuggested,
-  onClose
+  onClose,
+  initialSuggestedBudget
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedBudget, setSuggestedBudget] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof initialSuggestedBudget === 'number') {
+      setSuggestedBudget(initialSuggestedBudget);
+    }
+  }, [initialSuggestedBudget]);
 
   const duration = Math.ceil(
     (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)
