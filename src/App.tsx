@@ -1598,7 +1598,10 @@ const App: React.FC = () => {
             {/* Pricing Modal */}
             {showPricing && (
                 <Suspense fallback={null}>
-                    <PricingModal onClose={() => setShowPricing(false)} />
+                    <PricingModal
+                        onClose={() => setShowPricing(false)}
+                        onSelectFree={() => { setAuthInitialMode('signup'); setShowAuthModal(true); setShowPricing(false); }}
+                    />
                 </Suspense>
             )}
 

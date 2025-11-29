@@ -4,10 +4,11 @@ import { X, Check } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 
 interface Props {
-  onClose: () => void;
+    onClose: () => void;
+    onSelectFree?: () => void;
 }
 
-const PricingModal: React.FC<Props> = ({ onClose }) => {
+const PricingModal: React.FC<Props> = ({ onClose, onSelectFree }) => {
   const { t } = useLanguage();
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -70,9 +71,12 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                     ))}
                 </div>
                 
-                <button className="w-full px-4 py-3 border border-acid text-acid hover:bg-acid hover:text-black font-mono text-xs uppercase font-bold rounded-lg transition-all">
-                    Get Started
-                </button>
+                                <button
+                                    className="w-full px-4 py-3 border border-acid text-acid hover:bg-acid hover:text-black font-mono text-xs uppercase font-bold rounded-lg transition-all"
+                                    onClick={() => { onSelectFree?.(); }}
+                                >
+                                        Get Started
+                                </button>
             </div>
 
             {/* MOST POPULAR PLAN */}
