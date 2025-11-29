@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, MapPin, UserCircle, Database, Copy, Check, Plane, Sparkles, Phone } from 'lucide-react';
 import { translations, Language } from '../utils/translations';
 import { supabase } from '../services/supabaseClient';
-import { detectLanguageByCountry, getCountriesList } from '../utils/countryLanguageDetector';
+import { detectLanguageByCountry, getCountriesList, getPhoneCodeByCountry } from '../utils/countryLanguageDetector';
 import LazyImage from './LazyImage';
 
 interface Props {
@@ -23,10 +23,20 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
     email: '',
     password: '',
     phone: '',
+    phoneCode: '',
     country: ''
   });
 
   const t = translations[lang];
+
+  const handleCountryChange = (countryCode: string) => {
+    const phoneCode = getPhoneCodeByCountry(countryCode);
+    setFormData({
+      ...formData,
+      country: countryCode,
+      phoneCode: phoneCode
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +47,8 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
         if (mode === 'signup') {
             // Detect language based on country
             const detectedLanguage = detectLanguageByCountry(formData.country);
+            // Combine phone code with phone number
+            const fullPhone = formData.phoneCode + ' ' + formData.phone;
 
             const { data, error } = await supabase.auth.signUp({
                 email: formData.email,
@@ -44,7 +56,7 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
                 options: {
                     data: { 
                         full_name: formData.name,
-                        phone: formData.phone,
+                        phone: fullPhone,
                         country: formData.country,
                         language: detectedLanguage
                     }
@@ -280,17 +292,22 @@ with check (auth.uid() = user_id);`;
                             <>
                                 <div className="space-y-1 group">
                                     <label className="text-[9px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.phone}</label>
-                                    <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                            <Phone className="text-gray-400 group-focus-within:text-text transition-colors" size={16} />
+                                    <div className="relative flex gap-2">
+                                        <div className="flex-shrink-0 w-20 bg-gray-100 border border-gray-200 text-slate-900 px-2.5 py-2.5 rounded-lg flex items-center">
+                                            <span className="text-xs font-mono font-bold">{formData.phoneCode}</span>
                                         </div>
-                                        <input 
-                                            type="tel" 
-                                            value={formData.phone}
-                                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                            className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 pl-9 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
-                                            placeholder="+1 555 123 4567"
-                                        />
+                                        <div className="relative flex-1">
+                                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                                <Phone className="text-gray-400" size={16} />
+                                            </div>
+                                            <input 
+                                                type="tel" 
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                                className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 pl-9 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
+                                                placeholder="555 123 4567"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -303,7 +320,7 @@ with check (auth.uid() = user_id);`;
                                         <select 
                                             required
                                             value={formData.country}
-                                            onChange={(e) => setFormData({...formData, country: e.target.value})}
+                                            onChange={(e) => handleCountryChange(e.target.value)}
                                             className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 pl-9 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300 appearance-none cursor-pointer"
                                         >
                                             <option value="">{t.selectCountry}</option>
