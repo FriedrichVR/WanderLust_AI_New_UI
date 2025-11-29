@@ -1077,7 +1077,7 @@ const App: React.FC = () => {
                                         onClick={() => setShowStories(true)}
                                         className="text-dim hover:text-white transition-all opacity-80 hover:opacity-100 flex items-center gap-2 text-xs font-mono uppercase tracking-wide border-b border-transparent hover:border-acid pb-0.5"
                                     >
-                                        <Users size={14} /> Traveler Stories
+                                        <Users size={14} /> Historia de viajeros
                                     </button>
                                     <button
                                         onClick={() => setShowDemo(true)}

@@ -15,7 +15,7 @@ const EXCHANGE_RATES: Record<string, number> = {
     [Currency.MXN]: 17.1, 
     [Currency.CLP]: 970, 
     [Currency.BRL]: 5.05,
-    [Currency.ARS]: 1200 
+    [Currency.ARS]: 1400 
 };
 
 const TARGET_CURRENCIES = [Currency.USD, Currency.EUR, Currency.BRL, Currency.MXN, Currency.CLP, Currency.ARS];
