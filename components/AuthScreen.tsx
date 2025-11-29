@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, MapPin, UserCircle, Database, Copy, Check, Plane, Sparkles } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, MapPin, UserCircle, Database, Copy, Check, Plane, Sparkles, Phone } from 'lucide-react';
 import { translations, Language } from '../utils/translations';
 import { supabase } from '../services/supabaseClient';
+import { detectLanguageByCountry, getCountriesList } from '../utils/countryLanguageDetector';
 import LazyImage from './LazyImage';
 
 interface Props {
-  onLogin: (userData: { name: string; email: string; id: string }) => void;
+  onLogin: (userData: { name: string; email: string; id: string; country?: string; language?: Language }) => void;
   lang: Language;
   toggleLanguage: () => void;
 }
@@ -20,7 +21,9 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    phone: '',
+    country: ''
   });
 
   const t = translations[lang];
@@ -32,16 +35,32 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
 
     try {
         if (mode === 'signup') {
+            // Detect language based on country
+            const detectedLanguage = detectLanguageByCountry(formData.country);
+
             const { data, error } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
                 options: {
-                    data: { full_name: formData.name }
+                    data: { 
+                        full_name: formData.name,
+                        phone: formData.phone,
+                        country: formData.country,
+                        language: detectedLanguage
+                    }
                 }
             });
             if (error) throw error;
             if (data.user) {
                 alert("Registration successful! Please check your email to confirm.");
+                // Pass detected language to parent so app can initialize with correct language
+                onLogin({
+                    id: data.user.id,
+                    name: formData.name,
+                    email: data.user.email || '',
+                    country: formData.country,
+                    language: detectedLanguage
+                });
             }
         } else {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -52,10 +71,15 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
             
             // Explicitly call onLogin on success to update App state
             if (data.user) {
+                const userLanguage = data.user.user_metadata?.language as Language || 'en';
+                const userCountry = data.user.user_metadata?.country as string || '';
+                
                 onLogin({
                     id: data.user.id,
                     name: data.user.user_metadata.full_name || data.user.email?.split('@')[0] || 'Traveler',
-                    email: data.user.email || ''
+                    email: data.user.email || '',
+                    country: userCountry,
+                    language: userLanguage
                 });
             }
         }
@@ -252,9 +276,56 @@ with check (auth.uid() = user_id);`;
                             />
                         </div>
 
+                        {mode === 'signup' && (
+                            <>
+                                <div className="space-y-1.5 group">
+                                    <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.phone || 'Phone'}</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Phone className="text-gray-400 group-focus-within:text-text transition-colors" size={18} />
+                                        </div>
+                                        <input 
+                                            type="tel" 
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                                            className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 pl-10 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
+                                            placeholder="+1 (555) 123-4567"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5 group">
+                                    <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.country || 'Country'}</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Globe className="text-gray-400 group-focus-within:text-text transition-colors" size={18} />
+                                        </div>
+                                        <select 
+                                            required
+                                            value={formData.country}
+                                            onChange={(e) => setFormData({...formData, country: e.target.value})}
+                                            className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 pl-10 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300 appearance-none cursor-pointer"
+                                        >
+                                            <option value="">Select your country...</option>
+                                            {getCountriesList().map(country => (
+                                                <option key={country.code} value={country.code}>
+                                                    {country.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
                         <button 
                             type="submit" 
-                            disabled={isLoading}
+                            disabled={isLoading || (mode === 'signup' && !formData.country)}
                             className="w-full bg-slate-900 text-white hover:bg-acid hover:text-black py-4 rounded-lg font-mono text-xs font-bold uppercase tracking-widest transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group mt-2"
                         >
                             {isLoading ? <Loader2 className="animate-spin" size={18} /> : (

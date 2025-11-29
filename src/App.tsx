@@ -35,6 +35,8 @@ interface UserSession {
     id: string;
     name: string;
     email: string;
+    country?: string;
+    language?: Language;
 }
 
 interface GalleryImage {
@@ -710,7 +712,7 @@ const TripDetailView: React.FC<{
 };
 
 const App: React.FC = () => {
-    const { language, t, toggleLanguage } = useLanguage();
+    const { language, setLanguage, t, toggleLanguage } = useLanguage();
     const [user, setUser] = useState<UserSession | null>(null);
     const [trips, setTrips] = useState<Trip[]>([]);
     const [currentTripId, setCurrentTripId] = useState<string | null>(null);
@@ -796,6 +798,12 @@ const App: React.FC = () => {
     const handleLogin = async (userData: UserSession) => {
         setUser(userData);
         localStorage.setItem('wanderlust_last_user', JSON.stringify(userData));
+        
+        // If user has a detected language (from signup), apply it
+        if (userData.language) {
+            setLanguage(userData.language);
+        }
+        
         setLoading(true);
         const fetchedTrips = await getTrips(userData.id);
         setTrips(fetchedTrips);
