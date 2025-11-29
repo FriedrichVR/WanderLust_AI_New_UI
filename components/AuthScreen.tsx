@@ -214,107 +214,107 @@ with check (auth.uid() = user_id);`;
                 <div className="w-full max-w-sm mx-auto space-y-8">
                     
                     <div className="space-y-2 text-center lg:text-left pt-16 lg:pt-0">
-                        <h2 className="font-display text-3xl md:text-4xl font-bold text-text uppercase tracking-tight">
+                        <h2 className="font-display text-2xl md:text-3xl font-bold text-text uppercase tracking-tight">
                             {mode === 'login' ? t.signIn : t.createAccount}
                         </h2>
-                        <p className="font-sans text-dim text-sm">
-                            {mode === 'login' ? 'Welcome back, traveler.' : 'Begin your journey today.'}
+                        <p className="font-sans text-dim text-xs">
+                            {mode === 'login' ? t.authWelcome : t.authBeginJourney}
                         </p>
                     </div>
 
                     {errorMsg && (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 animate-slide-up">
-                            <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-slide-up">
+                            <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="text-xs font-bold text-red-700 uppercase mb-1">Authentication Error</h4>
+                                <h4 className="text-xs font-bold text-red-700 uppercase mb-0.5">Error</h4>
                                 <p className="text-xs text-red-600 leading-relaxed">{errorMsg}</p>
                             </div>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         {mode === 'signup' && (
-                            <div className="space-y-1.5 group">
-                                <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.fullName}</label>
+                            <div className="space-y-1 group">
+                                <label className="text-[9px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.fullName}</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <UserCircle className="text-gray-400 group-focus-within:text-text transition-colors" size={18} />
+                                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                        <UserCircle className="text-gray-400 group-focus-within:text-text transition-colors" size={16} />
                                     </div>
                                     <input 
                                         type="text" 
                                         required
                                         value={formData.name}
                                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                        className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 pl-10 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
+                                        className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 pl-9 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
                                         placeholder="John Doe"
                                     />
                                 </div>
                             </div>
                         )}
 
-                        <div className="space-y-1.5 group">
-                            <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.email}</label>
+                        <div className="space-y-1 group">
+                            <label className="text-[9px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.email}</label>
                             <input 
                                 type="email" 
                                 required
                                 value={formData.email}
                                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
+                                className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
                                 placeholder="name@example.com"
                             />
                         </div>
 
-                        <div className="space-y-1.5 group">
-                            <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.password}</label>
+                        <div className="space-y-1 group">
+                            <label className="text-[9px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.password}</label>
                             <input 
                                 type="password" 
                                 required
                                 value={formData.password}
                                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
+                                className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
                                 placeholder="••••••••"
                             />
                         </div>
 
                         {mode === 'signup' && (
                             <>
-                                <div className="space-y-1.5 group">
-                                    <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.phone || 'Phone'}</label>
+                                <div className="space-y-1 group">
+                                    <label className="text-[9px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.phone}</label>
                                     <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Phone className="text-gray-400 group-focus-within:text-text transition-colors" size={18} />
+                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                            <Phone className="text-gray-400 group-focus-within:text-text transition-colors" size={16} />
                                         </div>
                                         <input 
                                             type="tel" 
                                             value={formData.phone}
                                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                                            className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 pl-10 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
-                                            placeholder="+1 (555) 123-4567"
+                                            className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 pl-9 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300"
+                                            placeholder="+1 555 123 4567"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-1.5 group">
-                                    <label className="text-[10px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.country || 'Country'}</label>
+                                <div className="space-y-1 group">
+                                    <label className="text-[9px] font-mono font-bold uppercase text-dim tracking-widest group-focus-within:text-acid transition-colors">{t.country}</label>
                                     <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <Globe className="text-gray-400 group-focus-within:text-text transition-colors" size={18} />
+                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                            <Globe className="text-gray-400 group-focus-within:text-text transition-colors" size={16} />
                                         </div>
                                         <select 
                                             required
                                             value={formData.country}
                                             onChange={(e) => setFormData({...formData, country: e.target.value})}
-                                            className="w-full bg-white border border-gray-200 text-slate-900 px-4 py-3 pl-10 text-sm rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300 appearance-none cursor-pointer"
+                                            className="w-full bg-white border border-gray-200 text-slate-900 px-3 py-2.5 pl-9 text-xs rounded-lg focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-gray-300 appearance-none cursor-pointer"
                                         >
-                                            <option value="">Select your country...</option>
+                                            <option value="">{t.selectCountry}</option>
                                             {getCountriesList().map(country => (
                                                 <option key={country.code} value={country.code}>
                                                     {country.name}
                                                 </option>
                                             ))}
                                         </select>
-                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                             </svg>
                                         </div>
@@ -326,35 +326,35 @@ with check (auth.uid() = user_id);`;
                         <button 
                             type="submit" 
                             disabled={isLoading || (mode === 'signup' && !formData.country)}
-                            className="w-full bg-slate-900 text-white hover:bg-acid hover:text-black py-4 rounded-lg font-mono text-xs font-bold uppercase tracking-widest transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group mt-2"
+                            className="w-full bg-slate-900 text-white hover:bg-acid hover:text-black py-3 rounded-lg font-mono text-xs font-bold uppercase tracking-widest transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group mt-3"
                         >
-                            {isLoading ? <Loader2 className="animate-spin" size={18} /> : (
+                            {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
                                 <>
-                                    {mode === 'login' ? t.signIn : t.signUp} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    {mode === 'login' ? t.signIn : t.signUp} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </button>
                     </form>
 
-                    <div className="pt-6 border-t border-border flex flex-col items-center gap-6">
+                    <div className="pt-4 border-t border-border flex flex-col items-center gap-4">
                         <button 
                             onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setErrorMsg(null); }}
                             className="text-xs font-medium text-dim hover:text-text transition-colors"
                         >
                             {mode === 'login' ? (
-                                <span>Don't have an account? <strong className="text-acid hover:underline">Register now</strong></span>
+                                <span>{t.noAccountText} <strong className="text-acid hover:underline">{t.registerNow}</strong></span>
                             ) : (
-                                <span>Already have an account? <strong className="text-acid hover:underline">Sign in</strong></span>
+                                <span>{t.hasAccountText} <strong className="text-acid hover:underline">{t.signInNow}</strong></span>
                             )}
                         </button>
 
                         <button 
                             onClick={handleGuestAccess}
-                            className="w-full py-3 border-2 border-dashed border-acid/50 text-acid hover:bg-acid hover:text-obsidian hover:border-acid font-mono text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 group shadow-sm hover:shadow-acid/20"
+                            className="w-full py-2.5 border-2 border-dashed border-acid/50 text-acid hover:bg-acid hover:text-obsidian hover:border-acid font-mono text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 group shadow-sm hover:shadow-acid/20"
                         >
-                            <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+                            <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
                             {t.guestAccess}
-                            <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                            <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                         </button>
                     </div>
                 </div>
