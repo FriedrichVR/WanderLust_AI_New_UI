@@ -296,7 +296,7 @@ const TripDetailView: React.FC<{
     return (
         <div className="animate-fade-in pb-20">
             {/* Header with Cover Image */}
-            <div className="relative m-1 rounded-3xl overflow-hidden group mb-8 shadow-2xl h-[300px] md:h-[400px]">
+            <div className="relative m-1 rounded-3xl overflow-hidden group mb-6 shadow-2xl h-[200px] md:h-[280px]">
                 <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
@@ -379,12 +379,12 @@ const TripDetailView: React.FC<{
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b border-border sticky top-16 bg-obsidian z-30 pt-2">
+            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b border-border sticky top-0 bg-obsidian/95 backdrop-blur-md z-[80] pt-2">
                 {[
                     { id: 'overview', icon: Check, label: t.overview },
                     { id: 'itinerary', icon: MapIcon, label: t.itinerary },
-                    { id: 'budget', icon: Wallet, label: t.budget },
-                    { id: 'documents', icon: FileText, label: t.documents }
+                    { id: 'documents', icon: FileText, label: t.documents },
+                    { id: 'budget', icon: Wallet, label: t.budget }
                 ].map(tab => (
                     <button
                         key={tab.id}
@@ -399,15 +399,16 @@ const TripDetailView: React.FC<{
                 ))}
             </div>
 
-            {/* Tab Content - Suspense Wrapped */}
-            <div className="min-h-[400px]">
+            {/* Tab Content - natural height (no internal scroll) */}
+            <div className="relative">
+                <div>
                 <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin text-acid" size={32} /></div>}>
                     {activeTab === 'overview' && (
-                        <div className="animate-fade-in">
-                            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+                        <div className="animate-fade-in px-0 md:px-0">
+                            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4">
                                 {/* Left Column: Visual Diary & Mission Notes with Tabs (60% width - 3 cols) */}
                                 <div className="lg:col-span-3">
-                                    <div className="bg-surface border border-border p-3 rounded-xl shadow-sm h-full flex flex-col">
+                                    <div className="bg-surface border border-border p-3 md:p-4 rounded-xl shadow-sm h-full flex flex-col">
                                         {/* Tab Buttons */}
                                         <div className="flex gap-2 mb-3 border-b border-border pb-2">
                                             <button
@@ -535,10 +536,23 @@ const TripDetailView: React.FC<{
                         </div>
                     )}
 
-                    {activeTab === 'itinerary' && <TripItinerary trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />}
-                    {activeTab === 'budget' && <BudgetOverview trip={trip} addExpense={(e) => updateTrip({ ...trip, expenses: [...trip.expenses, e] })} removeExpense={(id) => updateTrip({ ...trip, expenses: trip.expenses.filter(e => e.id !== id) })} currencySymbol={trip.currency} lang={lang} theme={theme} />}
-                    {activeTab === 'documents' && <DocumentsManager trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />}
+                    {activeTab === 'itinerary' && (
+                        <div className="px-1 md:px-0">
+                            <TripItinerary trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                        </div>
+                    )}
+                    {activeTab === 'budget' && (
+                        <div className="px-1 md:px-0">
+                            <BudgetOverview trip={trip} addExpense={(e) => updateTrip({ ...trip, expenses: [...trip.expenses, e] })} removeExpense={(id) => updateTrip({ ...trip, expenses: trip.expenses.filter(e => e.id !== id) })} currencySymbol={trip.currency} lang={lang} theme={theme} />
+                        </div>
+                    )}
+                    {activeTab === 'documents' && (
+                        <div className="px-1 md:px-0">
+                            <DocumentsManager trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                        </div>
+                    )}
                 </Suspense>
+                </div>
             </div>
 
 
@@ -848,6 +862,18 @@ const App: React.FC = () => {
             document.body.style.overflow = 'unset';
         };
     }, [showPricing]);
+
+    // Disable scroll when Auth Modal is open
+    useEffect(() => {
+        if (showAuthModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showAuthModal]);
 
     const showToast = useCallback((msg: string, type: ToastType) => {
         setToast({ msg, type });
@@ -1401,17 +1427,12 @@ const App: React.FC = () => {
                                     </div>
 
                                     <div className="relative w-24 h-24 rounded-2xl bg-surface border border-border flex items-center justify-center group-hover:scale-110 group-hover:border-acid transition-all shadow-lg">
-                                        <Plus size={36} className="text-dim group-hover:text-acid transition-colors" />
-
-                                        {/* Animated plane overlay (shows on hover) */}
-                                        <div className="absolute -right-6 -top-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <div className="relative w-12 h-12">
-                                                <Plane
-                                                    size={28}
-                                                    className="text-acid drop-shadow-[0_0_8px_rgba(0,0,0,0.6)] animate-[planeFly_1.6s_ease-in-out_infinite]"
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* Centered vertical plane icon; rotates 90° clockwise on hover */}
+                                        <Plane
+                                            size={40}
+                                            className="text-acid drop-shadow-[0_0_8px_rgba(0,0,0,0.6)] transition-transform duration-500 ease-out rotate-[-90deg] group-hover:rotate-0"
+                                            aria-hidden="true"
+                                        />
                                     </div>
 
                                     <div className="text-center">
@@ -1419,18 +1440,7 @@ const App: React.FC = () => {
                                         <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.createFirstTrip}</p>
                                     </div>
 
-                                    {/* Keyframes for plane animation */}
-                                    <style>
-                                        {`
-                                        @keyframes planeFly {
-                                            0% { transform: translate3d(0,0,0) rotate(-8deg); opacity: 0.0; }
-                                            15% { opacity: 1; }
-                                            50% { transform: translate3d(16px,-6px,0) rotate(-2deg); }
-                                            85% { transform: translate3d(28px,-12px,0) rotate(3deg); opacity: 1; }
-                                            100% { transform: translate3d(36px,-18px,0) rotate(8deg); opacity: 0.0; }
-                                        }
-                                        `}
-                                    </style>
+                                    {/* Removed previous flight keyframes; using simple hover rotation */}
                                 </div>
 
                                 {/* Trip Cards Only - No Sidebar */}
@@ -1603,15 +1613,21 @@ const App: React.FC = () => {
                 </Suspense>
             )}
 
-            {/* Auth Modal (signup) triggered from freemium footer */}
+            {/* Auth Modal (signup) triggered from freemium footer) */}
             {showAuthModal && (
-                <AuthScreen
-                    onLogin={handleLogin}
-                    lang={language}
-                    toggleLanguage={toggleLanguage}
-                    initialMode={authInitialMode}
-                    onClose={() => setShowAuthModal(false)}
-                />
+                <div className="fixed inset-0 z-[130] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 md:p-6 animate-fade-in">
+                    <div className="w-full max-w-md md:max-w-lg bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden">
+                        <div className="p-4 md:p-6">
+                            <AuthScreen
+                                onLogin={(u) => { handleLogin(u); setShowAuthModal(false); }}
+                                lang={language}
+                                toggleLanguage={toggleLanguage}
+                                initialMode={authInitialMode}
+                                onClose={() => setShowAuthModal(false)}
+                            />
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Delete Trip Confirmation Modal */}
