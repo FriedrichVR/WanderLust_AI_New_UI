@@ -158,6 +158,22 @@ export const translations = {
     size: "Size",
     dragToPan: "Drag image to pan",
     
+    // Pricing
+    pricingTitle: "Free trips limit reached.",
+    pricingSubtitle: "Choose how you want to continue:",
+    freePlanBadge: "🆓 Free Mode",
+    freePlanPrice: "0",
+    freePlanDescHover: ["Keep exploring your saved trips", "Can't generate new itineraries"],
+    freePlanDesc: "Keep access to your saved trips.",
+    standardPlanBadge: "🎟 Unlock 1 trip",
+    standardPlanPrice: "2.99",
+    standardPlanDescHover: ["Generate one extra trip", "Saved to your account", "Complete itinerary access"],
+    standardPlanDesc: "Ideal if you only need one trip.",
+    proPlanBadge: "🚀 PRO – Unlimited access",
+    proPlanPrice: "4.99",
+    proPlanDescHover: ["Unlimited trips", "Premium itineraries", "Download as PDF", "Advanced recommendations", "Priority generation"],
+    proPlanDesc: "Best option if you travel often or want to plan without limits.",
+    
     // General
     tripStatus: "Trip Status",
     tripType: "Trip Type",
@@ -349,6 +365,22 @@ export const translations = {
     color: "Color",
     size: "Tamaño",
     dragToPan: "Arrastra para mover",
+    
+    // Pricing
+    pricingTitle: "Alcanzaste el límite de viajes gratis.",
+    pricingSubtitle: "Elegí cómo querés continuar:",
+    freePlanBadge: "🆓 Modo Free",
+    freePlanPrice: "0",
+    freePlanDescHover: ["Seguí explorando tus viajes guardados", "No podés generar nuevos itinerarios"],
+    freePlanDesc: "Mantén acceso a tus viajes guardados.",
+    standardPlanBadge: "🎟 Desbloquear 1 viaje",
+    standardPlanPrice: "2.99",
+    standardPlanDescHover: ["Generás un viaje extra", "Guardado en tu cuenta", "Acceso completo al itinerario"],
+    standardPlanDesc: "Ideal si solo necesitás un viaje puntual.",
+    proPlanBadge: "🚀 PRO – Acceso ilimitado",
+    proPlanPrice: "4.99",
+    proPlanDescHover: ["Viajes ilimitados", "Itinerarios premium", "Descarga en PDF", "Recomendaciones avanzadas", "Prioridad en generación"],
+    proPlanDesc: "La mejor opción si viajás seguido o querés planificar sin límites.",
     
     // General
     tripStatus: "Estado del Viaje",

@@ -1,12 +1,14 @@
 
 import React, { useRef, useState } from 'react';
 import { X, Check } from 'lucide-react';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface Props {
   onClose: () => void;
 }
 
 const PricingModal: React.FC<Props> = ({ onClose }) => {
+  const { t } = useLanguage();
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const card = e.currentTarget;
@@ -31,8 +33,8 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
 
         <div className="py-20 relative w-full max-w-7xl mx-auto pr-6 pl-6">
             <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl text-white mb-4 tracking-tight font-medium font-display">Ya usaste tus 3 viajes gratis.</h2>
-            <p className="text-lg text-zinc-400 font-medium">Elegí cómo querés continuar:</p>
+            <h2 className="text-3xl md:text-5xl text-white mb-4 tracking-tight font-medium font-display">{t.pricingTitle}</h2>
+            <p className="text-lg text-zinc-400 font-medium">{t.pricingSubtitle}</p>
             <div className="flex items-center justify-center mt-8">
                 <div className="text-sm text-zinc-400">⭐ Opciones disponibles</div>
             </div>
@@ -56,16 +58,16 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 
                 <div className="relative z-10 flex flex-col h-full pointer-events-none">
                 <div className="flex justify-start mb-8">
-                    <span className="px-4 py-1 border border-white/10 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest bg-zinc-900/50 backdrop-blur-sm rounded-full">🆓 Modo Free</span>
+                    <span className="px-4 py-1 border border-white/10 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest bg-zinc-900/50 backdrop-blur-sm rounded-full">{t.freePlanBadge}</span>
                 </div>
                 <div className="relative flex-grow">
                     <div className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:opacity-0 group-hover:-translate-y-4 group-hover:scale-95 origin-bottom">
                     <div className="text-7xl text-white font-display font-medium tracking-tighter flex items-start leading-none">
-                        0<span className="text-2xl mt-2 ml-2 text-zinc-600 font-mono tracking-normal">$</span>
+                        {t.freePlanPrice}<span className="text-2xl mt-2 ml-2 text-zinc-600 font-mono tracking-normal">$</span>
                     </div>
                     </div>
                     <div className="absolute inset-0 flex flex-col justify-center gap-5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] opacity-0 translate-y-8 scale-95 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 origin-center">
-                    {['Seguí explorando tus viajes guardados', 'No podés generar nuevos itinerarios'].map((item, i) => (
+                    {t.freePlanDescHover.map((item, i) => (
                         <div key={i} className="flex items-start gap-3">
                             <Check className="w-4 h-4 text-zinc-600 shrink-0 mt-0.5" />
                             <span className="text-sm text-zinc-300 font-medium leading-snug">{item}</span>
@@ -75,7 +77,7 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 </div>
                 <div className="mt-auto pt-10 flex items-end gap-6 justify-between pointer-events-auto">
                     <p className="text-sm text-zinc-500 font-medium leading-relaxed max-w-[70%] transition-colors group-hover:text-zinc-400">
-                        Mantén acceso a tus viajes guardados.
+                        {t.freePlanDesc}
                     </p>
                     <button className="flex-shrink-0 w-12 h-12 bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-400 hover:bg-white hover:text-black transition-all duration-300 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
@@ -105,16 +107,16 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 
                 <div className="relative z-10 flex flex-col h-full pointer-events-none">
                 <div className="flex justify-start mb-10">
-                    <span className="px-4 py-1 border border-cyan-500/30 text-[10px] font-semibold text-cyan-400 uppercase tracking-widest bg-cyan-950/20 shadow-[0_0_15px_-5px_rgba(34,211,238,0.3)] backdrop-blur-sm rounded-full">🎟 Desbloquear 1 viaje</span>
+                    <span className="px-4 py-1 border border-cyan-500/30 text-[10px] font-semibold text-cyan-400 uppercase tracking-widest bg-cyan-950/20 shadow-[0_0_15px_-5px_rgba(34,211,238,0.3)] backdrop-blur-sm rounded-full">{t.standardPlanBadge}</span>
                 </div>
                 <div className="relative flex-grow">
                     <div className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:opacity-0 group-hover:-translate-y-4 group-hover:scale-95 origin-bottom">
                     <div className="text-7xl text-white font-display font-medium tracking-tighter flex items-start leading-none drop-shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-                        2<span className="text-3xl mt-2 ml-1 text-zinc-400 font-mono tracking-normal">.99</span><span className="text-2xl mt-2 ml-1 text-cyan-500/70 font-mono tracking-normal">$</span>
+                        {t.standardPlanPrice}<span className="text-3xl mt-2 ml-1 text-zinc-400 font-mono tracking-normal" style={{visibility: t.standardPlanPrice === "2.99" ? "visible" : "hidden"}}>.</span><span className="text-3xl mt-2 ml-1 text-zinc-400 font-mono tracking-normal" style={{marginLeft: t.standardPlanPrice === "2.99" ? "-0.25rem" : "0.25rem"}}>99</span><span className="text-2xl mt-2 ml-1 text-cyan-500/70 font-mono tracking-normal">$</span>
                     </div>
                     </div>
                     <div className="absolute inset-0 flex flex-col justify-center gap-5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] opacity-0 translate-y-8 scale-95 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 origin-center">
-                    {['Generás un viaje extra', 'Guardado en tu cuenta', 'Acceso completo al itinerario'].map((item, i) => (
+                    {t.standardPlanDescHover.map((item, i) => (
                         <div key={i} className="flex items-start gap-4">
                             <Check className="w-4 h-4 text-cyan-500 shrink-0 mt-0.5" />
                             <span className="text-sm text-zinc-300 group-hover:text-white transition-colors font-medium leading-snug">{item}</span>
@@ -124,7 +126,7 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 </div>
                 <div className="mt-auto pt-10 flex items-end gap-6 justify-between pointer-events-auto">
                     <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[70%] transition-colors group-hover:text-zinc-300">
-                        Ideal si solo necesitás un viaje puntual.
+                        {t.standardPlanDesc}
                     </p>
                     <button className="flex-shrink-0 w-12 h-12 bg-cyan-500 border border-cyan-400 flex items-center justify-center text-black hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_20px_-5px_rgba(34,211,238,0.5)] rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
@@ -151,16 +153,16 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 
                 <div className="relative z-10 flex flex-col h-full pointer-events-none">
                 <div className="flex justify-start mb-10">
-                    <span className="px-4 py-1 border border-white/20 text-[10px] font-semibold text-white/70 uppercase tracking-widest bg-white/5 shadow-[0_0_15px_-5px_rgba(255,255,255,0.1)] backdrop-blur-sm rounded-full">🚀 PRO – Acceso ilimitado</span>
+                    <span className="px-4 py-1 border border-white/20 text-[10px] font-semibold text-white/70 uppercase tracking-widest bg-white/5 shadow-[0_0_15px_-5px_rgba(255,255,255,0.1)] backdrop-blur-sm rounded-full">{t.proPlanBadge}</span>
                 </div>
                 <div className="relative flex-grow">
                     <div className="absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:opacity-0 group-hover:-translate-y-4 group-hover:scale-95 origin-bottom">
                     <div className="text-7xl text-white font-display font-medium tracking-tighter flex items-start leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-                        4<span className="text-3xl mt-2 ml-1 text-zinc-400 font-mono tracking-normal">.99</span><span className="text-2xl mt-2 ml-1 text-white/50 font-mono tracking-normal">$</span>
+                        {t.proPlanPrice}<span className="text-3xl mt-2 ml-1 text-zinc-400 font-mono tracking-normal" style={{visibility: t.proPlanPrice === "4.99" ? "visible" : "hidden"}}>.</span><span className="text-3xl mt-2 ml-1 text-zinc-400 font-mono tracking-normal" style={{marginLeft: t.proPlanPrice === "4.99" ? "-0.25rem" : "0.25rem"}}>99</span><span className="text-2xl mt-2 ml-1 text-white/50 font-mono tracking-normal">$</span>
                     </div>
                     </div>
                     <div className="absolute inset-0 flex flex-col justify-center gap-5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] opacity-0 translate-y-8 scale-95 group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 origin-center">
-                    {['Viajes ilimitados', 'Itinerarios premium', 'Descarga en PDF', 'Recomendaciones avanzadas', 'Prioridad en generación'].map((item, i) => (
+                    {t.proPlanDescHover.map((item, i) => (
                         <div key={i} className="flex items-start gap-4">
                             <Check className="w-4 h-4 text-white shrink-0 mt-0.5" />
                             <span className="text-sm text-zinc-300 group-hover:text-white transition-colors font-medium leading-snug">{item}</span>
@@ -170,7 +172,7 @@ const PricingModal: React.FC<Props> = ({ onClose }) => {
                 </div>
                 <div className="mt-auto pt-10 flex items-end gap-6 justify-between pointer-events-auto">
                     <p className="text-sm text-zinc-400 font-medium leading-relaxed max-w-[70%] transition-colors group-hover:text-zinc-300">
-                        La mejor opción si viajás seguido o querés planificar sin límites.
+                        {t.proPlanDesc}
                     </p>
                     <button className="flex-shrink-0 w-12 h-12 bg-white border border-white/40 flex items-center justify-center text-black hover:bg-white/90 transition-all duration-300 shadow-[0_0_20px_-5px_rgba(255,255,255,0.2)] rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
