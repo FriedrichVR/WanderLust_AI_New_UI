@@ -1239,6 +1239,30 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Mobile Actions Bar */}
+                    <div className="md:hidden sticky top-16 z-40 bg-obsidian px-4 py-3 border-b border-border">
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => setShowPricing(true)}
+                                className="flex items-center justify-center gap-2 text-[11px] font-mono font-bold uppercase border border-border px-3 py-2 rounded-lg hover:border-acid transition-colors text-dim hover:text-acid"
+                            >
+                                <CreditCard size={14} /> {t.pricing}
+                            </button>
+                            <button
+                                onClick={() => setShowStories(true)}
+                                className="flex items-center justify-center gap-2 text-[11px] font-mono font-bold uppercase border border-border px-3 py-2 rounded-lg hover:border-acid transition-colors text-dim hover:text-acid"
+                            >
+                                <Users size={14} /> {t.travelerStories}
+                            </button>
+                            <button
+                                onClick={() => setShowDemo(true)}
+                                className="flex items-center justify-center gap-2 text-[11px] font-mono font-bold uppercase border border-border px-3 py-2 rounded-lg hover:border-acid transition-colors text-dim hover:text-acid"
+                            >
+                                <Play size={14} /> {t.watchDemo}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in relative z-10">
                         {/* HERO SECTION - REFACTORED TO LEFT ALIGN & HEADER STYLE */}
                         <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-16 gap-6 pt-4 md:pt-8">
@@ -1253,7 +1277,7 @@ const App: React.FC = () => {
                                     </h1>
                                 </div>
                                 <p className="text-dim text-sm font-light leading-relaxed font-sans max-w-lg">
-                                    <span className="bg-yellow-300/50  text-black font-bold">
+                                    <span className="bg-yellow-300/80  text-black font-bold">
                                         {t.heroSubtitle}
                                     </span>
                                 </p>
