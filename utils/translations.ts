@@ -17,6 +17,7 @@ export const translations = {
     freemiumNotice: "✨ Start for free: 3 full trips available.",
     freemiumTooltip: "Includes: Unlimited itinerary days, AI Chat, Budget Tracking, and up to 1GB of docs.",
     watchDemo: "🎥 See how it works (12s)",
+    travelerStories: "Traveler Stories",
     
     // Empty State
     emptyStateTitle: "Ready for your next adventure?",
@@ -208,6 +209,7 @@ export const translations = {
     freemiumNotice: "✨ Empezá gratis: tenés 3 viajes completos disponibles.",
     freemiumTooltip: "Incluye: Itinerario ilimitado, Chat IA, Gastos y hasta 1GB en documentos.",
     watchDemo: "🎥 Ver cómo funciona (12s)",
+    travelerStories: "Historias de viajeros",
 
     // Empty State
     emptyStateTitle: "¿Todavía no empezaste?",

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface Props {
   onClose: () => void;
@@ -208,6 +209,7 @@ const PixelContainer: React.FC = () => {
 };
 
 const TestimonialsRolodex: React.FC<Props> = ({ onClose }) => {
+  const { t } = useLanguage();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const handleNext = () => {
@@ -239,7 +241,7 @@ const TestimonialsRolodex: React.FC<Props> = ({ onClose }) => {
       </button>
 
       <div className="text-center mb-12 relative z-10">
-        <h2 className="font-display font-bold text-3xl text-white uppercase tracking-tight mb-2">Historias de viajeros</h2>
+        <h2 className="font-display font-bold text-3xl text-white uppercase tracking-tight mb-2">{t.travelerStories}</h2>
         <p className="text-dim font-mono text-sm">Aventuras reales, personas reales.</p>
       </div>
 

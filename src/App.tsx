@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense, lazy } from 'react';
+import { useLanguage } from '../hooks/useLanguage';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
     ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign
@@ -13,7 +14,7 @@ import Tooltip from '../components/Tooltip';
 import LazyImage from '../components/LazyImage';
 import Toast, { ToastType } from '../components/Toast';
 import BudgetSuggestionModal from '../components/BudgetSuggestionModal';
-import { translations, Language } from '../utils/translations';
+import { Language, translations } from '../utils/translations';
 
 // Lazy load heavy components for faster initial bundle load
 const BudgetOverview = lazy(() => import('../components/BudgetOverview'));
@@ -709,12 +710,13 @@ const TripDetailView: React.FC<{
 };
 
 const App: React.FC = () => {
+    const { language, t, toggleLanguage } = useLanguage();
     const [user, setUser] = useState<UserSession | null>(null);
     const [trips, setTrips] = useState<Trip[]>([]);
     const [currentTripId, setCurrentTripId] = useState<string | null>(null);
     const [initialTab, setInitialTab] = useState<'overview' | 'itinerary' | 'budget' | 'documents'>('overview');
     const [loading, setLoading] = useState(true);
-    const [settings, setSettings] = useState<Partial<AppState>>({ theme: 'dark', language: 'en' });
+    const [settings, setSettings] = useState<Partial<AppState>>({ theme: 'dark' });
     const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
     const apiKey = getSafeApiKey();
     const [globalSearch, setGlobalSearch] = useState('');
@@ -942,20 +944,15 @@ const App: React.FC = () => {
 
     if (!user) {
         return (
-            <AuthScreen
-                onLogin={handleLogin}
-                lang={settings.language as Language}
-                toggleLanguage={() => {
-                    const newLang = settings.language === 'en' ? 'es' : 'en';
-                    setSettings({ ...settings, language: newLang });
-                    saveSettings({ ...settings, language: newLang });
-                }}
+            <AuthScreen 
+                onLogin={handleLogin} 
+                lang={language}
+                toggleLanguage={toggleLanguage}
             />
         );
     }
 
     const currentTrip = trips.find(t => t.id === currentTripId);
-    const t = translations[settings.language as Language];
 
     return (
         <div className={`min-h-screen bg-obsidian text-text font-sans selection:bg-acid selection:text-black ${settings.theme}`}>
@@ -964,7 +961,7 @@ const App: React.FC = () => {
                     trip={currentTrip}
                     updateTrip={handleUpdateTrip}
                     goBack={() => { setCurrentTripId(null); setInitialTab('overview'); }}
-                    lang={settings.language as Language}
+                    lang={language}
                     theme={settings.theme as 'light' | 'dark'}
                     onDeleteRequest={() => handleDeleteTrip(currentTrip.id)}
                     resizeImageUtil={resizeImage}
@@ -1019,12 +1016,8 @@ const App: React.FC = () => {
                                 {settings.theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                             </button>
                             <div className="h-4 w-px bg-border"></div>
-                            <button onClick={() => {
-                                const newLang = settings.language === 'en' ? 'es' : 'en';
-                                setSettings({ ...settings, language: newLang });
-                                saveSettings({ ...settings, language: newLang });
-                            }} className="text-[10px] font-mono font-bold uppercase border border-border px-2 py-1 rounded-md hover:border-acid transition-colors text-dim hover:text-acid">
-                                [{settings.language?.toUpperCase()}]
+                            <button onClick={toggleLanguage} className="text-[10px] font-mono font-bold uppercase border border-border px-2 py-1 rounded-md hover:border-acid transition-colors text-dim hover:text-acid">
+                                [{language?.toUpperCase()}]
                             </button>
                             <div className="hidden md:flex items-center gap-2 text-xs font-mono text-dim border-l border-border pl-4 ml-2">
                                 <span className="uppercase">{user.name}</span>
@@ -1077,7 +1070,7 @@ const App: React.FC = () => {
                                         onClick={() => setShowStories(true)}
                                         className="text-dim hover:text-white transition-all opacity-80 hover:opacity-100 flex items-center gap-2 text-xs font-mono uppercase tracking-wide border-b border-transparent hover:border-acid pb-0.5"
                                     >
-                                        <Users size={14} /> Historia de viajeros
+                                        <Users size={14} /> {t.travelerStories}
                                     </button>
                                     <button
                                         onClick={() => setShowDemo(true)}
@@ -1199,13 +1192,11 @@ const App: React.FC = () => {
                 </>
             )}
 
-            <ChatAssistant
-                lang={settings.language as Language}
+            <ChatAssistant 
+                lang={language}
                 trip={currentTrip}
                 isOpen={false}
-            />
-
-            {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+            />            {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
             {/* Demo Video Modal */}
             {showDemo && (
