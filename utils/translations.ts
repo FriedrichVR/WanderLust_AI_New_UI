@@ -157,8 +157,10 @@ export const translations = {
     color: "Color",
     size: "Size",
     dragToPan: "Drag image to pan",
+    clearSearch: "Clear search",
     
     // Pricing
+    pricing: "Pricing",
     pricingTitle: "Free trips limit reached.",
     pricingSubtitle: "Choose how you want to continue:",
     freePlanBadge: "🆓 Free Mode",
@@ -374,8 +376,10 @@ export const translations = {
     color: "Color",
     size: "Tamaño",
     dragToPan: "Arrastra para mover",
+    clearSearch: "Limpiar búsqueda",
     
     // Pricing
+    pricing: "Precios",
     pricingTitle: "Alcanzaste el límite de viajes gratis.",
     pricingSubtitle: "Elegí cómo querés continuar:",
     freePlanBadge: "🆓 Modo Free",

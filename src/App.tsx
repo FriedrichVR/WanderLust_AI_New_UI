@@ -1013,14 +1013,23 @@ const App: React.FC = () => {
                                     placeholder={t.searchQuery}
                                     value={globalSearch}
                                     onChange={(e) => setGlobalSearch(e.target.value)}
-                                    className="w-full bg-surface border border-border rounded-2xl py-2 pl-12 pr-4 text-xs font-mono focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-dim"
+                                    className="w-full bg-surface border border-border rounded-2xl py-2 pl-12 pr-10 text-xs font-mono focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-dim"
                                 />
+                                {globalSearch && (
+                                    <button
+                                        onClick={() => setGlobalSearch('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-dim hover:text-acid transition-colors p-1"
+                                        title={t.clearSearch}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
                             </div>
                             <button
                                 onClick={() => setShowPricing(true)}
                                 className="flex items-center gap-2 text-xs font-mono font-bold uppercase border border-border px-3 py-1.5 rounded-md hover:border-acid transition-colors text-dim hover:text-acid group whitespace-nowrap"
                             >
-                                <CreditCard size={14} className="group-hover:text-acid transition-colors" /> Precios
+                                <CreditCard size={14} className="group-hover:text-acid transition-colors" /> {t.pricing}
                             </button>
                         </div>
 
