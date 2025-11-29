@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WanderLust AI - Clean Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              obsidian: 'var(--color-obsidian)',
+              void: 'var(--color-void)',
+              surface: 'var(--color-surface)',
+              panel: 'var(--color-panel)',
+              border: 'var(--color-border)',
+              acid: 'var(--color-acid)', // Accent
+              dim: 'var(--color-dim)',
+              muted: 'var(--color-muted)',
+              text: 'var(--color-text)',
+              danger: '#ef4444',
+              success: '#10b981',
+              warning: '#f59e0b',
+            },
+            animation: {
+              'fade-in': 'fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+              'slide-up': 'slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+              'float': 'float 8s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'spin-slow': 'spin 3s linear infinite',
+              'shimmer': 'shimmer 2s linear infinite',
+            },
+            keyframes: {
+              'fade-in': {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              'slide-up': {
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              },
+              'shimmer': {
+                '0%': { backgroundPosition: '-1000px 0' },
+                '100%': { backgroundPosition: '1000px 0' }
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        /* Light Mode - Clean & Stark */
+        --color-obsidian: #ffffff; 
+        --color-void: #f8fafc;
+        --color-surface: #f1f5f9; 
+        --color-panel: #e2e8f0; 
+        --color-border: #cbd5e1; 
+        --color-acid: #0891b2; 
+        --color-dim: #64748b; 
+        --color-muted: #94a3b8; 
+        --color-text: #0f172a; 
+      }
+
+      .dark {
+        /* Dark Mode - Deep Gray & Elegant */
+        --color-obsidian: #0a0a0a; /* Deep Gray Background */
+        --color-void: #050505;
+        --color-surface: #171717; /* Slightly lighter gray for surfaces */
+        --color-panel: #262626;   /* Distinct panel color */
+        --color-border: #333333;
+        --color-acid: #22d3ee; 
+        --color-dim: #888888;
+        --color-muted: #555555;
+        --color-text: #ffffff;
+      }
+
+      body { 
+        font-family: 'Inter', sans-serif; 
+        background-color: var(--color-obsidian);
+        color: var(--color-text);
+        transition: background-color 0.3s, color 0.3s;
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--color-dim); }
+      
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border) transparent;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-obsidian text-text overflow-x-hidden selection:bg-acid selection:text-black">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

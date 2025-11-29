@@ -1,0 +1,7 @@
+{
+  "name": "WanderLust AI _v05_OK",
+  "description": "A modern, AI-powered travel planning and budget tracking application featuring Gemini Chat, Google Maps integration, and comprehensive itinerary management.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
