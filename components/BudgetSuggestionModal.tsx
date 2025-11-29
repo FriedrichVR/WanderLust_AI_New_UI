@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../hooks/useLanguage';
 import { X, Loader2, TrendingUp, AlertCircle } from 'lucide-react';
 import { generateBudgetSuggestion } from '../services/geminiService';
 import { Currency } from '../types';
@@ -12,6 +13,7 @@ interface Props {
   onBudgetSuggested: (budget: number) => void;
   onClose: () => void;
   initialSuggestedBudget?: number | null;
+  title?: string;
 }
 
 const BudgetSuggestionModal: React.FC<Props> = ({
@@ -23,7 +25,9 @@ const BudgetSuggestionModal: React.FC<Props> = ({
   onBudgetSuggested,
   onClose,
   initialSuggestedBudget
+  , title
 }) => {
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedBudget, setSuggestedBudget] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,11 +71,11 @@ const BudgetSuggestionModal: React.FC<Props> = ({
       <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
             <div className="p-2 bg-acid/10 rounded-lg">
               <TrendingUp size={24} className="text-acid" />
             </div>
-            <h3 className="text-lg font-display font-bold text-text">Budget Suggestion</h3>
+            <h3 className="text-lg font-display font-bold text-text">{title || t.budgetSuggestionTitle}</h3>
           </div>
           <button
             onClick={onClose}

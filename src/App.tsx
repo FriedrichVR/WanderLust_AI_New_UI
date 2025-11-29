@@ -1362,6 +1362,7 @@ const App: React.FC = () => {
                     currency={pendingNewTrip.currency}
                     onBudgetSuggested={handleBudgetSuggested}
                     initialSuggestedBudget={aiSuggestedBudget}
+                    title={aiSuggestedBudget ? t.travelSuggestionTitle : t.budgetSuggestionTitle}
                     onClose={() => {
                         setShowBudgetSuggestion(false);
                         setPendingNewTrip(null);

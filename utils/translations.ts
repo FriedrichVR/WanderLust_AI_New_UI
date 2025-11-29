@@ -33,6 +33,8 @@ export const translations = {
     dates: "Dates",
     days: "Days",
     budget: "Budget",
+    budgetSuggestionTitle: "Budget Suggestion",
+    travelSuggestionTitle: "Travel Suggestion",
     missionId: "Mission ID",
     
     // Tabs
@@ -257,6 +259,8 @@ export const translations = {
     dates: "Fechas",
     days: "Días",
     budget: "Presupuesto",
+    budgetSuggestionTitle: "Sugerencia de Presupuesto",
+    travelSuggestionTitle: "Sugerencia de Viaje",
     missionId: "ID Misión",
     
     // Tabs
