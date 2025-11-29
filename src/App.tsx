@@ -15,7 +15,7 @@ import AuthScreen from '../components/AuthScreen';
 import Tooltip from '../components/Tooltip';
 import LazyImage from '../components/LazyImage';
 import Toast, { ToastType } from '../components/Toast';
-import BudgetSuggestionModal from '../components/BudgetSuggestionModal';
+// BudgetSuggestionModal ya no se usa para flujo AI inicial (overlay integrado)
 import { Language, translations } from '../utils/translations';
 
 // Lazy load heavy components for faster initial bundle load
@@ -738,13 +738,17 @@ const App: React.FC = () => {
     // Delete Trip Confirmation State
     const [tripToDelete, setTripToDelete] = useState<string | null>(null);
 
-    // Budget Suggestion Modal State
-    const [showBudgetSuggestion, setShowBudgetSuggestion] = useState(false);
+    // Budget Suggestion Modal State (legacy, no longer used)
+    // Removed usage to avoid confusing duplicate overlays
     const [pendingNewTrip, setPendingNewTrip] = useState<Trip | null>(null);
 
     // Trip Mode Selector State
     const [showTripModeSelector, setShowTripModeSelector] = useState(false);
     const [aiSuggestedBudget, setAiSuggestedBudget] = useState<number | null>(null);
+    // Estado para mostrar barra/overlay de espera mientras se prepara viaje IA
+    const [creatingAiTrip, setCreatingAiTrip] = useState(false); // overlay visible
+    const [aiPhase, setAiPhase] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+    const [aiError, setAiError] = useState<string | null>(null);
     // Auth modal state (used when clicking freemium notice to open signup)
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [authInitialMode, setAuthInitialMode] = useState<'login' | 'signup'>('login');
@@ -883,7 +887,9 @@ const App: React.FC = () => {
 
     const handleCreateTripWithAI = async () => {
         if (!user) return;
-
+        setCreatingAiTrip(true);
+        setAiPhase('loading');
+        setAiError(null);
         // generate quick suggestion locally
         const sug = generateQuickSuggestion();
         const mappedType = (['Leisure', 'Adventure', 'Family', 'Romantic', 'Solo', 'Business'].includes(sug.tripType) ? (sug.tripType as any) : 'Leisure');
@@ -916,27 +922,39 @@ const App: React.FC = () => {
         }
 
         setShowTripModeSelector(false);
-
-        // Pre-fetch budget suggestion from AI service (best-effort) and show modal
         setAiSuggestedBudget(null);
-        setShowBudgetSuggestion(true);
         try {
-            // Request budget in USD so the trip budget is consistent with app currency
             const computed = await generateBudgetSuggestion(sug.destination, sug.days, sug.tripType, 'USD');
-            if (computed) setAiSuggestedBudget(computed);
-        } catch (e) {
-            // ignore — modal can let user trigger suggestion manually
-            console.warn('AI budget prefetch failed', e);
+            if (computed) {
+                setAiSuggestedBudget(computed);
+                setAiPhase('ready');
+            } else {
+                setAiPhase('error');
+                setAiError('No se pudo generar un presupuesto.');
+            }
+        } catch (e: any) {
+            setAiPhase('error');
+            setAiError(e?.message || 'Error al obtener presupuesto.');
         }
+        // Mantener overlay visible para mostrar resultado y botones
     };
 
     const handleBudgetSuggested = (budget: number) => {
         if (!user || !pendingNewTrip) return;
         const tripWithBudget = { ...pendingNewTrip, budget };
-        const updatedTrips = [tripWithBudget, ...trips];
-        setTrips(updatedTrips);
+        // Replace provisional trip instead of duplicating it in the array
+        setTrips(prev => prev.some(t => t.id === tripWithBudget.id)
+            ? prev.map(t => t.id === tripWithBudget.id ? tripWithBudget : t)
+            : [tripWithBudget, ...prev]
+        );
         upsertTrip(user.id, tripWithBudget);
+        // Navigate into the trip and show itinerary by default
+        setInitialTab('itinerary');
         setCurrentTripId(tripWithBudget.id);
+        // Ensure overlay is closed no matter who calls this handler
+        setCreatingAiTrip(false);
+        setAiPhase('idle');
+        setAiError(null);
 
         // Attempt to generate a custom cover image for the newly created trip
         (async () => {
@@ -945,7 +963,8 @@ const App: React.FC = () => {
                 if (img) {
                     const updated = { ...tripWithBudget, coverImage: img };
                     // update local state and persist
-                    setTrips((prev) => [updated, ...prev.filter(t => t.id !== updated.id)]);
+                    // Ensure we do not duplicate the trip when updating the image
+                    setTrips((prev) => prev.map(t => t.id === updated.id ? updated : t));
                     upsertTrip(user.id, updated);
                     // If currently viewing this trip, set it so UI refreshes
                     setCurrentTripId(updated.id);
@@ -956,8 +975,23 @@ const App: React.FC = () => {
                 console.warn('Auto-generate cover image failed', e);
             }
         })();
+        // Auto-generate a basic itinerary based on the date range if empty
+        try {
+            const start = new Date(tripWithBudget.startDate);
+            const end = new Date(tripWithBudget.endDate);
+            const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+            if (!pendingNewTrip.itinerary || pendingNewTrip.itinerary.length === 0) {
+                const generated: DayPlan[] = Array.from({ length: days }).map((_, i) => ({
+                    id: crypto.randomUUID(),
+                    date: new Date(start.getTime() + i * 24 * 60 * 60 * 1000).toISOString(),
+                    activities: []
+                }));
+                const withItin = { ...tripWithBudget, itinerary: generated };
+                setTrips(prev => prev.map(t => t.id === withItin.id ? withItin : t));
+                upsertTrip(user.id, withItin);
+            }
+        } catch {}
         setPendingNewTrip(null);
-        setShowBudgetSuggestion(false);
         showToast('Trip created with suggested budget!', 'success');
     };
 
@@ -975,6 +1009,38 @@ const App: React.FC = () => {
         deleteTripFromDb(user.id, tripId);
         setCurrentTripId(null);
         showToast("Trip deleted.", 'info');
+    };
+
+    // Regenerar sugerencia dentro del overlay (sin duplicar ID)
+    const regenerateAiSuggestion = async () => {
+        if (!user || !pendingNewTrip) return;
+        setAiPhase('loading');
+        setAiError(null);
+        setAiSuggestedBudget(null);
+        const sug = generateQuickSuggestion();
+        const mappedType = (['Leisure', 'Adventure', 'Family', 'Romantic', 'Solo', 'Business'].includes(sug.tripType) ? (sug.tripType as any) : 'Leisure');
+        const updatedTrip = {
+            ...pendingNewTrip,
+            destination: sug.destination,
+            startDate: sug.startDate,
+            endDate: sug.endDate,
+            type: mappedType
+        };
+        setPendingNewTrip(updatedTrip);
+        upsertTrip(user.id, updatedTrip);
+        try {
+            const computed = await generateBudgetSuggestion(sug.destination, sug.days, sug.tripType, 'USD');
+            if (computed) {
+                setAiSuggestedBudget(computed);
+                setAiPhase('ready');
+            } else {
+                setAiPhase('error');
+                setAiError('No se pudo generar nuevo presupuesto.');
+            }
+        } catch (e: any) {
+            setAiPhase('error');
+            setAiError(e?.message || 'Error al regenerar presupuesto.');
+        }
     };
 
     const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, trip: Trip, update: (t: Trip) => void) => {
@@ -1063,7 +1129,8 @@ const App: React.FC = () => {
         );
     }
 
-    const currentTrip = trips.find(t => t.id === currentTripId);
+    // Ensure we always have something to render after accept; fallback to pending
+    const currentTrip = trips.find(t => t.id === currentTripId) || (pendingNewTrip && pendingNewTrip.id === currentTripId ? pendingNewTrip : undefined as any);
 
     return (
         <div className={`min-h-screen bg-obsidian text-text font-sans selection:bg-acid selection:text-black ${settings.theme}`}>
@@ -1083,6 +1150,15 @@ const App: React.FC = () => {
                     showToast={showToast}
                     initialTab={initialTab}
                 />
+            ) : currentTripId && !currentTrip ? (
+                <div className="fixed inset-0 z-[200] pointer-events-none">
+                    <div className="absolute top-6 right-6">
+                        <div className="flex items-center gap-2 bg-surface/80 border border-border rounded-xl px-3 py-2 shadow-2xl">
+                            <Loader2 className="animate-spin text-acid" size={16} />
+                            <span className="text-[10px] font-mono text-dim">Abriendo viaje…</span>
+                        </div>
+                    </div>
+                </div>
             ) : (
                 <>
                     {/* Compact Navbar */}
@@ -1411,23 +1487,81 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            {/* Budget Suggestion Modal */}
-            {showBudgetSuggestion && pendingNewTrip && (
-                <BudgetSuggestionModal
-                    destination={pendingNewTrip.destination}
-                    startDate={pendingNewTrip.startDate}
-                    endDate={pendingNewTrip.endDate}
-                    tripType={pendingNewTrip.type}
-                    currency={pendingNewTrip.currency}
-                    onBudgetSuggested={handleBudgetSuggested}
-                    initialSuggestedBudget={aiSuggestedBudget}
-                    title={aiSuggestedBudget ? t.travelSuggestionTitle : t.budgetSuggestionTitle}
-                    onClose={() => {
-                        setShowBudgetSuggestion(false);
-                        setPendingNewTrip(null);
-                    }}
-                />
+            {/* Overlay AI unificado: carga + resultado + acciones */}
+            {creatingAiTrip && pendingNewTrip && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-sm bg-surface border border-border rounded-3xl p-8 shadow-2xl flex flex-col gap-6">
+                        <div className="flex items-center gap-3">
+                            <Wand2 className="text-acid" size={28} />
+                            <h3 className="font-display text-lg uppercase tracking-wide">
+                                {aiPhase === 'loading' ? t.generating : aiPhase === 'ready' ? (t.travelSuggestionTitle || 'Sugerencia de Viaje') : 'Error'}
+                            </h3>
+                        </div>
+                        {aiPhase === 'loading' && (
+                            <>
+                                <p className="text-dim text-xs font-mono leading-relaxed">
+                                    Preparando tu viaje inteligente: generando sugerencia de destino, duración y presupuesto estimado. Por favor espera...
+                                </p>
+                                <div className="space-y-3">
+                                    <div className="h-2 w-full bg-panel rounded-full overflow-hidden">
+                                        <div className="h-full bg-acid animate-[pulse_1.2s_linear_infinite]" style={{ width: '60%' }}></div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] font-mono text-acid">
+                                        <Loader2 size={14} className="animate-spin" /> IA calibrando presupuesto...
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {aiPhase === 'error' && (
+                            <div className="text-xs text-red-400 font-mono bg-red-500/10 border border-red-500/30 p-3 rounded-xl">
+                                {aiError}
+                                <button onClick={regenerateAiSuggestion} className="mt-3 w-full px-3 py-2 bg-red-500 hover:bg-red-400 text-white rounded-md text-[10px] font-bold uppercase">Reintentar</button>
+                            </div>
+                        )}
+                        {aiPhase === 'ready' && (
+                            <div className="space-y-4">
+                                <div className="bg-panel/50 border border-border/50 rounded-lg p-4 space-y-2 text-xs">
+                                    <p className="text-text font-bold text-sm">Propuesta IA</p>
+                                    <div className="text-dim space-y-1">
+                                        <p>📍 {pendingNewTrip.destination}</p>
+                                        <p>📅 {Math.ceil((new Date(pendingNewTrip.endDate).getTime() - new Date(pendingNewTrip.startDate).getTime()) / (1000*60*60*24))} días • {pendingNewTrip.type}</p>
+                                        <p>💱 {pendingNewTrip.currency}</p>
+                                    </div>
+                                </div>
+                                {aiSuggestedBudget && (
+                                    <div className="bg-acid/5 border border-acid/30 rounded-lg p-4 text-center">
+                                        <p className="text-dim text-[11px] mb-1">Presupuesto estimado</p>
+                                        <div className="text-3xl font-display font-bold text-acid">{pendingNewTrip.currency} {aiSuggestedBudget.toLocaleString()}</div>
+                                        <p className="text-[10px] text-dim mt-1">≈ {pendingNewTrip.currency} {Math.round(aiSuggestedBudget / Math.max(1, Math.ceil((new Date(pendingNewTrip.endDate).getTime() - new Date(pendingNewTrip.startDate).getTime()) / (1000*60*60*24))))} / día</p>
+                                    </div>
+                                )}
+                                <div className="flex gap-2 pt-2">
+                                    <button
+                                        onClick={regenerateAiSuggestion}
+                                        className="flex-1 px-4 py-2 border border-acid/40 text-acid hover:bg-acid hover:text-black rounded-lg transition-colors text-xs font-bold uppercase"
+                                    >Buscar otra</button>
+                                    <button
+                                        onClick={() => {
+                                            if (aiSuggestedBudget) {
+                                                handleBudgetSuggested(aiSuggestedBudget);
+                                                setCreatingAiTrip(false);
+                                                setAiPhase('idle');
+                                            }
+                                        }}
+                                        disabled={!aiSuggestedBudget}
+                                        className="flex-1 px-4 py-2 bg-green-600 disabled:opacity-40 hover:bg-green-500 text-white rounded-lg transition-colors text-xs font-bold uppercase"
+                                    >Aceptar viaje</button>
+                                </div>
+                                <button
+                                    onClick={() => { setCreatingAiTrip(false); setPendingNewTrip(null); setAiPhase('idle'); }}
+                                    className="w-full mt-2 text-[10px] font-mono text-dim hover:text-text transition-colors"
+                                >Cancelar</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
+
 
         </div>
     );

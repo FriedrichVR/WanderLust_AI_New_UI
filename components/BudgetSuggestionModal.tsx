@@ -12,6 +12,7 @@ interface Props {
   currency: Currency;
   onBudgetSuggested: (budget: number) => void;
   onClose: () => void;
+  onRegenerate?: () => void; // Nueva acción para buscar otra sugerencia
   initialSuggestedBudget?: number | null;
   title?: string;
   autoFetch?: boolean;
@@ -25,6 +26,7 @@ const BudgetSuggestionModal: React.FC<Props> = ({
   currency,
   onBudgetSuggested,
   onClose,
+  onRegenerate,
   initialSuggestedBudget,
   title,
   autoFetch = false
@@ -170,43 +172,53 @@ const BudgetSuggestionModal: React.FC<Props> = ({
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-border text-dim hover:text-text rounded-lg transition-colors text-sm font-medium"
-            >
-              {t.cancel}
-            </button>
-
-            {!suggestedBudget ? (
-              <button
-                onClick={fetchBudgetSuggestion}
-                disabled={isLoading}
-                className={`flex-1 px-4 py-2 bg-acid text-black hover:bg-white disabled:opacity-50 rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2 ${autoFetch && isLoading ? 'hidden' : ''}`}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    {t.budgetModalAnalyzing}
-                  </>
-                ) : (
-                  t.budgetModalGetSuggestion
-                )}
-              </button>
-            ) : (
-              <button
-                onClick={handleAccept}
-                disabled={isCreating}
-                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2"
-              >
-                {isCreating ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    {t.processing}
-                  </>
-                ) : (
-                  t.budgetModalAccept
-                )}
-              </button>
+            {!suggestedBudget && (
+              <>
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-border text-dim hover:text-text rounded-lg transition-colors text-sm font-medium"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  onClick={fetchBudgetSuggestion}
+                  disabled={isLoading}
+                  className={`flex-1 px-4 py-2 bg-acid text-black hover:bg-white disabled:opacity-50 rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2 ${autoFetch && isLoading ? 'hidden' : ''}`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      {t.budgetModalAnalyzing}
+                    </>
+                  ) : (
+                    t.budgetModalGetSuggestion
+                  )}
+                </button>
+              </>
+            )}
+            {suggestedBudget && (
+              <>
+                <button
+                  onClick={onRegenerate}
+                  className="flex-1 px-4 py-2 border border-acid/40 text-acid hover:bg-acid hover:text-black rounded-lg transition-colors text-sm font-bold"
+                >
+                  {t.budgetModalRegenerate || 'Buscar otra'}
+                </button>
+                <button
+                  onClick={handleAccept}
+                  disabled={isCreating}
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all text-sm font-bold flex items-center justify-center gap-2"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      {t.processing}
+                    </>
+                  ) : (
+                    t.budgetModalAccept || 'Aceptar viaje'
+                  )}
+                </button>
+              </>
             )}
           </div>
 
