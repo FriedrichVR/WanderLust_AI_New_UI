@@ -88,6 +88,7 @@ export interface Trip {
   currency: Currency;
   status: TripStatus;
   type: TripType;
+  createdAt?: string; // ISO timestamp for creation; used for deletion window
   notes?: string;
   expenses: Expense[];
   itinerary: DayPlan[];

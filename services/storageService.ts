@@ -20,6 +20,7 @@ export const INITIAL_TRIPS: Trip[] = [
     currency: Currency.USD,
     status: TripStatus.PLANNING,
     type: 'Leisure',
+        createdAt: '2024-01-01T00:00:00.000Z',
     notes: 'Enfoque en relajación y yoga. Tal vez visitar las islas Gili por un par de días.',
     expenses: [
       { id: 'e1', description: 'Depósito Vuelo', amount: 500, currency: Currency.USD, category: 'Transport', date: '2024-01-15' },
@@ -56,6 +57,7 @@ export const INITIAL_TRIPS: Trip[] = [
     currency: Currency.USD,
     status: TripStatus.BOOKED,
     type: 'Adventure',
+        createdAt: '2024-03-01T00:00:00.000Z',
     notes: 'Obligatorio comer sushi en cinta. Buscar tiendas de videojuegos retro en Akihabara.',
     expenses: [
         { id: 't1', description: 'Vuelos Ida/Vuelta (ANA)', amount: 1400, currency: Currency.USD, category: 'Transport', date: '2024-03-10' },
@@ -99,6 +101,7 @@ export const INITIAL_TRIPS: Trip[] = [
     currency: Currency.EUR,
     status: TripStatus.COMPLETED,
     type: 'Family',
+        createdAt: '2023-06-01T00:00:00.000Z',
     notes: 'Buscar parques para niños cerca del apartamento.',
     expenses: [
         { id: 'b1', description: 'Vuelos (Iberia)', amount: 450, currency: Currency.EUR, category: 'Transport', date: '2023-06-01' },
@@ -142,6 +145,7 @@ export const INITIAL_TRIPS: Trip[] = [
     currency: Currency.USD,
     status: TripStatus.PLANNING,
     type: 'Adventure',
+        createdAt: '2024-11-01T00:00:00.000Z',
     notes: 'Necesito entrenar para las caminatas. Verificar requisitos de ropa térmica.',
     expenses: [
         { id: 'p1', description: 'Equipo Senderismo', amount: 300, currency: Currency.USD, category: 'Shopping', date: '2024-11-01' }

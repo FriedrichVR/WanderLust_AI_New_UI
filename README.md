@@ -15,6 +15,28 @@ View your app in AI Studio: https://ai.studio/apps/drive/1OJbNndmdgaTfdtURWRBo9h
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Create `.env.local` and set:
+   - `GEMINI_API_KEY` = your Gemini API key
+   - `VITE_DELETION_WINDOW_MS` = milliseconds allowed to delete a newly created trip (default fallback 60000). Example: `300000` for 5 minutes.
 3. Run the app:
    `npm run dev`
+
+### Testing & Restart Workflow
+
+After changing environment variables or dependencies:
+
+```powershell
+# Install (or update) deps
+npm install
+
+# (Optional) set deletion window for this session (5 min example)
+$Env:VITE_DELETION_WINDOW_MS=300000; npm run dev
+
+# Run test suite in a separate terminal
+npm run test
+
+# Full rebuild (useful after env changes)
+git pull; npm install; npm run build; npm run preview
+```
+
+`VITE_DELETION_WINDOW_MS` controls how long (ms) a newly created trip remains deletable.

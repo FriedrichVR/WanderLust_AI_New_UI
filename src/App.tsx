@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense, lazy } from 'react';
+import DeletionCountdown from '../components/DeletionCountdown';
 import { useLanguage } from '../hooks/useLanguage';
 import { generateQuickSuggestion } from '../utils/aiTripSuggester';
 import { generateBudgetSuggestion } from '../services/geminiService';
@@ -33,6 +34,21 @@ const TripModeSelector = lazy(() => import('../components/TripModeSelector'));
 
 const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=60&w=800&auto=format&fit=crop';
 const PAGE_SIZE = 20;
+// Tiempo máximo permitido para eliminar un viaje recién creado (ms)
+// Se puede configurar vía variable de entorno VITE_DELETION_WINDOW_MS (ej: 300000 para 5 min)
+const DELETION_WINDOW_MS: number = (() => {
+    let raw: any = undefined;
+    try {
+        // @ts-ignore
+        raw = import.meta?.env?.VITE_DELETION_WINDOW_MS;
+    } catch {}
+    if (raw === undefined && typeof process !== 'undefined') {
+        // @ts-ignore
+        raw = process.env.VITE_DELETION_WINDOW_MS;
+    }
+    const parsed = parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000; // fallback 1 minuto
+})();
 
 interface UserSession {
     id: string;
@@ -314,13 +330,27 @@ const TripDetailView: React.FC<{
                             {trip.status}
                         </button>
 
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 items-center">
                             <button onClick={() => setShowEditModal(true)} className="p-1.5 bg-white/10 hover:bg-white hover:text-black text-white rounded-full backdrop-blur-md transition-colors" title={t.editParams}>
                                 <Edit2 size={14} />
                             </button>
-                            <button onClick={() => setShowDeleteTripConfirm(true)} className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-full backdrop-blur-md transition-colors" title={t.deleteMission}>
+                            <button
+                                onClick={() => {
+                                    const expired = !trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS;
+                                    if (expired) {
+                                        showToast('Deletion window expired.', 'info');
+                                        return;
+                                    }
+                                    setShowDeleteTripConfirm(true);
+                                }}
+                                className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${(!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS)
+                                    ? 'bg-red-500/10 text-red-500 cursor-not-allowed'
+                                    : 'bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white'}`}
+                                title={t.deleteMission}
+                            >
                                 <Trash2 size={14} />
                             </button>
+                            <DeletionCountdown createdAt={trip.createdAt} windowMs={DELETION_WINDOW_MS} variant="badge" />
                         </div>
                     </div>
 
@@ -873,7 +903,8 @@ const App: React.FC = () => {
             itinerary: [],
             checklist: [],
             documents: [],
-            documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
+            documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other'],
+            createdAt: new Date().toISOString()
         };
         setPendingNewTrip(newTrip);
         setShowTripModeSelector(false);
@@ -908,7 +939,8 @@ const App: React.FC = () => {
             itinerary: [],
             checklist: [],
             documents: [],
-            documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
+            documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other'],
+            createdAt: new Date().toISOString()
         };
         // Show the pending trip immediately so the user sees it in the list
         setPendingNewTrip(newTrip);
@@ -1004,6 +1036,12 @@ const App: React.FC = () => {
 
     const handleDeleteTrip = (tripId: string) => {
         if (!user) return;
+        const target = trips.find(t => t.id === tripId);
+        // Enforce 1-minute deletion window. Trips without createdAt are treated as expired.
+        if (!target || !target.createdAt || Date.now() - new Date(target.createdAt).getTime() > DELETION_WINDOW_MS) {
+            showToast('El tiempo para eliminar este viaje ha expirado.', 'info');
+            return;
+        }
         const updatedTrips = trips.filter(t => t.id !== tripId);
         setTrips(updatedTrips);
         deleteTripFromDb(user.id, tripId);
@@ -1054,6 +1092,26 @@ const App: React.FC = () => {
             }
         }
     };
+
+    // Reinicia todos los createdAt para facilitar testing de la ventana de borrado
+    const resetDeletionTimers = useCallback(() => {
+        if (!user) return;
+        const nowIso = new Date().toISOString();
+        const updated = trips.map(t => ({ ...t, createdAt: nowIso }));
+        setTrips(updated);
+        updated.forEach(trip => { try { upsertTrip(user.id, trip); } catch {} });
+        showToast('Timers reiniciados.', 'success');
+    }, [trips, user, showToast]);
+
+    // Exponer múltiples alias en dev para evitar errores tipográficos
+    useEffect(() => {
+        // @ts-ignore
+        if (import.meta.env.DEV) {
+            (window as any).__resetDeletionTimers = resetDeletionTimers;
+            (window as any)._resetDeletionTimers = resetDeletionTimers;
+            (window as any).resetDeletionTimers = resetDeletionTimers;
+        }
+    }, [resetDeletionTimers]);
 
     const getAllImages = (trip: Trip): GalleryImage[] => {
         const images: GalleryImage[] = [];
@@ -1227,6 +1285,24 @@ const App: React.FC = () => {
                             <button onClick={toggleLanguage} className="text-[10px] font-mono font-bold uppercase border border-border px-2 py-1 rounded-md hover:border-acid transition-colors text-dim hover:text-acid">
                                 [{language?.toUpperCase()}]
                             </button>
+                            {/** Botón DEV para reiniciar timers de borrado **/}
+                            {/** @ts-ignore */}
+                            {import.meta.env.DEV && (
+                                <button
+                                    onClick={() => {
+                                        if (!user) return;
+                                        const nowIso = new Date().toISOString();
+                                        const updated = trips.map(t => ({ ...t, createdAt: nowIso }));
+                                        setTrips(updated);
+                                        updated.forEach(trip => { try { upsertTrip(user.id, trip); } catch {} });
+                                        showToast('Timers reiniciados.', 'success');
+                                    }}
+                                    className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono uppercase border border-acid/30 text-acid px-2 py-1 rounded-md hover:bg-acid hover:text-black transition-colors"
+                                    title="Reiniciar ventana de borrado"
+                                >
+                                    <ArrowRightLeft size={14} /> Reset
+                                </button>
+                            )}
                             <div className="hidden md:flex items-center gap-2 text-xs font-mono text-dim border-l border-border pl-4 ml-2">
                                 <span className="uppercase">{user.name}</span>
                                 <button onClick={handleLogout} className="text-text hover:text-red-500 transition-colors ml-2" title="Logout">
@@ -1333,16 +1409,26 @@ const App: React.FC = () => {
                                             <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
 
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setTripToDelete(trip.id);
-                                                }}
-                                                className="absolute top-4 left-4 p-2 bg-black/40 hover:bg-red-500/80 text-white rounded-full backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 z-10"
-                                                title={t.deleteMission}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="absolute top-4 left-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const expired = !trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS;
+                                                        if (expired) {
+                                                            showToast('El tiempo para eliminar este viaje ha expirado.', 'info');
+                                                            return;
+                                                        }
+                                                        setTripToDelete(trip.id);
+                                                    }}
+                                                    className={`p-2 rounded-full backdrop-blur-md transition-all ${(!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS)
+                                                        ? 'bg-black/20 text-red-600 border border-red-600/30 cursor-not-allowed'
+                                                        : 'bg-black/40 hover:bg-red-500/80 text-white'}`}
+                                                    title={t.deleteMission}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                                <DeletionCountdown createdAt={trip.createdAt} windowMs={DELETION_WINDOW_MS} />
+                                            </div>
 
                                             {trip.status !== 'Booked' && (
                                                 <div className="absolute top-4 right-4">
