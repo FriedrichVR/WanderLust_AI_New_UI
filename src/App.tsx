@@ -1164,7 +1164,9 @@ const App: React.FC = () => {
                                     </h1>
                                 </div>
                                 <p className="text-dim text-sm font-light leading-relaxed font-sans max-w-lg">
-                                    {t.heroSubtitle}
+                                    <span className="bg-yellow-300/50  text-black font-bold">
+                                        {t.heroSubtitle}
+                                    </span>
                                 </p>
                             </div>
 
