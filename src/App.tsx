@@ -1171,13 +1171,7 @@ const App: React.FC = () => {
                             <div className="flex flex-col gap-4 items-end">
 
 
-                                <div className="flex items-center gap-4">
-                                    <Tooltip content={t.freemiumTooltip} position="bottom">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-acid/20 bg-acid/5 text-acid text-[10px] font-mono uppercase tracking-widest cursor-help w-fit">
-                                            {t.freemiumNotice} <Info size={10} />
-                                        </div>
-                                    </Tooltip>
-                                </div>
+                                {/* Freemium notice removed from hero and moved below trips as footer */}
 
 
                             </div>
@@ -1293,6 +1287,15 @@ const App: React.FC = () => {
                                 ))}
                             </div>
                         )}
+                    </div>
+
+                    {/* Freemium footer below trips */}
+                    <div className="p-2 md:p-4 text-center">
+                        <Tooltip content={t.freemiumTooltip} position="top">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-acid/20 bg-acid/5 text-acid text-[12px] font-mono uppercase tracking-widest cursor-help mx-auto w-fit">
+                                {t.freemiumNotice} <Info size={12} />
+                            </div>
+                        </Tooltip>
                     </div>
 
                     {/* World Map Background Layer */}
