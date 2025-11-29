@@ -1,19 +1,21 @@
 
 import React, { useState } from 'react';
-import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, MapPin, UserCircle, Database, Copy, Check, Plane, Sparkles, Phone } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, MapPin, UserCircle, Database, Copy, Check, Plane, Sparkles, Phone, X } from 'lucide-react';
 import { translations, Language } from '../utils/translations';
 import { supabase } from '../services/supabaseClient';
 import { detectLanguageByCountry, getCountriesList, getPhoneCodeByCountry } from '../utils/countryLanguageDetector';
 import LazyImage from './LazyImage';
 
 interface Props {
-  onLogin: (userData: { name: string; email: string; id: string; country?: string; language?: Language }) => void;
-  lang: Language;
-  toggleLanguage: () => void;
+    onLogin: (userData: { name: string; email: string; id: string; country?: string; language?: Language }) => void;
+    lang: Language;
+    toggleLanguage: () => void;
+    initialMode?: 'login' | 'signup';
+    onClose?: () => void;
 }
 
-const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage, initialMode, onClose }) => {
+    const [mode, setMode] = useState<'login' | 'signup'>(initialMode || 'login');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showDevHelp, setShowDevHelp] = useState(false);
@@ -103,11 +105,16 @@ const AuthScreen: React.FC<Props> = ({ onLogin, lang, toggleLanguage }) => {
   };
 
   const handleGuestAccess = () => {
-    onLogin({
-        id: 'guest_user',
-        name: 'Guest Traveler',
-        email: 'guest@wanderlust.ai'
-    });
+        onLogin({
+                id: 'guest_user',
+                name: 'Guest Traveler',
+                email: 'guest@wanderlust.ai'
+        });
+
+        // If AuthScreen was opened as a modal, close it after logging in as guest
+        if (typeof onClose === 'function') {
+            onClose();
+        }
   };
 
   const copySQL = () => {
@@ -134,14 +141,26 @@ with check (auth.uid() = user_id);`;
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="relative min-h-screen bg-obsidian flex items-center justify-center p-0 md:p-6 overflow-hidden">
-      
-      {/* Background Decor */}
-      <div className="absolute inset-0 bg-grid opacity-[0.03] pointer-events-none"></div>
+    const isModal = typeof onClose === 'function';
 
-      {/* Main Card Container */}
-      <div className="relative w-full max-w-7xl h-screen md:h-[800px] grid lg:grid-cols-12 bg-surface shadow-2xl rounded-2xl overflow-hidden border border-border animate-fade-in">
+    const outerClass = isModal
+        ? 'fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4'
+        : 'relative min-h-screen bg-obsidian flex items-center justify-center p-0 md:p-6 overflow-hidden';
+
+    return (
+        <div className={outerClass}>
+            {/* Background Decor */}
+            <div className="absolute inset-0 bg-grid opacity-[0.03] pointer-events-none"></div>
+
+            {/* Close (when used as modal) */}
+            {onClose && (
+                <button onClick={onClose} className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50">
+                    <X size={20} />
+                </button>
+            )}
+
+            {/* Main Card Container */}
+            <div className="relative w-full max-w-7xl h-screen md:h-[800px] grid lg:grid-cols-12 bg-surface shadow-2xl rounded-2xl overflow-hidden border border-border animate-fade-in">
         
         {/* LEFT COLUMN: Visual & Branding (Hidden on Mobile) */}
         <div className="hidden lg:flex lg:col-span-7 relative flex-col justify-between p-12 overflow-hidden">

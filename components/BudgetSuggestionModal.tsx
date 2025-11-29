@@ -29,7 +29,7 @@ const BudgetSuggestionModal: React.FC<Props> = ({
   title,
   autoFetch = false
 }) => {
-  const [isLoading, setIsLoading] = useState(autoFetch);
+  const [isLoading, setIsLoading] = useState(false);
   const [suggestedBudget, setSuggestedBudget] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -42,12 +42,13 @@ const BudgetSuggestionModal: React.FC<Props> = ({
 
   const [progress, setProgress] = useState(0);
 
-  // Auto-fetch effect
+  // Auto-fetch effect: trigger fetching when modal opens with autoFetch requested
   React.useEffect(() => {
     if (autoFetch && !suggestedBudget && !isLoading && !error) {
       fetchBudgetSuggestion();
     }
-  }, [autoFetch]);
+    // Intentionally depend on autoFetch and suggestedBudget so we only trigger once
+  }, [autoFetch, suggestedBudget, isLoading, error]);
 
   React.useEffect(() => {
     if (isLoading) {

@@ -745,6 +745,9 @@ const App: React.FC = () => {
     // Trip Mode Selector State
     const [showTripModeSelector, setShowTripModeSelector] = useState(false);
     const [aiSuggestedBudget, setAiSuggestedBudget] = useState<number | null>(null);
+    // Auth modal state (used when clicking freemium notice to open signup)
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [authInitialMode, setAuthInitialMode] = useState<'login' | 'signup'>('login');
 
     useEffect(() => {
         const savedSettings = loadSettings();
@@ -901,15 +904,25 @@ const App: React.FC = () => {
             documents: [],
             documentCategories: ['flight', 'hotel', 'airbnb', 'food', 'other']
         };
-
+        // Show the pending trip immediately so the user sees it in the list
         setPendingNewTrip(newTrip);
+        const updatedTrips = [newTrip, ...trips];
+        setTrips(updatedTrips);
+        try {
+            // Persist the provisional trip (budget will be updated if user accepts suggestion)
+            await upsertTrip(user.id, newTrip);
+        } catch (err) {
+            console.warn('Failed to persist provisional AI trip', err);
+        }
+
         setShowTripModeSelector(false);
 
-        // Pre-fetch budget suggestion from AI service (best-effort)
+        // Pre-fetch budget suggestion from AI service (best-effort) and show modal
         setAiSuggestedBudget(null);
         setShowBudgetSuggestion(true);
         try {
-            const computed = await generateBudgetSuggestion(sug.destination, sug.days, sug.tripType, sug.currency);
+            // Request budget in USD so the trip budget is consistent with app currency
+            const computed = await generateBudgetSuggestion(sug.destination, sug.days, sug.tripType, 'USD');
             if (computed) setAiSuggestedBudget(computed);
         } catch (e) {
             // ignore — modal can let user trigger suggestion manually
@@ -1231,18 +1244,18 @@ const App: React.FC = () => {
                                                 <Trash2 size={16} />
                                             </button>
 
-                                            <div className="absolute top-4 right-4">
-                                                <span className={`px-3 py-1 text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1.5 shadow-sm ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/50' :
-                                                    trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/50' :
+                                            {trip.status !== 'Booked' && (
+                                                <div className="absolute top-4 right-4">
+                                                    <span className={`px-3 py-1 text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1.5 shadow-sm ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/50' :
                                                         'bg-black/60 text-amber-400 border-amber-500/50'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'Completed' ? 'bg-emerald-400' :
-                                                        trip.status === 'Booked' ? 'bg-cyan-400' :
+                                                        }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'Completed' ? 'bg-emerald-400' :
                                                             'bg-amber-400'
-                                                        }`}></span>
-                                                    {trip.status}
-                                                </span>
-                                            </div>
+                                                            }`}></span>
+                                                        {trip.status}
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             <div className="absolute bottom-6 left-6 right-6">
                                                 <h3 className="text-2xl md:text-4xl font-display font-bold text-white uppercase drop-shadow-lg truncate leading-none mb-1">{trip.destination}</h3>
@@ -1294,9 +1307,12 @@ const App: React.FC = () => {
                     {/* Freemium footer below trips */}
                     <div className="p-2 md:p-4 text-center">
                         <Tooltip content={t.freemiumTooltip} position="top">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-acid/20 bg-acid/5 text-acid text-[12px] font-mono uppercase tracking-widest cursor-help mx-auto w-fit">
+                            <button
+                                onClick={() => { setAuthInitialMode('signup'); setShowAuthModal(true); }}
+                                className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-acid/20 bg-acid/5 text-acid text-[12px] font-mono uppercase tracking-widest cursor-pointer mx-auto w-fit"
+                            >
                                 {t.freemiumNotice} <Info size={12} />
-                            </div>
+                            </button>
                         </Tooltip>
                     </div>
 
@@ -1363,6 +1379,17 @@ const App: React.FC = () => {
                         onClose={() => setShowTripModeSelector(false)}
                     />
                 </Suspense>
+            )}
+
+            {/* Auth Modal (signup) triggered from freemium footer */}
+            {showAuthModal && (
+                <AuthScreen
+                    onLogin={handleLogin}
+                    lang={language}
+                    toggleLanguage={toggleLanguage}
+                    initialMode={authInitialMode}
+                    onClose={() => setShowAuthModal(false)}
+                />
             )}
 
             {/* Delete Trip Confirmation Modal */}
