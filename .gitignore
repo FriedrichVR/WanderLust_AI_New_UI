@@ -1,4 +1,11 @@
-# Logs
+MyNotes
+.env
+*.env
+*.key
+*.secret
+/.vscode/
+node_modules/
+dist/# Logs
 logs
 *.log
 npm-debug.log*
