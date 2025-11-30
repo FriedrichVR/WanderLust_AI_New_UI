@@ -271,67 +271,74 @@ const TripDetailView: React.FC<{
     return (
         <div className="animate-fade-in pb-20">
             {/* Header with Cover Image */}
-            <div className="relative m-1 rounded-3xl overflow-hidden group mb-8 shadow-2xl h-[300px] md:h-[400px]">
+            <div className="relative m-1 rounded-2xl md:rounded-3xl overflow-hidden group mb-6 md:mb-8 shadow-2xl h-[240px] md:h-[400px]">
                 <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-                <div className="absolute top-6 left-6 z-20">
-                    <button onClick={goBack} className="bg-black/40 hover:bg-white hover:text-black text-white p-3 rounded-full backdrop-blur-md border border-white/10 transition-all flex items-center gap-2 group/back shadow-lg">
-                        <ArrowLeft size={20} className="group-hover/back:-translate-x-1 transition-transform" />
+                <div className="absolute top-4 md:top-6 left-4 md:left-6 z-20">
+                    <button onClick={goBack} className="bg-black/40 hover:bg-white hover:text-black text-white p-2 md:p-3 rounded-full backdrop-blur-md border border-white/10 transition-all flex items-center gap-1.5 md:gap-2 group/back shadow-lg">
+                        <ArrowLeft size={18} className="md:hidden group-hover/back:-translate-x-1 transition-transform" />
+                        <ArrowLeft size={20} className="hidden md:block group-hover/back:-translate-x-1 transition-transform" />
                         <span className="hidden md:inline font-mono text-xs uppercase tracking-widest">{t.dashboard}</span>
                     </button>
                 </div>
 
-                <div className="absolute top-6 right-6 z-20 flex gap-2">
-                    <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button onClick={() => setShowImageEditor(true)} className="p-2 hover:bg-white hover:text-black text-white rounded-full transition-all" title={t.editImage}>
-                            <Wand2 size={18} />
+                <div className="absolute top-4 md:top-6 right-4 md:right-6 z-20 flex gap-1.5 md:gap-2">
+                    <div className="flex items-center gap-1.5 md:gap-2 bg-black/40 backdrop-blur-md rounded-full p-0.5 md:p-1 border border-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <button onClick={() => setShowImageEditor(true)} className="p-1.5 md:p-2 hover:bg-white hover:text-black text-white rounded-full transition-all" title={t.editImage}>
+                            <Wand2 size={16} className="md:hidden" />
+                            <Wand2 size={18} className="hidden md:block" />
                         </button>
-                        <div className="w-px h-4 bg-white/20"></div>
-                        <button onClick={() => coverInputRef.current?.click()} className="p-2 hover:bg-white hover:text-black text-white rounded-full transition-all" title={t.uploadImage}>
-                            <Upload size={18} />
+                        <div className="w-px h-3 md:h-4 bg-white/20"></div>
+                        <button onClick={() => coverInputRef.current?.click()} className="p-1.5 md:p-2 hover:bg-white hover:text-black text-white rounded-full transition-all" title={t.uploadImage}>
+                            <Upload size={16} className="md:hidden" />
+                            <Upload size={18} className="hidden md:block" />
                         </button>
                     </div>
                     <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={(e) => handleCoverImageUploadUtil(e, trip, updateTrip)} />
                 </div>
 
                 {/* Refactored Header Content for Layout Stability */}
-                <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
+                <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-2 md:gap-4">
+                    <div className="flex items-center gap-2 md:gap-3">
                         <button
                             onClick={() => setShowEditModal(true)}
-                            className={`px-3 py-1 font-mono text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/30' :
+                            className={`px-2.5 md:px-3 py-0.5 md:py-1 font-mono text-[9px] md:text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/30' :
                                 trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/30' : 'bg-black/60 text-amber-400 border-amber-500/30'
                                 }`}>
                             {trip.status}
                         </button>
 
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                            <button onClick={() => setShowEditModal(true)} className="p-1.5 bg-white/10 hover:bg-white hover:text-black text-white rounded-full backdrop-blur-md transition-colors" title={t.editParams}>
-                                <Edit2 size={14} />
+                        <div className="opacity-0 md:opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 md:gap-2">
+                            <button onClick={() => setShowEditModal(true)} className="p-1 md:p-1.5 bg-white/10 hover:bg-white hover:text-black text-white rounded-full backdrop-blur-md transition-colors" title={t.editParams}>
+                                <Edit2 size={12} className="md:hidden" />
+                                <Edit2 size={14} className="hidden md:block" />
                             </button>
-                            <button onClick={() => setShowDeleteTripConfirm(true)} className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-full backdrop-blur-md transition-colors" title={t.deleteMission}>
-                                <Trash2 size={14} />
+                            <button onClick={() => setShowDeleteTripConfirm(true)} className="p-1 md:p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-full backdrop-blur-md transition-colors" title={t.deleteMission}>
+                                <Trash2 size={12} className="md:hidden" />
+                                <Trash2 size={14} className="hidden md:block" />
                             </button>
                         </div>
                     </div>
 
                     <h1
                         onClick={() => setShowEditModal(true)}
-                        className="text-white text-4xl md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-xl cursor-pointer hover:text-acid transition-colors break-words"
+                        className="text-white text-2xl md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-xl cursor-pointer hover:text-acid transition-colors break-words"
                     >
                         {trip.destination}
                     </h1>
 
-                    <div className="flex flex-wrap gap-6 text-white/80 font-mono text-xs">
-                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-2 hover:text-acid transition-all cursor-pointer group/dates">
-                            <CalendarIcon size={14} className="text-acid group-hover/dates:scale-110 transition-transform" />
+                    <div className="flex flex-wrap gap-3 md:gap-6 text-white/80 font-mono text-[10px] md:text-xs">
+                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 md:gap-2 hover:text-acid transition-all cursor-pointer group/dates">
+                            <CalendarIcon size={12} className="md:hidden text-acid group-hover/dates:scale-110 transition-transform" />
+                            <CalendarIcon size={14} className="hidden md:block text-acid group-hover/dates:scale-110 transition-transform" />
                             <span>
                                 {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
                             </span>
                         </button>
-                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-2 hover:text-acid transition-all cursor-pointer group/budget">
-                            <Wallet size={14} className="text-acid group-hover/budget:scale-110 transition-transform" />
+                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 md:gap-2 hover:text-acid transition-all cursor-pointer group/budget">
+                            <Wallet size={12} className="md:hidden text-acid group-hover/budget:scale-110 transition-transform" />
+                            <Wallet size={14} className="hidden md:block text-acid group-hover/budget:scale-110 transition-transform" />
                             <span>{trip.currency} {trip.budget.toLocaleString()}</span>
                         </button>
                     </div>
@@ -339,7 +346,7 @@ const TripDetailView: React.FC<{
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b border-border bg-obsidian pt-2 px-1 md:px-8">
+            <div className="flex items-center gap-1 md:gap-2 mb-6 md:mb-8 overflow-x-auto pb-2 no-scrollbar border-b border-border bg-obsidian pt-2 px-1 md:px-8">
                 {[
                     { id: 'overview', icon: Check, label: t.overview },
                     { id: 'itinerary', icon: MapIcon, label: t.itinerary },
@@ -349,12 +356,14 @@ const TripDetailView: React.FC<{
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-6 py-3 font-mono text-xs uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
+                        className={`flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-6 md:py-3 font-mono text-[10px] md:text-xs uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
                             ? 'border-acid text-acid font-bold'
                             : 'border-transparent text-dim hover:text-text hover:border-dim'
                             }`}
                     >
-                        <tab.icon size={16} /> {tab.label}
+                        <tab.icon size={14} className="md:hidden" />
+                        <tab.icon size={16} className="hidden md:block" /> 
+                        <span className="hidden sm:inline">{tab.label}</span>
                     </button>
                 ))}
             </div>

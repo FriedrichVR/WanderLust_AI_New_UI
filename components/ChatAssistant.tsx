@@ -128,46 +128,58 @@ Provide budget-conscious recommendations and flag high spending categories. Be e
       </button>
 
       {/* Main Chat Window */}
-      <div className={`fixed bottom-6 right-6 w-[calc(100vw-2rem)] md:w-[400px] h-[600px] max-h-[85vh] bg-obsidian/95 backdrop-blur-xl border border-border flex flex-col z-50 transition-all duration-500 origin-bottom-right shadow-2xl rounded-[32px] overflow-hidden ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none translate-y-8'}`}>
+      <div className={`fixed bottom-4 md:bottom-6 right-4 md:right-6 w-[calc(100vw-2rem)] md:w-[400px] h-[calc(100vh-6rem)] md:h-[600px] max-h-[85vh] bg-obsidian/95 backdrop-blur-xl border border-border flex flex-col z-50 transition-all duration-500 origin-bottom-right shadow-2xl rounded-[24px] md:rounded-[32px] overflow-hidden ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none translate-y-8'}`}>
         
         {/* Header */}
-        <div className="p-5 border-b border-border bg-surface/50 flex justify-between items-center backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-acid/20 to-blue-500/20 border border-acid/30 flex items-center justify-center shadow-inner">
-                <Sparkles size={18} className="text-acid" />
+        <div className="p-3 md:p-5 border-b border-border bg-surface/50 flex justify-between items-center backdrop-blur-md">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-acid/20 to-blue-500/20 border border-acid/30 flex items-center justify-center shadow-inner">
+                <Sparkles size={16} className="md:hidden text-acid" />
+                <Sparkles size={18} className="hidden md:block text-acid" />
             </div>
             <div>
-                <h3 className="font-display font-bold text-sm text-text tracking-wide">{t.aiAdvisor}</h3>
+                <h3 className="font-display font-bold text-xs md:text-sm text-text tracking-wide">{t.aiAdvisor}</h3>
                 <div className="flex items-center gap-1.5">
-                    <span className="relative flex h-2 w-2">
+                    <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-acid opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-acid"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-acid"></span>
                     </span>
-                    <span className="text-[10px] font-mono text-dim uppercase tracking-wider">{t.neuralLink}</span>
+                    <span className="text-[9px] md:text-[10px] font-mono text-dim uppercase tracking-wider">{t.neuralLink}</span>
                 </div>
             </div>
           </div>
           <button 
             onClick={handleClose} 
-            className="p-2 text-dim hover:text-text hover:bg-surface rounded-full transition-colors"
+            className="p-1.5 md:p-2 text-dim hover:text-text hover:bg-surface rounded-full transition-colors"
           >
-            <X size={20}/>
+            <X size={18} className="md:hidden" />
+            <X size={20} className="hidden md:block" />
           </button>
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-gradient-to-b from-surface to-obsidian custom-scrollbar scroll-smooth">
+        <div className="flex-1 overflow-y-auto p-3 md:p-5 space-y-4 md:space-y-6 bg-gradient-to-b from-surface to-obsidian custom-scrollbar scroll-smooth">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
-              <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`flex gap-2 md:gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                 
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${msg.role === 'user' ? 'bg-surface border-border' : 'bg-acid/10 border-acid/20'}`}>
-                    {msg.role === 'user' ? <User size={14} className="text-dim"/> : <Sparkles size={14} className="text-acid"/>}
+                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${msg.role === 'user' ? 'bg-surface border-border' : 'bg-acid/10 border-acid/20'}`}>
+                    {msg.role === 'user' ? (
+                        <>
+                          <User size={12} className="md:hidden text-dim"/>
+                          <User size={14} className="hidden md:block text-dim"/>
+                        </>
+                    ) : (
+                        <>
+                          <Sparkles size={12} className="md:hidden text-acid"/>
+                          <Sparkles size={14} className="hidden md:block text-acid"/>
+                        </>
+                    )}
                 </div>
 
                 {/* Bubble */}
-                <div className={`p-4 text-sm leading-relaxed shadow-md relative group ${
+                <div className={`p-3 md:p-4 text-xs md:text-sm leading-relaxed shadow-md relative group ${
                     msg.role === 'user' 
                     ? 'bg-gradient-to-br from-acid to-cyan-400 text-black rounded-3xl rounded-tr-sm font-medium' 
                     : 'bg-panel border border-border text-text rounded-3xl rounded-tl-sm'
@@ -200,22 +212,23 @@ Provide budget-conscious recommendations and flag high spending categories. Be e
         </div>
 
         {/* Input Area */}
-        <div className="p-5 bg-surface/95 backdrop-blur-md border-t border-border">
-          <div className="relative flex items-center gap-2 bg-gradient-to-r from-panel to-surface border border-border rounded-3xl px-2 py-2 focus-within:border-acid/50 transition-all shadow-inner">
+        <div className="p-3 md:p-5 bg-surface/95 backdrop-blur-md border-t border-border">
+          <div className="relative flex items-center gap-1.5 md:gap-2 bg-gradient-to-r from-panel to-surface border border-border rounded-2xl md:rounded-3xl px-1.5 md:px-2 py-1.5 md:py-2 focus-within:border-acid/50 transition-all shadow-inner">
             <input 
                 type="text" 
                 value={input} 
                 onChange={(e) => setInput(e.target.value)} 
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()} 
                 placeholder={t.enterCommand} 
-                className="flex-1 bg-transparent px-4 text-sm text-text placeholder:text-dim outline-none font-sans" 
+                className="flex-1 bg-transparent px-3 md:px-4 text-xs md:text-sm text-text placeholder:text-dim outline-none font-sans" 
             />
             <button 
                 onClick={handleSend} 
                 disabled={isLoading || !input.trim()} 
-                className="p-2.5 bg-acid text-black rounded-full hover:bg-white hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 shadow-lg shadow-acid/10"
+                className="p-2 md:p-2.5 bg-acid text-black rounded-full hover:bg-white hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 shadow-lg shadow-acid/10"
             >
-                <Send size={18}/>
+                <Send size={16} className="md:hidden" />
+                <Send size={18} className="hidden md:block" />
             </button>
           </div>
         </div>

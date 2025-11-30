@@ -444,7 +444,7 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
              <ChevronLeft size={24} />
          </button>
          
-         <div ref={scrollRef} className="flex overflow-x-auto gap-3 pb-4 scroll-smooth custom-scrollbar px-1 md:px-12 no-scrollbar">
+         <div ref={scrollRef} className="flex overflow-x-auto gap-2 md:gap-3 pb-4 scroll-smooth custom-scrollbar px-1 md:px-12 no-scrollbar">
             {trip.itinerary.map((day, index) => {
                 const date = new Date(day.date);
                 const isActive = activeDayId === day.id;
@@ -452,18 +452,19 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     <button
                         key={day.id}
                         onClick={() => setActiveDayId(day.id)}
-                        className={`flex-shrink-0 w-20 h-24 flex flex-col items-center justify-center border transition-all duration-300 relative overflow-hidden rounded-2xl ${
+                        className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 flex flex-col items-center justify-center border transition-all duration-300 relative overflow-hidden rounded-xl md:rounded-2xl ${
                             isActive ? 'bg-text text-obsidian border-text scale-105 font-bold shadow-lg' : 'bg-surface border-border text-dim hover:border-dim hover:bg-panel'
                         }`}
                     >
-                        <span className="font-mono text-xs z-10 mb-1">DAY {index + 1}</span>
-                        <span className="font-display text-2xl z-10">{date.getDate()}</span>
-                        <span className="font-mono text-[9px] z-10 opacity-70">{date.toLocaleDateString(lang, { weekday: 'short' })}</span>
+                        <span className="font-mono text-[9px] md:text-xs z-10 mb-0.5 md:mb-1">DAY {index + 1}</span>
+                        <span className="font-display text-lg md:text-2xl z-10">{date.getDate()}</span>
+                        <span className="font-mono text-[8px] md:text-[9px] z-10 opacity-70">{date.toLocaleDateString(lang, { weekday: 'short' })}</span>
                     </button>
                 );
             })}
-            <button onClick={handleAddDay} className="flex-shrink-0 w-20 h-24 flex items-center justify-center border border-dashed border-dim text-dim hover:text-white hover:border-white transition-colors bg-transparent rounded-2xl">
-                <Plus size={24} />
+            <button onClick={handleAddDay} className="flex-shrink-0 w-16 h-20 md:w-20 md:h-24 flex items-center justify-center border border-dashed border-dim text-dim hover:text-white hover:border-white transition-colors bg-transparent rounded-xl md:rounded-2xl">
+                <Plus size={20} className="md:hidden" />
+                <Plus size={24} className="hidden md:block" />
             </button>
          </div>
 
@@ -479,9 +480,9 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
         
         {/* Timeline */}
         <div key={activeDayId} className="lg:col-span-2 space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center flex-wrap gap-4 bg-surface p-4 rounded-2xl border border-border">
+            <div className="flex justify-between items-center flex-wrap gap-3 md:gap-4 bg-surface p-3 md:p-4 rounded-xl md:rounded-2xl border border-border">
                 <div className="flex flex-col">
-                    <h3 className="font-display text-xl text-text uppercase tracking-tight">
+                    <h3 className="font-display text-base md:text-xl text-text uppercase tracking-tight">
                         {currentDay ? new Date(currentDay.date).toLocaleDateString(lang, { weekday: 'long', month: 'long', day: 'numeric' }) : 'No Selection'}
                     </h3>
                     {loadingWeather ? (
@@ -501,26 +502,31 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     )}
 
                     {/* Passengers section */}
-                    <div className="mt-3 space-y-1">
+                    <div className="mt-2 md:mt-3 space-y-1">
                         { (trip.passengers && trip.passengers.length > 0 ? trip.passengers : ['PASAJERO 1', 'PASAJERO 2']).map((p, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-panel border border-border px-3 py-2 rounded-xl">
-                                <span className="text-[10px] font-mono text-dim uppercase tracking-widest">{p}</span>
-                                <span className="text-[10px] font-mono text-text uppercase">—</span>
+                            <div key={idx} className="flex items-center justify-between bg-panel border border-border px-2 py-1.5 md:px-3 md:py-2 rounded-lg md:rounded-xl">
+                                <span className="text-[9px] md:text-[10px] font-mono text-dim uppercase tracking-widest">{p}</span>
+                                <span className="text-[9px] md:text-[10px] font-mono text-text uppercase">—</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {currentDay && (
-                    <div className="flex gap-2">
-                         <button onClick={downloadDayPlan} className="p-2 bg-panel text-dim hover:text-text hover:bg-border transition-colors rounded-full" title={t.exportPlan}>
-                            <Download size={18}/>
+                    <div className="flex gap-1.5 md:gap-2">
+                         <button onClick={downloadDayPlan} className="p-1.5 md:p-2 bg-panel text-dim hover:text-text hover:bg-border transition-colors rounded-full" title={t.exportPlan}>
+                            <Download size={16} className="md:hidden" />
+                            <Download size={18} className="hidden md:block" />
                         </button>
-                        <button onClick={() => setDayToDelete(currentDay.id)} className="p-2 bg-panel text-dim hover:text-danger hover:bg-border transition-colors rounded-full" title="Delete Day">
-                            <Trash2 size={18}/>
+                        <button onClick={() => setDayToDelete(currentDay.id)} className="p-1.5 md:p-2 bg-panel text-dim hover:text-danger hover:bg-border transition-colors rounded-full" title="Delete Day">
+                            <Trash2 size={16} className="md:hidden" />
+                            <Trash2 size={18} className="hidden md:block" />
                         </button>
-                        <button onClick={openSearchNew} className="px-4 py-2 bg-text text-obsidian font-mono text-xs font-bold uppercase hover:bg-acid transition-colors flex items-center gap-2 rounded-full">
-                            <MapPin size={14} /> {t.addPoint}
+                        <button onClick={openSearchNew} className="px-3 py-1.5 md:px-4 md:py-2 bg-text text-obsidian font-mono text-[10px] md:text-xs font-bold uppercase hover:bg-acid transition-colors flex items-center gap-1.5 md:gap-2 rounded-full">
+                            <MapPin size={12} className="md:hidden" />
+                            <MapPin size={14} className="hidden md:block" />
+                            <span className="hidden sm:inline">{t.addPoint}</span>
+                            <span className="sm:hidden">+</span>
                         </button>
                     </div>
                 )}
@@ -530,25 +536,25 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
             {/* Day Log */}
             {currentDay && (
-                <div className="space-y-6">
-                    <div className="bg-surface border border-border p-6 rounded-3xl">
-                        <div className="flex flex-col gap-4">
-                            <div className="space-y-2">
-                                <label className="font-mono text-[10px] text-acid uppercase tracking-widest">{t.dayLog}</label>
+                <div className="space-y-4 md:space-y-6">
+                    <div className="bg-surface border border-border p-3 md:p-6 rounded-2xl md:rounded-3xl">
+                        <div className="flex flex-col gap-3 md:gap-4">
+                            <div className="space-y-1.5 md:space-y-2">
+                                <label className="font-mono text-[9px] md:text-[10px] text-acid uppercase tracking-widest">{t.dayLog}</label>
                                 <textarea 
                                     value={currentDay.notes || ''} 
                                     onChange={e => handleUpdateDayLog({ notes: e.target.value })}
-                                    className="w-full bg-panel border border-border p-4 text-sm text-text focus:border-acid outline-none min-h-[100px] transition-colors rounded-xl resize-y"
+                                    className="w-full bg-panel border border-border p-3 md:p-4 text-xs md:text-sm text-text focus:border-acid outline-none min-h-[80px] md:min-h-[100px] transition-colors rounded-lg md:rounded-xl resize-y"
                                     placeholder="// Write your notes here..."
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="font-mono text-[10px] text-acid uppercase tracking-widest">{t.baseLocation}</label>
+                            <div className="space-y-1.5 md:space-y-2">
+                                <label className="font-mono text-[9px] md:text-[10px] text-acid uppercase tracking-widest">{t.baseLocation}</label>
                                 <input 
                                     type="text" 
                                     value={currentDay.location || ''}
                                     onChange={e => handleUpdateDayLog({ location: e.target.value })}
-                                    className="w-full bg-panel border border-border p-3 text-sm text-text focus:border-acid outline-none mb-2 transition-colors rounded-xl"
+                                    className="w-full bg-panel border border-border p-2.5 md:p-3 text-xs md:text-sm text-text focus:border-acid outline-none mb-1.5 md:mb-2 transition-colors rounded-lg md:rounded-xl"
                                     placeholder="City or Hotel..."
                                 />
                                 <div className="flex gap-3 overflow-x-auto py-2 custom-scrollbar">
@@ -586,29 +592,30 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
                     {/* Info Blocks */}
                     {currentDay.infoBlocks?.map(block => (
-                        <div key={block.id} className="bg-surface border border-border p-6 relative group animate-fade-in rounded-3xl">
+                        <div key={block.id} className="bg-surface border border-border p-3 md:p-6 relative group animate-fade-in rounded-2xl md:rounded-3xl">
                             <button 
                                 onClick={() => setBlockToDelete(block.id)}
-                                className="absolute top-4 right-4 text-dim hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity p-2"
+                                className="absolute top-2 right-2 md:top-4 md:right-4 text-dim hover:text-danger opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity p-1.5 md:p-2"
                             >
-                                <X size={18} />
+                                <X size={16} className="md:hidden" />
+                                <X size={18} className="hidden md:block" />
                             </button>
                             
-                            <div className="mb-4 pr-8">
+                            <div className="mb-3 md:mb-4 pr-7 md:pr-8">
                                 <input 
                                     type="text" 
                                     value={block.title}
                                     onChange={e => handleUpdateInfoBlock(block.id, 'title', e.target.value)}
-                                    className="w-full bg-transparent border-b border-border p-2 text-lg font-bold text-text placeholder-dim/50 focus:border-acid outline-none transition-colors"
+                                    className="w-full bg-transparent border-b border-border p-1.5 md:p-2 text-base md:text-lg font-bold text-text placeholder-dim/50 focus:border-acid outline-none transition-colors"
                                     placeholder="BLOCK TITLE"
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-3 md:gap-4">
                                 <textarea 
                                     value={block.content}
                                     onChange={e => handleUpdateInfoBlock(block.id, 'content', e.target.value)}
-                                    className="w-full bg-panel border border-border p-4 text-sm text-text focus:border-acid outline-none min-h-[100px] transition-colors rounded-xl"
+                                    className="w-full bg-panel border border-border p-3 md:p-4 text-xs md:text-sm text-text focus:border-acid outline-none min-h-[80px] md:min-h-[100px] transition-colors rounded-lg md:rounded-xl"
                                     placeholder="Content details..."
                                 />
                                 
@@ -656,38 +663,40 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                 </div>
             )}
 
-            <div className="relative border-l-2 border-border ml-4 pl-8 space-y-8 py-4 mt-8">
+            <div className="relative border-l-2 border-border ml-2 md:ml-4 pl-4 md:pl-8 space-y-6 md:space-y-8 py-3 md:py-4 mt-6 md:mt-8">
                 {!currentDay || currentDay.activities.length === 0 ? (
-                    <div className="text-dim font-mono text-xs uppercase tracking-widest pl-2">{t.timelineEmpty}</div>
+                    <div className="text-dim font-mono text-[10px] md:text-xs uppercase tracking-widest pl-2">{t.timelineEmpty}</div>
                 ) : (
                     currentDay.activities.map((activity) => (
                         <div key={activity.id} className="relative group">
                             {/* Dot */}
-                            <div className="absolute -left-[41px] top-6 w-6 h-6 bg-surface border-4 border-border group-hover:border-acid rounded-full transition-colors z-10"></div>
+                            <div className="absolute -left-[21px] md:-left-[41px] top-4 md:top-6 w-4 h-4 md:w-6 md:h-6 bg-surface border-2 md:border-4 border-border group-hover:border-acid rounded-full transition-colors z-10"></div>
                             
-                            <div className="bg-surface border border-border p-6 hover:border-dim transition-colors group rounded-3xl shadow-sm relative">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="font-mono text-xs font-bold text-acid bg-acid/10 px-3 py-1 rounded-full">{activity.startTime}</div>
+                            <div className="bg-surface border border-border p-3 md:p-6 hover:border-dim transition-colors group rounded-2xl md:rounded-3xl shadow-sm relative">
+                                <div className="flex justify-between items-start mb-2 md:mb-3">
+                                    <div className="font-mono text-[10px] md:text-xs font-bold text-acid bg-acid/10 px-2 py-0.5 md:px-3 md:py-1 rounded-full">{activity.startTime}</div>
                                     <button 
                                         onClick={() => {
                                             const updated = trip.itinerary.map(d => d.id === activeDayId ? {...d, activities: d.activities.filter(a => a.id !== activity.id)} : d);
                                             updateTrip({...trip, itinerary: updated});
                                         }}
-                                        className="text-dim hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                        className="text-dim hover:text-danger opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity p-1"
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={14} className="md:hidden" />
+                                        <Trash2 size={16} className="hidden md:block" />
                                     </button>
                                 </div>
-                                <h4 className="font-bold text-lg text-text mb-1">{activity.title}</h4>
+                                <h4 className="font-bold text-base md:text-lg text-text mb-1">{activity.title}</h4>
                                 <button 
                                     onClick={() => openSearchForActivity(activity)}
-                                    className="text-xs text-dim hover:text-acid font-mono mb-4 flex items-center gap-1 transition-colors text-left group/loc"
+                                    className="text-[10px] md:text-xs text-dim hover:text-acid font-mono mb-3 md:mb-4 flex items-center gap-1 transition-colors text-left group/loc"
                                     title={t.locateTarget}
                                 >
-                                    <MapPin size={12} className="group-hover/loc:scale-110 transition-transform" /> 
+                                    <MapPin size={11} className="md:hidden group-hover/loc:scale-110 transition-transform" />
+                                    <MapPin size={12} className="hidden md:block group-hover/loc:scale-110 transition-transform" /> 
                                     {activity.locationAddress || 'Set Location'}
                                 </button>
-                                <p className="text-sm text-gray-400 leading-relaxed">{activity.description}</p>
+                                <p className="text-xs md:text-sm text-gray-400 leading-relaxed">{activity.description}</p>
                             </div>
                         </div>
                     ))
@@ -696,13 +705,14 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
         </div>
 
         {/* Checklist */}
-        <div className="bg-surface border border-border h-fit sticky top-24 rounded-3xl shadow-lg overflow-hidden">
-            <div className="p-5 border-b border-border bg-panel/50">
-                <h3 className="font-mono text-xs text-acid uppercase tracking-widest flex items-center gap-2">
-                    <CheckCircle2 size={16} /> {t.logisticsCheck}
+        <div className="bg-surface border border-border h-fit sticky top-20 md:top-24 rounded-2xl md:rounded-3xl shadow-lg overflow-hidden">
+            <div className="p-3 md:p-5 border-b border-border bg-panel/50">
+                <h3 className="font-mono text-[10px] md:text-xs text-acid uppercase tracking-widest flex items-center gap-1.5 md:gap-2">
+                    <CheckCircle2 size={14} className="md:hidden" />
+                    <CheckCircle2 size={16} className="hidden md:block" /> {t.logisticsCheck}
                 </h3>
             </div>
-            <div className="p-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+            <div className="p-1.5 md:p-2 max-h-[300px] md:max-h-[400px] overflow-y-auto custom-scrollbar">
                 {trip.checklist.map(item => (
                     <div key={item.id} className="flex items-start gap-3 p-3 hover:bg-panel transition-colors group border-b border-border/30 last:border-0 rounded-xl">
                         <div 
