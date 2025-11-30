@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Calendar, Plus, MapPin, Trash2, Search, Loader2, ExternalLink, Clock, CheckCircle2, Circle, AlertTriangle, Image as ImageIcon, Upload, X, ZoomIn, FileText, ChevronLeft, ChevronRight, Cloud, Share2, Download, CloudRain } from 'lucide-react';
+import { Calendar, Plus, MapPin, Trash2, Search, Loader2, ExternalLink, Clock, CheckCircle2, Circle, AlertTriangle, Image as ImageIcon, Upload, X, ZoomIn, FileText, ChevronLeft, ChevronRight, Cloud, Share2, Download, CloudRain, Camera } from 'lucide-react';
 import { Trip, Activity, MapsSearchResult, DayPlan, InfoBlock } from '../types';
 import { searchPlacesWithGemini, getWeatherForecast } from '../services/geminiService';
 import { translations, Language } from '../utils/translations';
@@ -35,7 +35,8 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
   const [searchResults, setSearchResults] = useState<MapsSearchResult[]>([]);
   
   const [uploadTargetBlockId, setUploadTargetBlockId] = useState<string | null>(null); 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [weatherInfo, setWeatherInfo] = useState<{ temp: string; condition: string; description: string } | null>(null);
@@ -501,15 +502,7 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                         <span className="text-[10px] font-mono text-dim mt-1">Weather unavailable</span>
                     )}
 
-                    {/* Passengers section */}
-                    <div className="mt-1.5 md:mt-3 space-y-1">
-                        { (trip.passengers && trip.passengers.length > 0 ? trip.passengers : ['PASAJERO 1', 'PASAJERO 2']).map((p, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-panel border border-border px-2 py-1 md:px-3 md:py-2 rounded-md md:rounded-xl">
-                                <span className="text-[8px] md:text-[10px] font-mono text-dim uppercase tracking-widest">{p}</span>
-                                <span className="text-[8px] md:text-[10px] font-mono text-text uppercase">—</span>
-                            </div>
-                        ))}
-                    </div>
+                    {/* Passengers section removed per request */}
                 </div>
 
                 {currentDay && (
@@ -533,6 +526,8 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
             </div>
 
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
+            {/* Separate input to hint camera capture on mobile */}
+            <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleImageUpload} />
 
             {/* Day Log */}
             {currentDay && (
@@ -549,14 +544,6 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                 />
                             </div>
                             <div className="space-y-1.5 md:space-y-2">
-                                <label className="font-mono text-[9px] md:text-[10px] text-acid uppercase tracking-widest">{t.baseLocation}</label>
-                                <input 
-                                    type="text" 
-                                    value={currentDay.location || ''}
-                                    onChange={e => handleUpdateDayLog({ location: e.target.value })}
-                                    className="w-full bg-panel border border-border p-2 md:p-3 text-[10px] md:text-sm text-text focus:border-acid outline-none mb-1.5 md:mb-2 transition-colors rounded-lg md:rounded-xl"
-                                    placeholder="City or Hotel..."
-                                />
                                 <div className="flex gap-2 md:gap-3 overflow-x-auto py-1.5 md:py-2 custom-scrollbar">
                                     {currentDay.images?.map((img, i) => (
                                         <div 
@@ -585,6 +572,23 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                     <button onClick={() => triggerImageUpload(null)} disabled={totalRemainingSlots === 0} className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 border border-dashed border-dim flex items-center justify-center text-dim hover:text-white hover:border-white transition-colors rounded-lg md:rounded-xl ${totalRemainingSlots === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
                                         <ImageIcon size={18} className="md:hidden" />
                                         <ImageIcon size={24} className="hidden md:block" />
+                                    </button>
+                                </div>
+                                {/* Highlighted Photo Actions */}
+                                <div className="flex items-center gap-2 md:gap-3 mt-2">
+                                    <button
+                                        onClick={() => triggerImageUpload(null)}
+                                        className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] md:text-xs shadow"
+                                        title="Subir fotos"
+                                    >
+                                        <Upload size={12} /> Subir foto
+                                    </button>
+                                    <button
+                                        onClick={() => cameraInputRef.current?.click()}
+                                        className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1.5 md:py-2 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 text-[10px] md:text-xs"
+                                        title="Tomar foto"
+                                    >
+                                        <Camera size={12} /> Tomar foto
                                     </button>
                                 </div>
                             </div>
@@ -656,13 +660,7 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                         </div>
                     ))}
 
-                    <button 
-                        onClick={handleAddInfoBlock}
-                        className="w-full py-2.5 md:py-4 border border-dashed border-dim text-dim hover:text-acid hover:border-acid hover:bg-acid/5 font-mono text-[10px] md:text-xs uppercase transition-all flex items-center justify-center gap-1.5 md:gap-2 group rounded-xl md:rounded-2xl"
-                    >
-                        <Plus size={12} className="md:hidden group-hover:scale-110 transition-transform" />
-                        <Plus size={14} className="hidden md:block group-hover:scale-110 transition-transform" /> {t.addInfoBlock}
-                    </button>
+                    {/* Add Info Block button removed per request */}
                 </div>
             )}
 
@@ -709,39 +707,39 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
         {/* Checklist */}
         <div className="bg-surface border border-border h-fit sticky top-20 md:top-24 rounded-xl md:rounded-3xl shadow-lg overflow-hidden">
-            <div className="p-2 md:p-5 border-b border-border bg-panel/50">
-                <h3 className="font-mono text-[9px] md:text-xs text-acid uppercase tracking-widest flex items-center gap-1.5 md:gap-2">
-                    <CheckCircle2 size={12} className="md:hidden" />
-                    <CheckCircle2 size={16} className="hidden md:block" /> {t.logisticsCheck}
+            <div className="p-1.5 md:p-4 border-b border-border bg-panel/50">
+                <h3 className="font-mono text-[8px] md:text-[10px] text-acid uppercase tracking-widest flex items-center gap-1 md:gap-1.5">
+                    <CheckCircle2 size={10} className="md:hidden" />
+                    <CheckCircle2 size={14} className="hidden md:block" /> {t.logisticsCheck}
                 </h3>
             </div>
-            <div className="p-1 md:p-2 max-h-[250px] md:max-h-[400px] overflow-y-auto custom-scrollbar">
+            <div className="p-1 md:p-2 max-h-[240px] md:max-h-[360px] overflow-y-auto custom-scrollbar">
                 {trip.checklist.map(item => (
-                    <div key={item.id} className="flex items-start gap-2 md:gap-3 p-2 md:p-3 hover:bg-panel transition-colors group border-b border-border/30 last:border-0 rounded-lg md:rounded-xl">
+                    <div key={item.id} className="flex items-start gap-1.5 md:gap-2 p-1.5 md:p-2 hover:bg-panel transition-colors group border-b border-border/30 last:border-0 rounded-lg md:rounded-xl">
                         <div 
-                            className={`w-4 h-4 md:w-5 md:h-5 mt-0.5 border flex items-center justify-center transition-colors shrink-0 cursor-pointer rounded-md ${item.completed ? 'bg-acid border-acid text-black' : 'border-dim'}`}
+                            className={`w-3.5 h-3.5 md:w-4 md:h-4 mt-0.5 border flex items-center justify-center transition-colors shrink-0 cursor-pointer rounded-md ${item.completed ? 'bg-acid border-acid text-black' : 'border-dim'}`}
                             onClick={() => {
                                 const updatedChecklist = trip.checklist.map(c => c.id === item.id ? {...c, completed: !c.completed} : c);
                                 updateTrip({...trip, checklist: updatedChecklist});
                             }}
                         >
-                            {item.completed && <CheckCircle2 size={12} className="md:hidden" />}
-                            {item.completed && <CheckCircle2 size={14} className="hidden md:block" />}
+                            {item.completed && <CheckCircle2 size={10} className="md:hidden" />}
+                            {item.completed && <CheckCircle2 size={12} className="hidden md:block" />}
                         </div>
                         <div className="flex-1">
-                             <div className={`text-[11px] md:text-sm font-medium mb-0.5 md:mb-1 ${item.completed ? 'text-dim line-through' : 'text-text'}`}>{item.task}</div>
+                             <div className={`text-[10px] md:text-[12px] leading-snug font-medium mb-0.5 md:mb-1 ${item.completed ? 'text-neutral-400 line-through' : 'text-text'} line-clamp-2`}>{item.task}</div>
                              <div className="flex items-center gap-2">
-                                 <div className="flex items-center gap-1.5 bg-panel/50 hover:bg-panel border border-transparent hover:border-border px-2 py-1 rounded-lg transition-all cursor-pointer group/date">
+                                 <div className="flex items-center gap-1 bg-panel/60 hover:bg-panel border border-transparent hover:border-border px-1.5 py-0.5 rounded-lg transition-all cursor-pointer group/date">
                                      <Calendar size={10} className={item.dueDate ? "text-acid" : "text-dim group-hover/date:text-text"} />
                                      <input 
                                         type="date" 
-                                        className="bg-transparent text-[10px] text-dim font-mono border-none outline-none hover:text-text cursor-pointer w-auto p-0 uppercase"
+                                        className="bg-transparent text-[9px] md:text-[10px] text-text font-mono border-none outline-none cursor-pointer w-auto p-0 uppercase"
                                         value={item.dueDate || ''}
                                         onChange={(e) => handleUpdateTaskDate(item.id, e.target.value)}
                                     />
                                  </div>
                                  {item.dueDate && !item.completed && new Date(item.dueDate) < new Date() && (
-                                     <span className="text-[9px] text-danger font-bold bg-danger/10 px-1.5 py-0.5 rounded-sm flex items-center gap-1 animate-pulse">
+                                     <span className="text-[8px] md:text-[9px] text-danger font-bold bg-danger/10 px-1.5 py-0.5 rounded-sm flex items-center gap-1 animate-pulse">
                                          <AlertTriangle size={8} /> OVERDUE
                                      </span>
                                  )}
@@ -749,14 +747,14 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                         </div>
                         <button 
                             onClick={() => setTaskToDelete(item.id)}
-                            className="text-dim hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="text-dim hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity p-1"
                         >
-                            <Trash2 size={14} />
+                            <Trash2 size={12} />
                         </button>
                     </div>
                 ))}
             </div>
-            <div className="p-2 md:p-4 border-t border-border bg-panel/30">
+            <div className="p-1.5 md:p-3 border-t border-border bg-panel/30">
                 <div className="flex flex-col gap-1.5 md:gap-2">
                     <input 
                         type="text" 
@@ -764,20 +762,20 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                         value={taskInput}
                         onChange={(e) => setTaskInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-                        className="w-full bg-surface border border-border px-2 md:px-4 py-1.5 md:py-2.5 text-[10px] md:text-sm text-text focus:border-acid outline-none rounded-lg md:rounded-xl transition-colors" 
+                        className="w-full bg-surface border border-border px-2 md:px-3 py-1.5 md:py-2 text-[10px] md:text-xs text-text focus:border-acid outline-none rounded-lg md:rounded-xl transition-colors" 
                     />
                     <div className="flex gap-1.5 md:gap-2">
                         <div className="flex-1 bg-surface border border-border px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl flex items-center gap-1.5 md:gap-2">
-                            <Calendar size={12} className="text-dim md:hidden" />
-                            <Calendar size={14} className="text-dim hidden md:block" />
+                            <Calendar size={11} className="text-dim md:hidden" />
+                            <Calendar size={12} className="text-dim hidden md:block" />
                             <input 
                                 type="date"
                                 value={taskDueDate}
                                 onChange={(e) => setTaskDueDate(e.target.value)}
-                                className="w-full bg-transparent text-[10px] md:text-xs text-dim focus:text-text outline-none"
+                                className="w-full bg-transparent text-[10px] md:text-[11px] text-dim focus:text-text outline-none"
                             />
                         </div>
-                        <button onClick={handleAddTask} disabled={!taskInput.trim()} className="bg-text text-obsidian px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold hover:bg-acid transition-colors uppercase rounded-lg md:rounded-xl">{t.add}</button>
+                        <button onClick={handleAddTask} disabled={!taskInput.trim()} className="bg-text text-obsidian px-3 md:px-3 py-1.5 md:py-2 text-[10px] md:text-[11px] font-bold hover:bg-acid transition-colors uppercase rounded-lg md:rounded-xl">{t.add}</button>
                     </div>
                 </div>
             </div>

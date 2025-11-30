@@ -90,7 +90,7 @@
         --color-surface: #171717; /* Slightly lighter gray for surfaces */
         --color-panel: #262626;   /* Distinct panel color */
         --color-border: #333333;
-        --color-acid: #22d3ee; 
+        --color-acid: #10b981; 
         --color-dim: #888888;
         --color-muted: #555555;
         --color-text: #ffffff;
@@ -135,6 +135,15 @@
 <link rel="stylesheet" href="/index.css">
 </head>
   <body class="bg-obsidian text-text overflow-x-hidden selection:bg-acid selection:text-black">
+    <!-- Background Decor adapted to reference -->
+    <div class="fixed inset-0 -z-10 pointer-events-none">
+      <div class="absolute inset-0 opacity-50 [mask-image:radial-gradient(60%_50%_at_50%_20%,black,transparent)]">
+        <img src="https://images.unsplash.com/photo-1526772662000-69e29c6552d5?q=80&w=2000&auto=format&fit=crop" alt="bg" class="w-full h-full object-cover object-center"/>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/70 to-black"></div>
+      <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[120rem] h-[40rem] bg-gradient-to-r from-emerald-500/10 via-cyan-500/10 to-blue-500/10 blur-3xl opacity-70"></div>
+      <div class="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

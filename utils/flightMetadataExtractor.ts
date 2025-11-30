@@ -12,6 +12,7 @@ async function loadPdfjs() {
   return pdfjs;
 }
 
+
 // Basic regex helpers
 const IATA_RE = /\b[A-Z]{3}\b/g; // crude: three uppercase letters
 const TIME_RE = /\b([01]?\d|2[0-3]):[0-5]\d\b/g; // HH:MM 24h
@@ -59,9 +60,17 @@ export async function extractFlightMetadataLocal(base64Data: string): Promise<Lo
     let fullText = '';
     for (let p = 1; p <= doc.numPages; p++) {
       const page = await doc.getPage(p);
-      const content = await page.getTextContent();
-      const pageText = content.items.map((it: any) => it.str).join(' ');
-      fullText += '\n' + pageText.toUpperCase();
+      let pageText = '';
+      try {
+        const content = await page.getTextContent();
+        pageText = content.items.map((it: any) => it.str).join(' ');
+      } catch {}
+
+      // If text extraction is empty or very short, leave it blank (no OCR to avoid bundling/resolution issues)
+      if (!pageText || pageText.trim().length < 20) {
+        pageText = pageText || '';
+      }
+      fullText += '\n' + (pageText || '').toUpperCase();
     }
 
     // Airline detection

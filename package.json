@@ -15,6 +15,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "lucide-react": "^0.554.0",
     "pdfjs-dist": "^4.10.38",
+    "tesseract.js": "^5.1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.4.1",

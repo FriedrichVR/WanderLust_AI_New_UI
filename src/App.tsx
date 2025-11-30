@@ -6,11 +6,12 @@ import { generateQuickSuggestion } from '../utils/aiTripSuggester';
 import { generateBudgetSuggestion } from '../services/geminiService';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
-    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign, Files
+    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal
 } from 'lucide-react';
 import { Trip, AppState, Currency, TripStatus, TripType, DayPlan } from '../types';
 import { loadSettings, saveSettings, getTrips, upsertTrip, deleteTripFromDb, getLocalCache, INITIAL_TRIPS } from '../services/storageService';
 import { generateTripImage, generateTripSummary } from '../services/geminiService';
+import { extractFlightMetadataLocal } from '../utils/flightMetadataExtractor';
 import { supabase } from '../services/supabaseClient';
 import AuthScreen from '../components/AuthScreen';
 import Tooltip from '../components/Tooltip';
@@ -172,12 +173,16 @@ const TripDetailView: React.FC<{
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
     const [showImageEditor, setShowImageEditor] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [docFilter, setDocFilter] = useState<'all' | 'flight' | 'hotel' | 'airbnb' | 'food' | 'other'>('all');
+    const [notesTab, setNotesTab] = useState<'notes' | 'gallery'>('gallery');
 
     // Missing State Variables Added
     const [deleteImageTarget, setDeleteImageTarget] = useState<GalleryImage | null>(null);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [showDeleteTripConfirm, setShowDeleteTripConfirm] = useState(false);
     const [leftPanelTab, setLeftPanelTab] = useState<'diary' | 'notes' | 'converter'>('diary');
+    const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+    const [selectedAttraction, setSelectedAttraction] = useState<{ url: string; title: string; desc: string } | null>(null);
 
     const coverInputRef = useRef<HTMLInputElement>(null);
     const t = translations[lang];
@@ -199,35 +204,7 @@ const TripDetailView: React.FC<{
         }
     };
 
-    const handleGenImage = async () => {
-        setIsGeneratingImage(true);
-        try {
-            const newImage = await generateTripImage(trip.destination, trip.type);
-            if (newImage) {
-                updateTrip({ ...trip, coverImage: newImage });
-                showToast("Cover image generated successfully!", 'success');
-            }
-        } catch (error: any) {
-            showToast(error.message || "Failed to generate image.", 'error');
-        } finally {
-            setIsGeneratingImage(false);
-        }
-    };
-
-    const handleGenSummary = async () => {
-        setIsGeneratingSummary(true);
-        try {
-            const summary = await generateTripSummary(trip);
-            if (summary) {
-                updateTrip({ ...trip, notes: summary });
-                showToast("Mission summary updated.", 'success');
-            }
-        } catch (error: any) {
-            showToast(error.message || "Failed to generate summary.", 'error');
-        } finally {
-            setIsGeneratingSummary(false);
-        }
-    };
+    // Auto generators disabled per request
 
     const saveTripDetails = () => {
         const newStartStr = editForm.startDate ? editForm.startDate.split('T')[0] : '';
@@ -304,95 +281,100 @@ const TripDetailView: React.FC<{
     };
 
     const diaryImages = useMemo(() => allImages.filter(img => img.type !== 'cover'), [allImages]);
+    const destinationGallery = useMemo(() => {
+        const seed = encodeURIComponent((trip.destination || 'travel').toLowerCase());
+        // Use Picsum with seeded images to avoid Unavailable responses and hotlink issues
+        return Array.from({ length: 9 }).map((_, i) => `https://picsum.photos/seed/${seed}-${i}/800/800`);
+    }, [trip.destination]);
 
     return (
         <div className="animate-fade-in pb-20">
-            {/* Header with Cover Image */}
-            <div className="relative m-1 overflow-hidden group mb-6 shadow-2xl h-[200px] md:h-[280px]">
-                <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
-                <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? 'from-white/90 via-white/30 to-transparent' : 'from-black/90 via-black/20 to-transparent'}`}></div>
-
-                <div className="absolute top-6 left-6 z-20">
-                    <button onClick={goBack} className={`p-3 rounded-full backdrop-blur-md transition-all flex items-center gap-2 group/back shadow-lg border ${isLight ? 'bg-white/60 text-black hover:bg-black hover:text-white border-black/10' : 'bg-black/40 text-white hover:bg-white hover:text-black border-white/10'}`}>
-                        <ArrowLeft size={20} className="group-hover/back:-translate-x-1 transition-transform" />
-                        <span className="hidden md:inline font-mono text-xs uppercase tracking-widest">{t.dashboard}</span>
-                    </button>
-                </div>
-
-                <div className="absolute top-6 right-6 z-20 flex gap-2">
-                    <div className={`flex items-center gap-2 rounded-full p-1 border opacity-0 group-hover:opacity-100 transition-all duration-300 ${isLight ? 'bg-white/50 border-black/10' : 'bg-black/40 border-white/10'}`}
-                    >
-                        <button onClick={() => setShowImageEditor(true)} className="p-2 hover:bg-white hover:text-black text-white rounded-full transition-all" title={t.editImage}>
-                            <Wand2 size={18} />
-                        </button>
-                        <div className="w-px h-4 bg-white/20"></div>
-                        <button onClick={() => coverInputRef.current?.click()} className="p-2 hover:bg-white hover:text-black text-white rounded-full transition-all" title={t.uploadImage}>
-                            <Upload size={18} />
-                        </button>
-                    </div>
-                    <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={(e) => handleCoverImageUploadUtil(e, trip, updateTrip)} />
-                </div>
-
-                {/* Refactored Header Content for Layout Stability */}
-                <div className={`absolute bottom-0 left-0 w-full p-4 md:p-8 z-20 flex flex-col gap-4 ${isLight ? 'bg-gradient-to-t from-white via-white/60 to-transparent' : 'bg-gradient-to-t from-black via-black/60 to-transparent'}`}>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setShowEditModal(true)}
-                            className={`px-3 py-1 font-mono text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? (isLight ? 'bg-white/70 text-emerald-600 border-emerald-600/30' : 'bg-black/60 text-emerald-400 border-emerald-500/30') :
-                                trip.status === 'Booked' ? (isLight ? 'bg-white/70 text-cyan-600 border-cyan-600/30' : 'bg-black/60 text-cyan-400 border-cyan-500/30') : (isLight ? 'bg-white/70 text-amber-600 border-amber-600/30' : 'bg-black/60 text-amber-400 border-amber-500/30')
-                                }`}>
-                            {trip.status}
-                        </button>
-
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 items-center">
-                            <button onClick={() => setShowEditModal(true)} className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${isLight ? 'bg-black/10 text-black hover:bg-black hover:text-white' : 'bg-white/10 text-white hover:bg-white hover:text-black'}`} title={t.editParams}>
-                                <Edit2 size={14} />
+            {/* New Trip Header — reference-inspired */}
+            <section className="relative mx-auto max-w-7xl px-4 md:px-6 pt-6">
+                <div className="grid lg:grid-cols-12 gap-6 items-center">
+                    <div className="lg:col-span-7">
+                        <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-white/10 bg-white/5 text-xs text-neutral-300 mb-4">
+                            <Wand2 className="text-emerald-400" size={14} />
+                            {trip.type} • {trip.status}
+                        </div>
+                        <h1 onClick={() => setShowEditModal(true)} className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1] cursor-pointer">
+                            {trip.destination}
+                        </h1>
+                        <p className="mt-3 text-neutral-300 text-sm md:text-base">
+                            {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()} • {trip.currency} {trip.budget.toLocaleString()}
+                        </p>
+                        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                            <button onClick={goBack} className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-base font-semibold bg-amber-500 text-neutral-950 hover:bg-amber-400 transition shadow-lg">
+                                <ArrowLeft size={16} /> {t.dashboard}
+                            </button>
+                            <button onClick={() => setShowEditModal(true)} className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">
+                                <Edit2 size={16} /> {t.editParams}
                             </button>
                             <button
                                 onClick={() => {
-                                    const enforceWindow = !isAuthenticated; // sólo modo free/demo
+                                    const enforceWindow = !isAuthenticated;
                                     const expired = enforceWindow && (!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS);
-                                    if (expired) {
-                                        showToast('Deletion window expired.', 'info');
-                                        return;
-                                    }
+                                    if (expired) { showToast('Deletion window expired.', 'info'); return; }
                                     setShowDeleteTripConfirm(true);
                                 }}
-                                className={`p-1.5 rounded-full backdrop-blur-md transition-colors ${((!trip.createdAt || Date.now() - new Date(trip.createdAt).getTime() > DELETION_WINDOW_MS) && !isAuthenticated)
-                                    ? (isLight ? 'bg-red-500/10 text-red-600 cursor-not-allowed' : 'bg-red-500/10 text-red-500 cursor-not-allowed')
-                                    : (isLight ? 'bg-red-500/20 text-red-600 hover:bg-red-500 hover:text-white' : 'bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white')}`}
+                                className="inline-flex items-center justify-center rounded-md p-2 text-red-300 ring-1 ring-red-500/30 hover:bg-red-500/10 transition"
                                 title={t.deleteMission}
                             >
-                                <Trash2 size={14} />
+                                <Trash2 size={16} />
                             </button>
                             <DeletionCountdown createdAt={trip.createdAt} windowMs={DELETION_WINDOW_MS} variant="badge" />
                         </div>
                     </div>
 
-                    <h1
-                        onClick={() => setShowEditModal(true)}
-                        className={`text-4xl md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-xl cursor-pointer transition-colors break-words ${isLight ? 'text-black hover:text-acid' : 'text-white hover:text-acid'}`}
-                    >
-                        {trip.destination}
-                    </h1>
-
-                    <div className={`flex flex-wrap gap-6 font-mono text-xs ${isLight ? 'text-black/70' : 'text-white/80'}`}>
-                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-2 hover:text-acid transition-all cursor-pointer group/dates">
-                            <CalendarIcon size={14} className="text-acid group-hover/dates:scale-110 transition-transform" />
-                            <span>
-                                {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
-                            </span>
-                        </button>
-                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-2 hover:text-acid transition-all cursor-pointer group/budget">
-                            <Wallet size={14} className="text-acid group-hover/budget:scale-110 transition-transform" />
-                            <span>{trip.currency} {trip.budget.toLocaleString()}</span>
-                        </button>
+                    <div className="lg:col-span-5">
+                        <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-neutral-900/50">
+                            <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-64 md:h-[22rem] object-cover" />
+                            <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-neutral-950/90 via-neutral-950/60 to-transparent">
+                                <div className="flex items-center gap-4 text-xs text-neutral-300">
+                                    <span className="inline-flex items-center gap-1"><CalendarIcon size={12} /> {Math.max(1, Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime())/(1000*60*60*24)))} días</span>
+                                    <span className="inline-flex items-center gap-1"><Wallet size={12} /> {trip.currency} {trip.budget.toLocaleString()}</span>
+                                </div>
+                            </div>
+                            <div className="absolute top-4 right-4">
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 text-emerald-300 px-2 py-1 text-[11px] ring-1 ring-emerald-500/30">
+                                    <Compass size={12} /> {trip.type}
+                                </span>
+                            </div>
+                            <div className="absolute top-4 left-4 flex items-center gap-2">
+                                <button onClick={() => setShowImageEditor(true)} className="inline-flex items-center gap-1 rounded-md bg-white/10 text-white px-2 py-1 text-[11px] ring-1 ring-white/20 hover:bg-white/20 transition">
+                                    <Wand2 size={12} /> {t.editImage}
+                                </button>
+                                <button onClick={() => coverInputRef.current?.click()} className="inline-flex items-center gap-1 rounded-md bg-white/10 text-white px-2 py-1 text-[11px] ring-1 ring-white/20 hover:bg-white/20 transition">
+                                    <Upload size={12} /> {t.uploadImage}
+                                </button>
+                                <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={(e) => handleCoverImageUploadUtil(e, trip, updateTrip)} />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+                {/* Overview badges under header */}
+                <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
+                        <div className="text-xs text-neutral-400">Días</div>
+                        <div className="mt-1 text-lg font-semibold tracking-tight">{Math.max(1, Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime())/(1000*60*60*24)))}</div>
+                    </div>
+                    <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
+                        <div className="text-xs text-neutral-400">Gasto total</div>
+                        <div className="mt-1 text-lg font-semibold tracking-tight">{(trip.expenses?.reduce((s,e)=>s+(e.amount||0),0) || 0).toLocaleString()}</div>
+                    </div>
+                    <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
+                        <div className="text-xs text-neutral-400">Restante</div>
+                        <div className="mt-1 text-lg font-semibold tracking-tight">{Math.max(0, (trip.budget||0) - (trip.expenses?.reduce((s,e)=>s+(e.amount||0),0) || 0)).toLocaleString()}</div>
+                    </div>
+                    <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
+                        <div className="text-xs text-neutral-400">Docs</div>
+                        <div className="mt-1 text-lg font-semibold tracking-tight">{trip.documents?.length || 0}</div>
+                    </div>
+                </div>
+            </section>
 
-            {/* Navigation Tabs */}
-            <div className={`flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b sticky top-0 backdrop-blur-md z-[80] pt-2 ${isLight ? 'bg-white/98 border-neutral-300' : 'bg-obsidian/95 border-border'}`}>
+            {/* Navigation Tabs — streamlined */}
+            <div className={`flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b sticky top-0 backdrop-blur-sm z-[80] pt-2 ${isLight ? 'bg-white/70 border-neutral-300' : 'bg-neutral-950/70 border-white/10'}`}>
                 {[
                     { id: 'overview', icon: Check, label: t.overview },
                     { id: 'itinerary', icon: MapIcon, label: t.itinerary },
@@ -402,9 +384,9 @@ const TripDetailView: React.FC<{
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-6 py-3 font-mono text-xs uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
-                            ? 'border-acid text-acid font-bold'
-                            : (isLight ? 'border-transparent text-neutral-700 hover:text-neutral-900 hover:border-neutral-300' : 'border-transparent text-dim hover:text-text hover:border-dim')
+                        className={`flex items-center gap-2 px-6 py-3 text-xs transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
+                            ? 'border-emerald-500 text-emerald-400 font-semibold'
+                            : 'border-transparent text-neutral-300 hover:text-white hover:border-white/10'
                             }`}
                     >
                         <tab.icon size={16} /> {tab.label}
@@ -417,192 +399,411 @@ const TripDetailView: React.FC<{
                 <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin text-acid" size={32} /></div>}>
                     {activeTab === 'overview' && (
                         <div className="animate-fade-in px-0 md:px-0 w-full">
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full flex flex-col w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
-                                    <div className={`px-3 pt-3 pb-2 border-b ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
-                                        <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Overview Panel</h4>
-                                    </div>
-                                    <div className="p-3 flex-1 flex flex-col">
-                                        <div className="flex gap-2 mb-2 border-b border-border/60 pb-2">
-                                            <button
-                                                onClick={() => setLeftPanelTab('diary')}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'diary'
-                                                    ? 'bg-acid text-black font-bold'
-                                                    : 'text-dim hover:text-text hover:bg-panel'
-                                                    }`}
-                                            >
-                                                <ImageIcon size={14} /> {t.visualDiary}
-                                            </button>
-                                            <button
-                                                onClick={() => setLeftPanelTab('notes')}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'notes'
-                                                    ? 'bg-acid text-black font-bold'
-                                                    : (isLight ? 'text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100' : 'text-dim hover:text-text hover:bg-panel')
-                                                    }`}
-                                            >
-                                                <FileText size={14} /> {t.missionNotes}
-                                            </button>
-                                            <button
-                                                onClick={() => setLeftPanelTab('converter')}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'converter'
-                                                    ? 'bg-acid text-black font-bold'
-                                                    : (isLight ? 'text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100' : 'text-dim hover:text-text hover:bg-panel')
-                                                    }`}
-                                            >
-                                                <DollarSign size={14} /> Converter
-                                            </button>
-                                        </div>
-                                        {leftPanelTab === 'diary' && (
-                                            <div className="flex-1 flex flex-col gap-3">
-                                                <div className="flex justify-end">
-                                                    <button
-                                                        onClick={handleGenImage}
-                                                        disabled={isGeneratingImage}
-                                                        className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
-                                                    >
-                                                        {isGeneratingImage ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
-                                                        {isGeneratingImage ? t.generating : t.regenVisual}
-                                                    </button>
+                            {/* Card grid overview */}
+                            <section className="mx-auto max-w-7xl px-4 md:px-6">
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div className="rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30 flex items-center justify-center text-emerald-300">
+                                                    <Goal className="w-5 h-5" />
                                                 </div>
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 flex-1">
-                                                    {diaryImages.length === 0 && (
-                                                        <div className={`col-span-full py-10 text-center text-[10px] font-mono border border-dashed rounded-xl flex flex-col items-center justify-center gap-2 ${isLight ? 'text-neutral-600 border-neutral-300' : 'text-dim border-dim'}`}>
-                                                            <ImageIcon size={24} className="opacity-50" />
-                                                            {t.galleryEmpty}
-                                                        </div>
-                                                    )}
-                                                    {diaryImages.map((img) => {
-                                                        const originalIndex = allImages.indexOf(img);
-                                                        return (
-                                                            <div key={`${img.type}-${img.dayId}-${img.index}-${originalIndex}`} className="aspect-square rounded-xl overflow-hidden bg-panel border border-border relative group cursor-pointer">
-                                                                <LazyImage
-                                                                    src={img.src}
-                                                                    alt={img.label}
-                                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                                    onClick={() => setLightboxIndex(originalIndex)}
-                                                                />
-                                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none"></div>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); onDeleteImage(img); }}
-                                                                    className="absolute top-2 right-2 p-1.5 bg-black/50 text-white hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm z-10"
-                                                                    title="Delete Image"
-                                                                >
-                                                                    <Trash2 size={12} />
-                                                                </button>
-                                                                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <p className="text-[9px] font-mono text-white font-bold truncate">{img.label}</p>
-                                                                    <p className="text-[7px] font-mono text-white/70">{new Date(img.date).toLocaleDateString()}</p>
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    })}
-                                                </div>
+                                                <h3 className="text-lg font-semibold tracking-tight">{t.visualDiary}</h3>
                                             </div>
-                                        )}
-                                        {leftPanelTab === 'notes' && (
-                                            <div className="flex-1 flex flex-col gap-3">
-                                                <div className="flex justify-end">
-                                                    <button
-                                                        onClick={handleGenSummary}
-                                                        disabled={isGeneratingSummary}
-                                                        className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
-                                                    >
-                                                        {isGeneratingSummary ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
-                                                        {isGeneratingSummary ? t.generating : t.aiSummary}
-                                                    </button>
+                                            {/* Regenerar visual removed */}
+                                        </div>
+                                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                            {diaryImages.length === 0 && (
+                                                <div className="col-span-full py-10 text-center text-[10px] font-mono border border-dashed rounded-xl flex flex-col items-center justify-center gap-2 text-neutral-300">
+                                                    <ImageIcon size={24} className="opacity-50" />
+                                                    {t.galleryEmpty}
                                                 </div>
+                                            )}
+                                            {diaryImages.slice(0, 8).map((img) => {
+                                                const originalIndex = allImages.indexOf(img);
+                                                return (
+                                                    <div key={`${img.type}-${img.dayId}-${img.index}-${originalIndex}`} className="aspect-square rounded-xl overflow-hidden bg-neutral-950/60 ring-1 ring-white/10 relative group cursor-pointer">
+                                                        <LazyImage
+                                                            src={img.src}
+                                                            alt={img.label}
+                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                            onClick={() => setLightboxIndex(originalIndex)}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none"></div>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setDeleteImageTarget(img); }}
+                                                            className="absolute top-2 right-2 p-1.5 bg-black/50 text-white hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm z-10"
+                                                            title="Delete Image"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30 flex items-center justify-center text-emerald-300">
+                                                <Sparkles className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold tracking-tight">{t.missionNotes}</h3>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => setNotesTab('gallery')} className={`px-2.5 py-1 rounded-md text-[11px] ring-1 ring-white/10 ${notesTab==='gallery'?'bg-emerald-500/20 text-emerald-300':'bg-neutral-950/60 text-neutral-300 hover:bg-white/5'}`}>Galería</button>
+                                                <button onClick={() => setNotesTab('notes')} className={`px-2.5 py-1 rounded-md text-[11px] ring-1 ring-white/10 ${notesTab==='notes'?'bg-emerald-500/20 text-emerald-300':'bg-neutral-950/60 text-neutral-300 hover:bg-white/5'}`}>Notas</button>
+                                            </div>
+                                        </div>
+                                        {notesTab === 'notes' ? (
+                                            <div className="mt-4">
+                                                <label className="text-[11px] text-neutral-400 block mb-1">{t.missionNotes}</label>
                                                 <textarea
                                                     value={trip.notes || ''}
                                                     onChange={(e) => updateTrip({ ...trip, notes: e.target.value })}
-                                                    className="w-full flex-1 bg-panel border border-border p-2 rounded-xl outline-none text-text text-[11px] resize-none leading-relaxed placeholder-dim custom-scrollbar focus:border-acid transition-colors"
-                                                    placeholder="// Enter mission notes or generate summary..."
+                                                    placeholder="Escribe tu resumen de la misión…"
+                                                    className="w-full min-h-[120px] bg-neutral-950/60 ring-1 ring-white/10 rounded-lg p-3 text-sm text-neutral-200 placeholder-neutral-400 focus:ring-emerald-500/40 focus:outline-none"
                                                 />
                                             </div>
-                                        )}
-                                        {leftPanelTab === 'converter' && (
-                                            <div className="flex-1 flex flex-col">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
-                                                    <div className="bg-panel border border-border rounded-xl p-3 flex flex-col">
-                                                        <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
-                                                            <CurrencyConverter lang={lang} />
-                                                        </Suspense>
-                                                    </div>
-                                                    <div className="bg-panel border border-border rounded-xl overflow-hidden">
-                                                        <Suspense fallback={<div className="h-[120px] bg-surface animate-pulse"></div>}>
-                                                            <WorldMapTracker />
-                                                        </Suspense>
-                                                    </div>
-                                                </div>
+                                        ) : (
+                                            <div className="mt-4 grid grid-cols-3 gap-2">
+                                                {destinationGallery.map((url, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => {
+                                                            const title = `${trip.destination} · Atracción ${idx + 1}`;
+                                                            const desc = `Descubre esta atracción destacada en ${trip.destination}. Ideal para fotos y paseo.
+Ubicación aproximada: centro de la ciudad · Recomendado: tarde dorada`;
+                                                            setSelectedAttraction({ url, title, desc });
+                                                        }}
+                                                        className="aspect-square rounded-lg overflow-hidden bg-neutral-950/60 ring-1 ring-white/10 hover:ring-emerald-500/30 focus:outline-none"
+                                                        title="Ver detalle"
+                                                    >
+                                                        <LazyImage src={url} alt={`${trip.destination} gallery ${idx+1}`} className="w-full h-full object-cover" />
+                                                    </button>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
+                                    <div className="rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30 flex items-center justify-center text-emerald-300">
+                                                <DollarSign className="w-5 h-5" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold tracking-tight">Converter</h3>
+                                        </div>
+                                        <p className="mt-3 text-sm text-neutral-300">Convierte rápidamente a tu moneda.</p>
+                                        <div className="mt-4 grid grid-cols-1 gap-3">
+                                            <Suspense fallback={<div className="h-20 bg-neutral-950/60 ring-1 ring-white/10 rounded-lg animate-pulse"></div>}>
+                                                <CurrencyConverter lang={lang} />
+                                            </Suspense>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
                         </div>
                     )}
                     {activeTab === 'itinerary' && (
                         <div className="px-0 md:px-0 w-full">
-                            <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
-                                <div className={`px-3 pt-3 pb-2 border-b flex items-center justify-between ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
-                                    <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Itinerary</h4>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={handleGenSummary}
-                                            disabled={isGeneratingSummary}
-                                            className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
-                                        >
-                                            {isGeneratingSummary ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
-                                            {isGeneratingSummary ? t.generating : t.aiItinerary}
-                                        </button>
+                            <section className="mx-auto max-w-7xl px-4 md:px-6">
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div className="md:col-span-2 rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-lg font-semibold tracking-tight">{t.itinerary}</h4>
+                                            {/* AI itinerary button removed */}
+                                        </div>
+                                        <div className="mt-4">
+                                            <TripItinerary trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <h4 className="text-lg font-semibold tracking-tight">{t.overview}</h4>
+                                        <p className="mt-3 text-sm text-neutral-300">{Math.max(1, Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime())/(1000*60*60*24)))} días • {trip.type}</p>
+                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                            <div className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 p-3">
+                                                <div className="text-xs text-neutral-400">Presupuesto</div>
+                                                <div className="mt-1 text-lg font-semibold tracking-tight">{trip.currency} {trip.budget.toLocaleString()}</div>
+                                            </div>
+                                            <div className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 p-3">
+                                                <div className="text-xs text-neutral-400">Documentos</div>
+                                                <div className="mt-1 text-lg font-semibold tracking-tight">{trip.documents?.length || 0}</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-3">
-                                    <TripItinerary trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
-                                </div>
-                            </div>
+                            </section>
                         </div>
                     )}
                     {activeTab === 'budget' && (
                         <div className="px-0 md:px-0 w-full">
-                            <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
-                                <div className={`px-3 pt-3 pb-2 border-b flex items-center justify-between ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
-                                    <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Budget</h4>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={handleGenSummary}
-                                            disabled={isGeneratingSummary}
-                                            className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
-                                        >
-                                            {isGeneratingSummary ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
-                                            {isGeneratingSummary ? t.generating : t.aiBudget}
-                                        </button>
+                            <section className="mx-auto max-w-7xl px-4 md:px-6">
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div className="md:col-span-2 rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-lg font-semibold tracking-tight">{t.budget}</h4>
+                                            {/* AI budget button removed */}
+                                        </div>
+                                        <div className="mt-4">
+                                            <BudgetOverview trip={trip} addExpense={(e) => updateTrip({ ...trip, expenses: [...trip.expenses, e] })} removeExpense={(id) => updateTrip({ ...trip, expenses: trip.expenses.filter(e => e.id !== id) })} currencySymbol={trip.currency} lang={lang} theme={theme} />
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
+                                        <h4 className="text-lg font-semibold tracking-tight">Resumen</h4>
+                                        <div className="mt-4 grid grid-cols-2 gap-3">
+                                            <div className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 p-3">
+                                                <div className="text-xs text-neutral-400">Total gastos</div>
+                                                <div className="mt-1 text-lg font-semibold tracking-tight">{trip.expenses?.reduce((s, e) => s + (e.amount || 0), 0).toLocaleString()}</div>
+                                            </div>
+                                            <div className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 p-3">
+                                                <div className="text-xs text-neutral-400">Items</div>
+                                                <div className="mt-1 text-lg font-semibold tracking-tight">{trip.expenses?.length || 0}</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-3">
-                                    <BudgetOverview trip={trip} addExpense={(e) => updateTrip({ ...trip, expenses: [...trip.expenses, e] })} removeExpense={(id) => updateTrip({ ...trip, expenses: trip.expenses.filter(e => e.id !== id) })} currencySymbol={trip.currency} lang={lang} theme={theme} />
-                                </div>
-                            </div>
+                            </section>
                         </div>
                     )}
                     {activeTab === 'documents' && (
                         <div className="px-0 md:px-0 w-full">
-                            <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
-                                <div className={`px-3 pt-3 pb-2 border-b flex items-center justify-between ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
-                                    <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Documents</h4>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => {}}
-                                            className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors flex items-center gap-1"
+                            <section className="mx-auto max-w-7xl px-4 md:px-6">
+                                <div className="grid lg:grid-cols-12 gap-6">
+                                    {/* Sidebar filters */}
+                                    <aside className="lg:col-span-3 rounded-xl p-4 bg-neutral-900/60 ring-1 ring-white/10">
+                                        <h4 className="text-base font-semibold tracking-tight mb-3">Filtros</h4>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            {['all','flight','hotel','airbnb','food','other'].map((c) => (
+                                                <button key={c} onClick={() => setDocFilter(c as any)} className={`px-2.5 py-1.5 rounded-md text-[11px] ring-1 ring-white/10 ${docFilter===c? 'bg-emerald-500/20 text-emerald-300' : 'bg-neutral-950/60 text-neutral-300 hover:bg-white/5'}`}>{c.toUpperCase()}</button>
+                                            ))}
+                                        </div>
+                                        <div className="mt-4 grid grid-cols-2 gap-2">
+                                            <div className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 p-2.5">
+                                                <div className="text-[11px] text-neutral-400">Total docs</div>
+                                                <div className="mt-1 text-base font-semibold tracking-tight">{trip.documents?.length || 0}</div>
+                                            </div>
+                                            <div className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 p-2.5">
+                                                <div className="text-[11px] text-neutral-400">Categorías</div>
+                                                <div className="mt-1 text-base font-semibold tracking-tight">{trip.documentCategories?.length || 0}</div>
+                                            </div>
+                                        </div>
+                                    </aside>
+                                    {/* Main content */}
+                                    <div className="lg:col-span-9 rounded-xl p-5 bg-neutral-900/60 ring-1 ring-white/10">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-base font-semibold tracking-tight">{t.documents}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <label className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer">
+                                                    <Files size={10} /> Subir
+                                                    <input type="file" multiple className="hidden" onChange={async (e) => {
+                                                        const files = Array.from(e.target.files || []);
+                                                        if (!files.length) return;
+                                                        let updated = { ...trip };
+                                                        const ensureFirstDay = () => {
+                                                            if (!updated.itinerary || updated.itinerary.length === 0) {
+                                                                updated.itinerary = [{ id: crypto.randomUUID(), date: new Date(updated.startDate || Date.now()).toISOString(), activities: [] } as any];
+                                                            }
+                                                        };
+                                                        for (const f of files) {
+                                                            const reader = new FileReader();
+                                                            const dataUrl = await new Promise<string>((res, rej) => { reader.onload = () => res(reader.result as string); reader.onerror = rej; reader.readAsDataURL(f); });
+                                                            const name = f.name.toLowerCase();
+                                                            const cat = name.includes('flight') || name.includes('pnr') ? 'flight' : name.includes('hotel') ? 'hotel' : name.includes('airbnb') ? 'airbnb' : name.includes('food') || name.includes('receipt') ? 'food' : 'other';
+                                                            const doc = { id: crypto.randomUUID(), name: f.name, category: cat, dataUrl, dateAdded: new Date().toISOString() } as any;
+                                                            updated.documents = [...(updated.documents||[]), doc];
+
+                                                            // Basic extraction for flight PDFs -> map to itinerary info block
+                                                            const isPdf = dataUrl.startsWith('data:application/pdf') || f.name.toLowerCase().endsWith('.pdf') || dataUrl.includes('pdf');
+                                                            if (cat === 'flight' && isPdf) {
+                                                                try {
+                                                                    const meta = await extractFlightMetadataLocal(dataUrl);
+                                                                    if (meta) {
+                                                                        ensureFirstDay();
+                                                                        const first = updated.itinerary[0];
+                                                                        const block = {
+                                                                            id: crypto.randomUUID(),
+                                                                            title: `Ticket aéreo (${meta.bookingReference || 'PNR'})`,
+                                                                            description: `${meta.outbound?.route || ''} ${meta.outbound?.departureDate || ''} ${meta.outbound?.departureTime || ''} → ${meta.outbound?.arrivalTime || ''}`.trim(),
+                                                                            images: [],
+                                                                            data: {
+                                                                                bookingReference: meta.bookingReference || null,
+                                                                                airline: meta.outbound?.airline || null,
+                                                                                outbound: meta.outbound || null,
+                                                                                return: meta.return || null
+                                                                            }
+                                                                        } as any;
+                                                                        first.infoBlocks = [...(first.infoBlocks||[]), block];
+                                                                        showToast('Datos de vuelo extraídos.', 'success');
+                                                                    } else {
+                                                                        // Fallback: extraer por nombre de archivo
+                                                                        const IATA_RE = /\b([A-Z]{3})[-_ ]([A-Z]{3})\b/;
+                                                                        const PNR_RE = /\b([A-Z0-9]{5,8})\b/;
+                                                                        const DATE_RE = /(20\d{2}[-_ ]\d{2}[-_ ]\d{2}|\d{2}[-_ ]\d{2}[-_ ]20\d{2})/;
+                                                                        const routeMatch = f.name.toUpperCase().match(IATA_RE);
+                                                                        const pnrMatch = f.name.toUpperCase().match(PNR_RE);
+                                                                        const dateMatch = f.name.toUpperCase().match(DATE_RE);
+                                                                        if (routeMatch || pnrMatch || dateMatch) {
+                                                                            ensureFirstDay();
+                                                                            const first = updated.itinerary[0];
+                                                                            const route = routeMatch ? `${routeMatch[1]} → ${routeMatch[2]}` : '';
+                                                                            const title = `Ticket aéreo (${pnrMatch ? pnrMatch[1] : 'PNR'})`;
+                                                                            const description = `${route} ${dateMatch ? dateMatch[1].replace(/[-_ ]/g,'-') : ''}`.trim();
+                                                                            const block = { id: crypto.randomUUID(), title, description, images: [], data: { bookingReference: pnrMatch ? pnrMatch[1] : null, outbound: { route, departureDate: dateMatch ? dateMatch[1].replace(/[-_ ]/g,'-') : null } } } as any;
+                                                                            first.infoBlocks = [...(first.infoBlocks||[]), block];
+                                                                            showToast('Datos de vuelo inferidos por nombre.', 'success');
+                                                                        } else {
+                                                                            showToast('No se detectaron datos de vuelo.', 'info');
+                                                                        }
+                                                                    }
+                                                                } catch (err) {
+                                                                    showToast('Error al extraer datos de vuelo.', 'error');
+                                                                }
+                                                            }
+                                                        }
+                                                        // Mantener categorías únicas
+                                                        const cats = Array.from(new Set([...(updated.documentCategories||[]), ...updated.documents.map(d => d.category||'other')]))
+                                                        updated.documentCategories = cats as any;
+                                                        updateTrip(updated);
+                                                        showToast('Documentos subidos.', 'success');
+                                                    }} />
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {/* Upload bar */}
+                                        <div
+                                            onDragOver={(e) => { e.preventDefault(); }}
+                                            onDrop={async (e) => {
+                                                e.preventDefault();
+                                                const files = Array.from(e.dataTransfer.files || []);
+                                                if (!files.length) return;
+                                                let updated = { ...trip };
+                                                for (const f of files) {
+                                                    const reader = new FileReader();
+                                                    const dataUrl = await new Promise<string>((res, rej) => { reader.onload = () => res(reader.result as string); reader.onerror = rej; reader.readAsDataURL(f); });
+                                                    const name = f.name.toLowerCase();
+                                                    const cat = name.includes('flight') || name.includes('pnr') ? 'flight' : name.includes('hotel') ? 'hotel' : name.includes('airbnb') ? 'airbnb' : name.includes('food') || name.includes('receipt') ? 'food' : 'other';
+                                                    const doc = { id: crypto.randomUUID(), name: f.name, category: cat, dataUrl, dateAdded: new Date().toISOString() } as any;
+                                                    updated.documents = [...(updated.documents||[]), doc];
+
+                                                    // Extraction for dropped flight PDFs
+                                                    const isPdf = dataUrl.startsWith('data:application/pdf') || f.name.toLowerCase().endsWith('.pdf') || dataUrl.includes('pdf');
+                                                    if (cat === 'flight' && isPdf) {
+                                                        try {
+                                                            const meta = await extractFlightMetadataLocal(dataUrl);
+                                                            if (meta) {
+                                                                if (!updated.itinerary || updated.itinerary.length === 0) {
+                                                                    updated.itinerary = [{ id: crypto.randomUUID(), date: new Date(updated.startDate || Date.now()).toISOString(), activities: [] } as any];
+                                                                }
+                                                                const first = updated.itinerary[0];
+                                                                const block = {
+                                                                    id: crypto.randomUUID(),
+                                                                    title: `Ticket aéreo (${meta.bookingReference || 'PNR'})`,
+                                                                    description: `${meta.outbound?.route || ''} ${meta.outbound?.departureDate || ''} ${meta.outbound?.departureTime || ''} → ${meta.outbound?.arrivalTime || ''}`.trim(),
+                                                                    images: [],
+                                                                    data: {
+                                                                        bookingReference: meta.bookingReference || null,
+                                                                        airline: meta.outbound?.airline || null,
+                                                                        outbound: meta.outbound || null,
+                                                                        return: meta.return || null
+                                                                    }
+                                                                } as any;
+                                                                first.infoBlocks = [...(first.infoBlocks||[]), block];
+                                                                showToast('Datos de vuelo extraídos.', 'success');
+                                                            } else {
+                                                                // Fallback: nombre de archivo
+                                                                const IATA_RE = /\b([A-Z]{3})[-_ ]([A-Z]{3})\b/;
+                                                                const PNR_RE = /\b([A-Z0-9]{5,8})\b/;
+                                                                const DATE_RE = /(20\d{2}[-_ ]\d{2}[-_ ]\d{2}|\d{2}[-_ ]\d{2}[-_ ]20\d{2})/;
+                                                                const routeMatch = f.name.toUpperCase().match(IATA_RE);
+                                                                const pnrMatch = f.name.toUpperCase().match(PNR_RE);
+                                                                const dateMatch = f.name.toUpperCase().match(DATE_RE);
+                                                                if (routeMatch || pnrMatch || dateMatch) {
+                                                                    if (!updated.itinerary || updated.itinerary.length === 0) {
+                                                                        updated.itinerary = [{ id: crypto.randomUUID(), date: new Date(updated.startDate || Date.now()).toISOString(), activities: [] } as any];
+                                                                    }
+                                                                    const first = updated.itinerary[0];
+                                                                    const route = routeMatch ? `${routeMatch[1]} → ${routeMatch[2]}` : '';
+                                                                    const title = `Ticket aéreo (${pnrMatch ? pnrMatch[1] : 'PNR'})`;
+                                                                    const description = `${route} ${dateMatch ? dateMatch[1].replace(/[-_ ]/g,'-') : ''}`.trim();
+                                                                    const block = { id: crypto.randomUUID(), title, description, images: [], data: { bookingReference: pnrMatch ? pnrMatch[1] : null, outbound: { route, departureDate: dateMatch ? dateMatch[1].replace(/[-_ ]/g,'-') : null } } } as any;
+                                                                    first.infoBlocks = [...(first.infoBlocks||[]), block];
+                                                                    showToast('Datos de vuelo inferidos por nombre.', 'success');
+                                                                } else {
+                                                                    showToast('No se detectaron datos de vuelo.', 'info');
+                                                                }
+                                                            }
+                                                        } catch (err) {
+                                                            showToast('Error al extraer datos de vuelo.', 'error');
+                                                        }
+                                                    }
+                                                }
+                                                // Actualizar categorías agregadas
+                                                const cats = Array.from(new Set([...(updated.documentCategories||[]), ...updated.documents.map(d => d.category||'other')]))
+                                                updated.documentCategories = cats as any;
+                                                updateTrip(updated);
+                                                showToast('Documentos agregados.', 'success');
+                                            }}
+                                            className="mt-3 w-full rounded-xl border border-white/10 bg-neutral-950/60 p-3 text-[12px] text-neutral-300"
                                         >
-                                            <Files size={10} />
-                                            {t.manageDocs}
-                                        </button>
+                                            Arrastra y suelta tus archivos aquí para subirlos.
+                                        </div>
+                                        {/* Grid */}
+                                        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                                            {(trip.documents || []).filter(d => {
+                                                if (!docFilter || docFilter==='all') return true;
+                                                return (d.category||'other') === docFilter;
+                                            }).map((d) => {
+                                                const isImg = (d.dataUrl || '').startsWith('data:image');
+                                                return (
+                                                    <div key={d.id} className="rounded-xl bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition overflow-hidden group">
+                                                        <div className="h-28 bg-neutral-900/60 relative">
+                                                            {isImg ? (
+                                                                <LazyImage src={d.dataUrl} alt={d.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-neutral-300 text-[11px]">
+                                                                    <Files size={12} className="text-emerald-400 mr-1" /> {d.name.split('.').pop()?.toUpperCase()} file
+                                                                </div>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    const updated = { ...trip, documents: (trip.documents || []).filter(x => x.id !== d.id) };
+                                                                    updateTrip(updated);
+                                                                    showToast('Documento eliminado.', 'info');
+                                                                }}
+                                                                className="absolute top-2 right-2 p-1.5 bg-black/50 text-white hover:bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-all ring-1 ring-white/20"
+                                                                title="Eliminar"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); setPreviewDoc(d); }}
+                                                                className="absolute top-2 left-2 p-1.5 bg-black/50 text-white hover:bg-white/70 hover:text-black rounded-md opacity-100 transition-all ring-1 ring-white/20"
+                                                                title="Abrir documento"
+                                                            >
+                                                                <ExternalLink size={12} />
+                                                            </button>
+                                                        </div>
+                                                        <div className="p-3 space-y-1.5 border-t border-white/10">
+                                                            <div className="text-[11px] font-semibold truncate text-neutral-100">{d.name}</div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-300 px-2 py-0.5 text-[10px] ring-1 ring-emerald-500/30">{d.category || 'other'}</span>
+                                                                <span className="text-[10px] text-neutral-400">{new Date(d.dateAdded).toLocaleDateString()}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                            {(trip.documents || []).filter(d => {
+                                                if (!docFilter || docFilter==='all') return true;
+                                                return (d.category||'other') === docFilter;
+                                            }).length === 0 && (
+                                                <div className="col-span-full text-[12px] text-neutral-300 ring-1 ring-white/10 rounded-xl p-6 bg-neutral-900/60">
+                                                    No hay documentos para este filtro.
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-3">
-                                    <DocumentsManager trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
-                                </div>
-                            </div>
+                            </section>
                         </div>
                     )}
                 </Suspense>
@@ -719,7 +920,7 @@ const TripDetailView: React.FC<{
             {/* Delete Image Modal */}
             {
                 deleteImageTarget && (
-                    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 animate-fade-in">
                         <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
                             <div className="flex items-center gap-3 mb-4 text-danger">
                                 <AlertTriangle size={28} />
@@ -748,7 +949,7 @@ const TripDetailView: React.FC<{
                             </div>
                             <div className="flex gap-4">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); performDeleteImage(); }}
+                                    onClick={(e) => { e.stopPropagation(); setDeleteImageTarget(allImages[lightboxIndex]); }}
                                     className="p-3 bg-black/50 text-white hover:text-red-500 hover:bg-black border border-white/20 rounded-full transition-all"
                                     title="Delete Image"
                                 >
@@ -792,7 +993,7 @@ const TripDetailView: React.FC<{
             {/* Delete Trip Confirmation */}
             {
                 showDeleteTripConfirm && (
-                    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
                         <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
                             <div className="flex items-center gap-3 mb-4 text-danger">
                                 <AlertTriangle size={32} />
@@ -809,6 +1010,60 @@ const TripDetailView: React.FC<{
                     </div>
                 )
             }
+
+            {/* Document Preview Modal */}
+            {previewDoc && (
+                <div className="fixed inset-0 z-[140] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setPreviewDoc(null)}>
+                    <div className="w-full max-w-5xl bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden" onClick={(e)=>e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 border-b border-border">
+                            <div className="text-sm font-mono text-dim truncate">{previewDoc.name}</div>
+                            <button className="p-2 rounded-full bg-black/40 text-white hover:bg-black/60" onClick={() => setPreviewDoc(null)}><X size={18} /></button>
+                        </div>
+                        <div className="h-[70vh] bg-panel">
+                            { (previewDoc.dataUrl||'').startsWith('data:image') ? (
+                                <img src={previewDoc.dataUrl} alt={previewDoc.name} className="w-full h-full object-contain" />
+                            ) : (previewDoc.dataUrl||'').startsWith('data:application/pdf') ? (
+                                <object data={previewDoc.dataUrl} type="application/pdf" className="w-full h-full">
+                                    <p className="p-6 text-sm text-neutral-300">Tu navegador no puede embeber PDF. <a href={previewDoc.dataUrl} target="_blank" rel="noreferrer" className="text-emerald-400 underline">Abrir en nueva pestaña</a>.</p>
+                                </object>
+                            ) : (
+                                <iframe src={previewDoc.dataUrl} className="w-full h-full" title="document-preview"></iframe>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Attraction Detail Modal */}
+            {selectedAttraction && (
+                <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedAttraction(null)}>
+                    <div className="w-full max-w-2xl bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden" onClick={(e)=>e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 border-b border-border">
+                            <div className="text-sm font-mono text-text truncate">{selectedAttraction.title}</div>
+                            <button className="p-2 rounded-full bg-black/40 text-white hover:bg-black/60" onClick={() => setSelectedAttraction(null)}><X size={18} /></button>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-0">
+                            <div className="bg-panel p-0">
+                                <LazyImage src={selectedAttraction.url} alt={selectedAttraction.title} className="w-full h-full object-cover md:h-[360px]" />
+                            </div>
+                            <div className="p-5 bg-panel border-l border-border">
+                                <h4 className="text-lg font-semibold tracking-tight mb-2">{trip.destination}</h4>
+                                <p className="text-sm text-neutral-300 whitespace-pre-line">{selectedAttraction.desc}</p>
+                                <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-neutral-400">
+                                    <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-2">
+                                        Mejor horario
+                                        <div className="text-neutral-200 mt-1">Golden hour</div>
+                                    </div>
+                                    <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-2">
+                                        Entrada
+                                        <div className="text-neutral-200 mt-1">Libre</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
@@ -1315,16 +1570,20 @@ const App: React.FC = () => {
                 </div>
             ) : (
                 <>
-                    {/* Compact Navbar */}
-                    <div className={`h-16 border-b ${settings.theme === 'light' ? 'bg-neutral-50/98 border-neutral-200' : 'bg-obsidian/95 border-border'} backdrop-blur-md sticky top-0 z-50 px-4 md:px-6 flex items-center justify-between`}>
+                    {/* Header styled to reference */}
+                    <header className={`sticky top-0 z-50 backdrop-blur-sm ${settings.theme === 'light' ? 'bg-neutral-50/70 border-neutral-200' : 'bg-neutral-950/70 border-white/10'} border-b px-4 md:px-6 h-16 flex items-center justify-between`}>
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-surface border border-border flex items-center justify-center rounded-lg shadow-sm">
-                                <Hexagon className="text-acid fill-acid/10" size={20} />
+                            <div className={`flex items-center justify-center w-9 h-9 rounded-md ${settings.theme === 'light' ? 'bg-neutral-100 ring-1 ring-neutral-300' : 'bg-neutral-900 ring-1 ring-white/10'}`}>
+                                <span className="text-emerald-400 font-semibold tracking-tight text-lg leading-none">WL</span>
                             </div>
-                            <span className={`font-display font-bold text-lg tracking-tight ${settings.theme === 'light' ? 'text-neutral-900' : 'text-text'}`}>
-                                WanderLust<span className="text-dim">AI</span>
-                            </span>
+                            <span className={`hidden sm:inline text-sm ${settings.theme === 'light' ? 'text-neutral-600' : 'text-neutral-300'}`}>Smart Travel Planner</span>
                         </div>
+
+                        <nav className="hidden md:flex items-center gap-7 text-sm text-neutral-300">
+                            <button onClick={() => setShowStories(true)} className="hover:text-white transition-colors">Community</button>
+                            <button onClick={() => setShowPricing(true)} className="hover:text-white transition-colors">Pricing</button>
+                            <button onClick={() => setShowDemo(true)} className="hover:text-white transition-colors">Demo</button>
+                        </nav>
 
                         <div className="hidden md:flex flex-1 max-w-2xl mx-8 gap-3 items-center">
                             <div className="w-full relative group flex-1">
@@ -1346,24 +1605,12 @@ const App: React.FC = () => {
                                     </button>
                                 )}
                             </div>
-                            <button
-                                onClick={() => setShowPricing(true)}
-                                className="flex items-center gap-2 text-xs font-mono font-bold uppercase border border-border px-3 py-1.5 rounded-md hover:border-acid transition-colors text-dim hover:text-acid group whitespace-nowrap"
+                            <a
+                                onClick={() => setShowAuthModal(true)}
+                                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 transition cursor-pointer"
                             >
-                                <CreditCard size={14} className="group-hover:text-acid transition-colors" /> {t.pricing}
-                            </button>
-                            <button
-                                onClick={() => setShowStories(true)}
-                                className="flex items-center gap-2 text-xs font-mono font-bold uppercase border border-border px-3 py-1.5 rounded-md hover:border-acid transition-colors text-dim hover:text-acid group whitespace-nowrap"
-                            >
-                                <Users size={14} className="group-hover:text-acid transition-colors" /> {t.travelerStories}
-                            </button>
-                            <button
-                                onClick={() => setShowDemo(true)}
-                                className="flex items-center gap-2 text-xs font-mono font-bold uppercase border border-border px-3 py-1.5 rounded-md hover:border-acid transition-colors text-dim hover:text-acid group whitespace-nowrap"
-                            >
-                                <Play size={14} className="group-hover:text-acid transition-colors" /> {t.watchDemo}
-                            </button>
+                                Start Free
+                            </a>
                         </div>
 
                         <div className="flex items-center gap-4">
@@ -1409,7 +1656,7 @@ const App: React.FC = () => {
                                 <LogOut size={18} />
                             </button>
                         </div>
-                    </div>
+                    </header>
 
                     {/* Mobile Actions Bar */}
                     <div className="md:hidden sticky top-16 z-40 bg-obsidian px-4 py-3 border-b border-border">
@@ -1435,34 +1682,63 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in relative z-10">
-                        {/* HERO SECTION - REFACTORED TO LEFT ALIGN & HEADER STYLE */}
-                        <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-16 gap-6 pt-4 md:pt-8">
-                            <div className="text-left">
-                                <h4 className={`text-xs font-mono font-bold uppercase tracking-[0.2em] mb-4 ${settings.theme === 'light' ? 'text-neutral-700' : 'text-dim opacity-60'}`}>
-                                    {t.authority}
-                                </h4>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <Hexagon className="text-acid" size={48} />
-                                    <h1 className={`text-5xl md:text-7xl font-display font-bold uppercase tracking-tighter ${settings.theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>
-                                        WanderLust<span className={settings.theme === 'light' ? 'text-neutral-500' : 'text-dim'}>AI</span>
-                                    </h1>
-                                </div>
-                                <p className={`text-sm font-light leading-relaxed font-sans max-w-lg ${settings.theme === 'light' ? 'text-neutral-700' : 'text-dim'}`}>
-                                    <span className="bg-yellow-300/80  text-black font-bold">
+                    <div className="px-6 md:px-8 max-w-7xl mx-auto animate-fade-in relative z-10">
+                        {/* HERO SECTION — Reference-inspired */}
+                        <section className="pt-16 md:pt-24 pb-10">
+                            <div className="grid lg:grid-cols-12 gap-10 items-center">
+                                <div className="lg:col-span-7">
+                                    <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-white/10 bg-white/5 text-xs text-neutral-300 mb-5">
+                                        <Wand2 className="text-emerald-400" size={14} />
                                         {t.heroSubtitle}
-                                    </span>
-                                </p>
+                                    </div>
+                                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]">
+                                        Explore further. Stress less.
+                                    </h1>
+                                    <p className="mt-5 text-neutral-300 text-base md:text-lg max-w-xl">
+                                        IA para itinerarios, presupuesto, documentos y mapas. Tu viaje, organizado con estilo.
+                                    </p>
+                                    <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                                        <button onClick={handleCreateTrip} className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">
+                                            <Plane size={16} /> {t.createFirstTrip}
+                                        </button>
+                                        <button onClick={() => setShowStories(true)} className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">
+                                            <Users size={16} /> {t.travelerStories}
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-10 grid grid-cols-3 gap-4 max-w-xl">
+                                        <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-4">
+                                            <div className="text-xs text-neutral-400">Trips planned</div>
+                                            <div className="mt-1 text-2xl font-semibold tracking-tight">3k+</div>
+                                        </div>
+                                        <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-4">
+                                            <div className="text-xs text-neutral-400">Avg. budget optimization</div>
+                                            <div className="mt-1 text-2xl font-semibold tracking-tight">18%</div>
+                                        </div>
+                                        <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-4">
+                                            <div className="text-xs text-neutral-400">Documents managed</div>
+                                            <div className="mt-1 text-2xl font-semibold tracking-tight">12k+</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="lg:col-span-5">
+                                    <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-neutral-900/50">
+                                        <LazyImage src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=1600&auto=format&fit=crop" alt="hero city night" className="w-full h-80 md:h-[28rem] object-cover" />
+                                        <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-neutral-950/90 via-neutral-950/60 to-transparent">
+                                            <div className="flex items-center gap-2 text-xs text-neutral-300">
+                                                <Compass className="text-emerald-400" size={14} /> Live route hints • Budget sync
+                                            </div>
+                                        </div>
+                                        <div className="absolute top-4 right-4">
+                                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 text-emerald-300 px-2 py-1 text-[11px] ring-1 ring-emerald-500/30">
+                                                <Sparkles size={12} /> Featured
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-
-                            <div className="flex flex-col gap-4 items-end">
-
-
-                                {/* Freemium notice removed from hero and moved below trips as footer */}
-
-
-                            </div>
-                        </div>
+                        </section>
 
                         {filteredTrips.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-dim/30 rounded-3xl bg-panel/20 group">
@@ -1582,6 +1858,87 @@ const App: React.FC = () => {
                                 ))}
                             </div>
                         )}
+
+                        {/* Pricing Section */}
+                        <section className="relative mt-12 md:mt-16">
+                            <div className="text-center max-w-2xl mx-auto">
+                                <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Elige tu ritmo</h2>
+                                <p className="mt-2 text-neutral-300 text-sm md:text-base">Empieza gratis. Mejora cuando quieras.</p>
+                            </div>
+                            <div className="mt-8 grid md:grid-cols-3 gap-6">
+                                <div className="rounded-2xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition flex flex-col">
+                                    <h3 className="text-lg font-semibold tracking-tight">Starter</h3>
+                                    <div className="mt-2 text-3xl font-semibold tracking-tight">$0<span className="text-sm text-neutral-400">/mo</span></div>
+                                    <ul className="mt-4 space-y-2 text-sm text-neutral-300">
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />3 viajes</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Tracking básico</li>
+                                        <li className="flex items-center gap-2"><X className="text-neutral-500" size={16} />Comunidad</li>
+                                    </ul>
+                                    <button onClick={() => setShowAuthModal(true)} className="mt-6 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">Comenzar</button>
+                                </div>
+                                <div className="relative rounded-2xl p-6 bg-neutral-800/60 ring-2 ring-emerald-500/40 hover:ring-emerald-400/60 transition flex flex-col">
+                                    <div className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-md bg-emerald-500 text-neutral-950 px-2.5 py-1 text-[11px] font-medium">Más popular</div>
+                                    <h3 className="text-lg font-semibold tracking-tight">Pro</h3>
+                                    <div className="mt-2 text-3xl font-semibold tracking-tight">$19<span className="text-sm text-neutral-300">/mo</span></div>
+                                    <ul className="mt-4 space-y-2 text-sm text-neutral-200">
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Ilimitado</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Coaching IA</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Comunidad</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Analytics</li>
+                                    </ul>
+                                    <button onClick={() => setShowPricing(true)} className="mt-6 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">Upgrade a Pro</button>
+                                </div>
+                                <div className="rounded-2xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition flex flex-col">
+                                    <h3 className="text-lg font-semibold tracking-tight">Elite</h3>
+                                    <div className="mt-2 text-3xl font-semibold tracking-tight">$49<span className="text-sm text-neutral-400">/mo</span></div>
+                                    <ul className="mt-4 space-y-2 text-sm text-neutral-300">
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />1:1 soporte</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Personalización</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Prioridad</li>
+                                    </ul>
+                                    <button onClick={() => setShowPricing(true)} className="mt-6 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">Go Elite</button>
+                                </div>
+                            </div>
+                            <div className="mx-auto max-w-7xl px-0 mt-8">
+                                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                            </div>
+                        </section>
+
+                        {/* FAQ Section */}
+                        <section className="relative mt-10 md:mt-14">
+                            <div className="mx-auto max-w-4xl px-0">
+                                <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-center">Preguntas frecuentes</h2>
+                                <div className="mt-8 space-y-3">
+                                    <details className="group rounded-lg ring-1 ring-white/10 open:ring-white/20 bg-neutral-900/60 open:bg-neutral-900/70 transition">
+                                        <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4 text-sm">
+                                            <span>¿Cómo funciona el modo IA?</span>
+                                            <ChevronRight className="transition duration-200 group-open:rotate-90" size={16} />
+                                        </summary>
+                                        <div className="px-5 pb-4 pt-0 text-sm text-neutral-300">
+                                            Genera destino, fechas y presupuesto estimado. Puedes editar todo.
+                                        </div>
+                                    </details>
+                                    <details className="group rounded-lg ring-1 ring-white/10 open:ring-white/20 bg-neutral-900/60 open:bg-neutral-900/70 transition">
+                                        <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4 text-sm">
+                                            <span>¿Puedo adjuntar documentos?</span>
+                                            <ChevronRight className="transition duration-200 group-open:rotate-90" size={16} />
+                                        </summary>
+                                        <div className="px-5 pb-4 pt-0 text-sm text-neutral-300">
+                                            Sí, gestiona tickets, reservas y fotos en Documentos.
+                                        </div>
+                                    </details>
+                                    <details className="group rounded-lg ring-1 ring-white/10 open:ring-white/20 bg-neutral-900/60 open:bg-neutral-900/70 transition">
+                                        <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4 text-sm">
+                                            <span>¿Modo oscuro?</span>
+                                            <ChevronRight className="transition duration-200 group-open:rotate-90" size={16} />
+                                        </summary>
+                                        <div className="px-5 pb-4 pt-0 text-sm text-neutral-300">
+                                            Sí, alterna desde el ícono de luna/sol.
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+                        </section>
                     </div>
 
                     {/* Freemium footer below trips */}
@@ -1683,7 +2040,7 @@ const App: React.FC = () => {
 
             {/* Delete Trip Confirmation Modal */}
             {tripToDelete && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
                         <div className="flex items-center gap-3 mb-4 text-danger">
                             <AlertTriangle size={32} />
@@ -1771,6 +2128,33 @@ const App: React.FC = () => {
                                 >Cancelar</button>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Floating Quick Actions */}
+            {currentTripId && currentTrip && (
+                <div className="fixed bottom-6 right-6 z-[90]">
+                    <div className="rounded-full shadow-xl">
+                        <div className="group inline-flex items-center">
+                            <button className="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 hover:bg-emerald-400 flex items-center justify-center">
+                                <Plus size={20} />
+                            </button>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-3 flex gap-2">
+                                <button onClick={() => {
+                                    const newDay = { id: crypto.randomUUID(), date: new Date().toISOString(), activities: [] } as DayPlan;
+                                    handleUpdateTrip({ ...currentTrip, itinerary: [...(currentTrip.itinerary||[]), newDay] });
+                                    showToast('Día agregado.', 'success');
+                                }} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Día</button>
+                                <button onClick={() => {
+                                    const exp = { id: crypto.randomUUID(), label: 'Nuevo gasto', amount: 0, category: 'other' } as any;
+                                    handleUpdateTrip({ ...currentTrip, expenses: [...(currentTrip.expenses||[]), exp] });
+                                    showToast('Gasto agregado.', 'success');
+                                }} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Gasto</button>
+                                <button onClick={() => setActiveTab('documents')} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Doc</button>
+                                {/* Quick action AI resumen removed */}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
