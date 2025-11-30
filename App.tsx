@@ -304,7 +304,7 @@ const TripDetailView: React.FC<{
                         <button
                             onClick={() => setShowEditModal(true)}
                             className={`px-2.5 md:px-3 py-0.5 md:py-1 font-mono text-[9px] md:text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/30' :
-                                trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/30' : 'bg-black/60 text-amber-400 border-amber-500/30'
+                                trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/30' : 'bg-black/60 text-violet-400 border-violet-500/30'
                                 }`}>
                             {trip.status}
                         </button>
@@ -1119,11 +1119,11 @@ const App: React.FC = () => {
                                                 <div className="absolute top-3 right-3 md:top-4 md:right-4">
                                                     <span className={`px-2.5 py-1 md:px-3 md:py-1 text-[9px] md:text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1 md:gap-1.5 shadow-sm ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/50' :
                                                         trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/50' :
-                                                            'bg-black/60 text-amber-400 border-amber-500/50'
+                                                            'bg-black/60 text-violet-400 border-violet-500/50'
                                                         }`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'Completed' ? 'bg-emerald-400' :
                                                             trip.status === 'Booked' ? 'bg-cyan-400' :
-                                                                'bg-amber-400'
+                                                                'bg-violet-400'
                                                             }`}></span>
                                                         {trip.status}
                                                     </span>

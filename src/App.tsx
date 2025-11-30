@@ -292,7 +292,7 @@ const TripDetailView: React.FC<{
             {/* New Trip Header — reference-inspired */}
             <section className="relative mx-auto max-w-7xl px-4 md:px-6 pt-6">
                 <div className="grid lg:grid-cols-12 gap-6 items-center">
-                    <div className="lg:col-span-7">
+                    <div className="lg:col-span-6">
                         <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-white/10 bg-white/5 text-xs text-neutral-300 mb-4">
                             <Wand2 className="text-emerald-400" size={14} />
                             {trip.type} • {trip.status}
@@ -304,10 +304,10 @@ const TripDetailView: React.FC<{
                             {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()} • {trip.currency} {trip.budget.toLocaleString()}
                         </p>
                         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                            <button onClick={goBack} className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-base font-semibold bg-amber-500 text-neutral-950 hover:bg-amber-400 transition shadow-lg">
+                            <button onClick={goBack} className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-base font-semibold bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition shadow-lg">
                                 <ArrowLeft size={16} /> {t.dashboard}
                             </button>
-                            <button onClick={() => setShowEditModal(true)} className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">
+                            <button onClick={() => setShowEditModal(true)} className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-400 text-neutral-900 hover:bg-emerald-300 transition">
                                 <Edit2 size={16} /> {t.editParams}
                             </button>
                             <button
@@ -326,7 +326,7 @@ const TripDetailView: React.FC<{
                         </div>
                     </div>
 
-                    <div className="lg:col-span-5">
+                    <div className="lg:col-span-6">
                         <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-neutral-900/50">
                             <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-64 md:h-[22rem] object-cover" />
                             <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-neutral-950/90 via-neutral-950/60 to-transparent">
@@ -1686,7 +1686,7 @@ const App: React.FC = () => {
                         {/* HERO SECTION — Reference-inspired */}
                         <section className="pt-16 md:pt-24 pb-10">
                             <div className="grid lg:grid-cols-12 gap-10 items-center">
-                                <div className="lg:col-span-7">
+                                <div className="lg:col-span-6">
                                     <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-white/10 bg-white/5 text-xs text-neutral-300 mb-5">
                                         <Wand2 className="text-emerald-400" size={14} />
                                         {t.heroSubtitle}
@@ -1722,7 +1722,7 @@ const App: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="lg:col-span-5">
+                                <div className="lg:col-span-6">
                                     <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-neutral-900/50">
                                         <LazyImage src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=1600&auto=format&fit=crop" alt="hero city night" className="w-full h-80 md:h-[28rem] object-cover" />
                                         <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-neutral-950/90 via-neutral-950/60 to-transparent">
@@ -1774,7 +1774,7 @@ const App: React.FC = () => {
                                         onClick={() => setCurrentTripId(trip.id)}
                                         className={`group relative h-[300px] md:h-[360px] rounded-3xl overflow-hidden cursor-pointer transition-all hover:-translate-y-1.5 border flex flex-col w-[380px] ${settings.theme === 'light' ? 'bg-white border-neutral-300 shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.16)]' : 'bg-surface border-border shadow-xl hover:shadow-acid/20'}`}
                                     >
-                                        <div className="h-[65%] relative overflow-hidden">
+                                        <div className="h-[72%] relative overflow-hidden">
                                             <LazyImage src={trip.coverImage} alt={trip.destination} className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ${settings.theme === 'light' ? 'brightness-85 contrast-115 saturate-110' : ''}`} />
                                             <div className={`absolute inset-0 bg-gradient-to-t ${settings.theme === 'light' ? 'from-white/95 via-white/70 to-transparent' : 'from-black via-black/60 to-transparent'}`}></div>
 
@@ -1803,10 +1803,10 @@ const App: React.FC = () => {
                                             {trip.status !== 'Booked' && (
                                                 <div className="absolute top-4 right-4">
                                                     <span className={`px-3 py-1 text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1.5 shadow-sm ${trip.status === 'Completed' ? (settings.theme === 'light' ? 'bg-white/70 text-emerald-600 border-emerald-600/40' : 'bg-black/60 text-emerald-400 border-emerald-500/50') :
-                                                        (settings.theme === 'light' ? 'bg-white/70 text-amber-600 border-amber-600/40' : 'bg-black/60 text-amber-400 border-amber-500/50')
+                                                        (settings.theme === 'light' ? 'bg-white/70 text-violet-600 border-violet-600/40' : 'bg-black/60 text-violet-400 border-violet-500/50')
                                                         }`}>
                                                         <span className={`w-1.5 h-1.5 rounded-full ${trip.status === 'Completed' ? (settings.theme === 'light' ? 'bg-emerald-600' : 'bg-emerald-400') :
-                                                            (settings.theme === 'light' ? 'bg-amber-600' : 'bg-amber-400')
+                                                            (settings.theme === 'light' ? 'bg-violet-600' : 'bg-violet-400')
                                                             }`}></span>
                                                         {trip.status}
                                                     </span>
