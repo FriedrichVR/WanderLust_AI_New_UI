@@ -132,39 +132,37 @@ export const searchPlacesWithGemini = async (query: string, locationHint?: strin
 // IMAGE GENERATION SERVICE
 export const generateTripImage = async (destination: string, type: string): Promise<string> => {
   try {
-    // Using gemini-2.5-flash-image to generate an image
-    const prompt = `Create a stunning, high-quality, photorealistic 16:9 travel cover image for a trip to ${destination}. 
-    The mood should be ${type} (e.g. relaxing for Leisure, exciting for Adventure). 
-    No text in the image.`;
-
-    const response = await getAi().models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [{ text: prompt }]
-      },
-      config: {
-        imageConfig: {
-          aspectRatio: "16:9",
+    // Search for images on Unsplash using their API
+    const query = encodeURIComponent(`${destination} travel ${type}`);
+    const unsplashAccessKey = 'krNc1QqQ2tN4iXfDyyTKj73uvLGpFMqfrx1dUCcuFzs';
+    
+    // Try Unsplash API first
+    try {
+      const response = await fetch(
+        `https://api.unsplash.com/search/photos?query=${query}&per_page=1&orientation=landscape`,
+        {
+          headers: {
+            'Authorization': `Client-ID ${unsplashAccessKey}`
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          return data.results[0].urls.regular;
         }
       }
-    });
-
-    // Iterate parts to find image data
-    if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData && part.inlineData.data) {
-                return `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
-            }
-        }
+    } catch (unsplashError) {
+      console.warn('Unsplash API failed, falling back to direct URL', unsplashError);
     }
     
-    throw new Error("No image data returned from API.");
+    // Fallback: Use Unsplash source URL (doesn't require API key)
+    const fallbackQuery = encodeURIComponent(destination);
+    return `https://source.unsplash.com/1600x900/?${fallbackQuery},travel,landscape`;
   } catch (error: any) {
-    if (isQuotaError(error)) {
-        throw new Error("Image generation limit reached (429). Please try again later.");
-    }
-    console.error("Image Generation Error:", error);
-    throw new Error("Failed to generate image. Please check your API key or connection.");
+    console.error("Image Search Error:", error);
+    throw new Error("Failed to fetch destination image.");
   }
 }
 

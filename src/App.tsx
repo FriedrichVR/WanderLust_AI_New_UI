@@ -290,6 +290,17 @@ const TripDetailView: React.FC<{
         updateTrip(updatedTrip as Trip);
         setShowEditModal(false);
         showToast("Trip details updated.", 'success');
+        
+        // If destination changed, generate new cover image
+        if (editForm.destination && editForm.destination !== trip.destination && editForm.destination !== 'New Adventure') {
+            generateTripImage(editForm.destination, trip.type).then(imageUrl => {
+                const tripWithNewImage = { ...updatedTrip, coverImage: imageUrl };
+                updateTrip(tripWithNewImage as Trip);
+                showToast('Destination image updated!', 'success');
+            }).catch(err => {
+                console.warn('Failed to generate new destination image:', err);
+            });
+        }
     };
 
     const diaryImages = useMemo(() => allImages.filter(img => img.type !== 'cover'), [allImages]);
@@ -381,7 +392,7 @@ const TripDetailView: React.FC<{
             </div>
 
             {/* Navigation Tabs */}
-            <div className={`flex items-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b sticky top-0 backdrop-blur-md z-[80] pt-2 ${isLight ? 'bg-white/98 border-neutral-300' : 'bg-obsidian/95 border-border'}`}>
+            <div className={`flex items-center justify-center gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar border-b sticky top-0 backdrop-blur-md z-[80] pt-2 ${isLight ? 'bg-white/98 border-neutral-300' : 'bg-obsidian/95 border-border'}`}>
                 {[
                     { id: 'overview', icon: Check, label: t.overview },
                     { id: 'itinerary', icon: MapIcon, label: t.itinerary },
@@ -519,9 +530,9 @@ const TripDetailView: React.FC<{
 
                                         {/* Currency Converter Tab Content */}
                                         {leftPanelTab === 'converter' && (
-                                            <div className="flex-1">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div className="bg-panel border border-border rounded-xl p-3">
+                                            <div className="flex-1 flex flex-col">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+                                                    <div className="bg-panel border border-border rounded-xl p-3 flex flex-col">
                                                         <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
                                                             <CurrencyConverter lang={lang} />
                                                         </Suspense>
@@ -971,7 +982,7 @@ const App: React.FC = () => {
         setShowTripModeSelector(true);
     };
 
-    const handleCreateTripManual = () => {
+    const handleCreateTripManual = async () => {
         if (!user) return;
 
         const newTrip: Trip = {
@@ -1040,6 +1051,19 @@ const App: React.FC = () => {
 
         setShowTripModeSelector(false);
         setAiSuggestedBudget(null);
+        
+        // Generate destination image in background
+        generateTripImage(sug.destination, mappedType).then(imageUrl => {
+            const tripWithImage = { ...newTrip, coverImage: imageUrl };
+            setTrips(prev => prev.map(t => t.id === newTrip.id ? tripWithImage : t));
+            if (pendingNewTrip?.id === newTrip.id) {
+                setPendingNewTrip(tripWithImage);
+            }
+            upsertTrip(user.id, tripWithImage).catch(console.warn);
+        }).catch(err => {
+            console.warn('Failed to generate destination image:', err);
+        });
+        
         try {
             const computed = await generateBudgetSuggestion(sug.destination, sug.days, sug.tripType, 'USD');
             if (computed) {

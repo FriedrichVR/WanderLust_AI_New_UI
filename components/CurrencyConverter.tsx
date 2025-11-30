@@ -80,7 +80,7 @@ const CurrencyConverter: React.FC<Props> = ({ lang }) => {
       </div>
 
       {/* Results Grid - Tighter */}
-      <div className="grid grid-cols-1 gap-2 overflow-y-auto custom-scrollbar max-h-[200px]">
+      <div className="grid grid-cols-1 gap-2 overflow-y-auto custom-scrollbar flex-1">
           {displayTargets.map((target) => (
               <div key={target} className="flex items-center justify-between p-2 border border-border/50 hover:border-dim bg-panel/50 transition-all">
                   <div className="flex items-center gap-2">
