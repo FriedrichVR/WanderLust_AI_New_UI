@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useMemo } from 'react';
-import { Upload, FileText, Trash2, Eye, Plane, Hotel, Folder, AlertTriangle, X, CheckSquare, Square, Loader2, Home, Utensils, Download, Camera, Settings, Plus, Edit2, Save, Filter, Maximize2, File, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Trash2, Eye, Plane, Hotel, Folder, AlertTriangle, X, CheckSquare, Square, Loader2, Home, Utensils, Download, Camera, Settings, Plus, Edit2, Save, Filter, Maximize2, File, CheckCircle2, AlertCircle, ChevronRight } from 'lucide-react';
 import { Trip, TripDocument } from '../types';
 import { translations, Language } from '../utils/translations';
 import { ToastType } from './Toast';
@@ -27,6 +27,14 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
   const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error', msg: string} | null>(null);
   const [tagsInput, setTagsInput] = useState('');
   const [metadata, setMetadata] = useState<any>({});
+  const [autoMetaKeys, setAutoMetaKeys] = useState<Set<string>>(new Set());
+  const hasAuto = (key: string) => {
+      try {
+          return autoMetaKeys instanceof Set && autoMetaKeys.has(key);
+      } catch {
+          return false;
+      }
+  };
   const [previewDoc, setPreviewDoc] = useState<TripDocument | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -38,9 +46,12 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
   const [docToEdit, setDocToEdit] = useState<TripDocument | null>(null);
   const [editTagsInput, setEditTagsInput] = useState('');
+    const [airbnbMetaIndex, setAirbnbMetaIndex] = useState<number>(0);
+    const [flightMetaView, setFlightMetaView] = useState<'outbound' | 'return'>('outbound');
 
   const documents = trip.documents || [];
   const categories = useMemo(() => trip.documentCategories || ['flight', 'hotel', 'airbnb', 'food', 'other'], [trip.documentCategories]);
+    const airbnbDocs = useMemo(() => documents.filter(d => (d.type || '').toLowerCase() === 'airbnb'), [documents]);
 
   // Safety check to ensure active category exists
   if (!categories.includes(uploadType) && categories.length > 0) {
@@ -132,9 +143,9 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
         setUploadStatus(null);
         // For non-PDF-only selections, upload will be triggered after optional extraction below.
         
-        // Auto-extract metadata from first PDF file if it's hotel/airbnb/flight
+        // Auto-extract metadata from first PDF file depending on category
         const firstPDF = newFiles.find(f => (f.type && f.type.toLowerCase().includes('pdf')) || f.name.toLowerCase().endsWith('.pdf'));
-        if (firstPDF && (uploadType.toLowerCase().includes('hotel') || uploadType.toLowerCase().includes('airbnb') || uploadType.toLowerCase().includes('flight'))) {
+        if (firstPDF && (uploadType.toLowerCase().includes('airbnb') || uploadType.toLowerCase().includes('flight'))) {
             try {
                 if (showToast) showToast(`Extracting data from ${firstPDF.name}...`, 'info');
                 
@@ -146,7 +157,31 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                         const pdfData = await extractPDFData(dataUrl, uploadType);
                         
                         if (pdfData) {
-                            const mergedMeta = {
+                            const isFlightCat = uploadType.toLowerCase().includes('flight') || uploadType.toLowerCase().includes('vuelo');
+                            const mergedMeta = isFlightCat ? {
+                                ...metadata,
+                                bookingReference: pdfData.bookingReference || metadata.bookingReference,
+                                outboundCheckInCode: pdfData.outbound?.checkInCode || metadata.outboundCheckInCode,
+                                outboundPassengers: pdfData.outbound?.passengers || metadata.outboundPassengers,
+                                outboundAirline: pdfData.outbound?.airline || metadata.outboundAirline,
+                                outboundDepartureDate: pdfData.outbound?.departureDate || metadata.outboundDepartureDate,
+                                outboundDepartureTime: pdfData.outbound?.departureTime || metadata.outboundDepartureTime,
+                                outboundRoute: pdfData.outbound?.route || metadata.outboundRoute,
+                                outboundDestination: pdfData.outbound?.destination || metadata.outboundDestination,
+                                outboundDuration: pdfData.outbound?.duration || metadata.outboundDuration,
+                                outboundLayoverAirport: pdfData.outbound?.layover?.airport || metadata.outboundLayoverAirport,
+                                outboundLayoverWait: pdfData.outbound?.layover?.waitDuration || metadata.outboundLayoverWait,
+                                returnCheckInCode: pdfData.return?.checkInCode || metadata.returnCheckInCode,
+                                returnPassengers: pdfData.return?.passengers || metadata.returnPassengers,
+                                returnAirline: pdfData.return?.airline || metadata.returnAirline,
+                                returnDepartureDate: pdfData.return?.departureDate || metadata.returnDepartureDate,
+                                returnDepartureTime: pdfData.return?.departureTime || metadata.returnDepartureTime,
+                                returnRoute: pdfData.return?.route || metadata.returnRoute,
+                                returnDestination: pdfData.return?.destination || metadata.returnDestination,
+                                returnDuration: pdfData.return?.duration || metadata.returnDuration,
+                                returnLayoverAirport: pdfData.return?.layover?.airport || metadata.returnLayoverAirport,
+                                returnLayoverWait: pdfData.return?.layover?.waitDuration || metadata.returnLayoverWait
+                            } : {
                                 ...metadata,
                                 hotelName: pdfData.propertyName || metadata.hotelName,
                                 hostName: pdfData.hostName || metadata.hostName,
@@ -158,20 +193,70 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                 guestName: pdfData.guestName || metadata.guestName,
                                 totalPrice: pdfData.totalPrice || metadata.totalPrice
                             };
+                            // Track which keys were auto-populated from extraction
+                            const newAutoKeys = new Set<string>(autoMetaKeys);
+                            if (isFlightCat) {
+                                if (pdfData.bookingReference) newAutoKeys.add('bookingReference');
+                                if (pdfData.outbound?.checkInCode) newAutoKeys.add('outboundCheckInCode');
+                                if (pdfData.outbound?.passengers) newAutoKeys.add('outboundPassengers');
+                                if (pdfData.outbound?.airline) newAutoKeys.add('outboundAirline');
+                                if (pdfData.outbound?.departureDate) newAutoKeys.add('outboundDepartureDate');
+                                if (pdfData.outbound?.departureTime) newAutoKeys.add('outboundDepartureTime');
+                                if (pdfData.outbound?.route) newAutoKeys.add('outboundRoute');
+                                if (pdfData.outbound?.destination) newAutoKeys.add('outboundDestination');
+                                if (pdfData.outbound?.duration) newAutoKeys.add('outboundDuration');
+                                if (pdfData.outbound?.layover?.airport) newAutoKeys.add('outboundLayoverAirport');
+                                if (pdfData.outbound?.layover?.waitDuration) newAutoKeys.add('outboundLayoverWait');
+                                if (pdfData.return?.checkInCode) newAutoKeys.add('returnCheckInCode');
+                                if (pdfData.return?.passengers) newAutoKeys.add('returnPassengers');
+                                if (pdfData.return?.airline) newAutoKeys.add('returnAirline');
+                                if (pdfData.return?.departureDate) newAutoKeys.add('returnDepartureDate');
+                                if (pdfData.return?.departureTime) newAutoKeys.add('returnDepartureTime');
+                                if (pdfData.return?.route) newAutoKeys.add('returnRoute');
+                                if (pdfData.return?.destination) newAutoKeys.add('returnDestination');
+                                if (pdfData.return?.duration) newAutoKeys.add('returnDuration');
+                                if (pdfData.return?.layover?.airport) newAutoKeys.add('returnLayoverAirport');
+                                if (pdfData.return?.layover?.waitDuration) newAutoKeys.add('returnLayoverWait');
+                            } else {
+                                if (pdfData.propertyName) newAutoKeys.add('hotelName');
+                                if (pdfData.hostName) newAutoKeys.add('hostName');
+                                if (pdfData.bookingReference) newAutoKeys.add('bookingReference');
+                                if (pdfData.checkInDate) newAutoKeys.add('checkInDate');
+                                if (pdfData.checkOutDate) newAutoKeys.add('checkOutDate');
+                                if (pdfData.address) newAutoKeys.add('address');
+                                if (pdfData.whatsappNumber) newAutoKeys.add('whatsappNumber');
+                                if (pdfData.guestName) newAutoKeys.add('guestName');
+                                if (pdfData.totalPrice) newAutoKeys.add('totalPrice');
+                            }
                             setMetadata(mergedMeta);
+                            setAutoMetaKeys(newAutoKeys);
                             if (showToast) showToast(`Data extracted successfully!`, 'success');
                             // After extraction, upload with enriched metadata
                             if (!isUploading) {
                                 handleAddDocuments(newFiles, mergedMeta);
                             }
+                        } else {
+                            console.warn('PDF extraction returned null for', firstPDF.name);
+                            if (showToast) showToast('No se pudo extraer datos del PDF. Subido sin metadatos.', 'error');
+                            if (!isUploading) {
+                                handleAddDocuments(newFiles);
+                            }
                         }
                     } catch (error) {
                         console.warn('PDF extraction failed:', error);
+                        if (showToast) showToast('Falló la extracción del PDF. Subiendo documento...', 'error');
+                        if (!isUploading) {
+                            handleAddDocuments(newFiles);
+                        }
                     }
                 };
                 reader.readAsDataURL(firstPDF);
             } catch (error) {
                 console.warn('PDF processing error:', error);
+                if (showToast) showToast('Error procesando el PDF. Subiendo documento...', 'error');
+                if (!isUploading) {
+                    handleAddDocuments(newFiles);
+                }
             }
         } else {
             // No PDF extraction needed: upload immediately
@@ -209,8 +294,9 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
             const dataUrl = await resizeImage(file);
             
             // Metadata is already extracted in handleFileSelect, just use current state
+            const genId = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : Math.random().toString(36).slice(2);
             newDocs.push({
-                id: crypto.randomUUID(), 
+                id: genId, 
                 name: file.name, 
                 type: (uploadType || '').toLowerCase(), 
                 dataUrl: dataUrl, 
@@ -244,6 +330,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                     // Preserve metadata in state when override was used (it already contains extracted data)
                     if (!metadataOverride) {
                         setMetadata({});
+                        setAutoMetaKeys(new Set());
                     }
           
           const successMsg = `Successfully uploaded ${newDocs.length} file(s).`;
@@ -332,6 +419,89 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
       setEditTagsInput(doc.tags?.join(', ') || '');
   };
 
+  const handleReextract = async (doc: TripDocument) => {
+      const docTypeLower = (doc.type || '').toLowerCase();
+      const isFlightDoc = docTypeLower.includes('flight') || docTypeLower.includes('vuelo');
+      const isLodgingDoc = docTypeLower.includes('airbnb');
+      if (!isFlightDoc && !isLodgingDoc) {
+          if (showToast) showToast('Solo disponible para Flights y Airbnb.', 'info');
+          return;
+      }
+      try {
+          if (showToast) showToast(`Re-extrayendo datos de ${doc.name}...`, 'info');
+          const data = await extractPDFData(doc.dataUrl, doc.type);
+          if (!data) {
+              if (showToast) showToast('No se pudo extraer datos.', 'error');
+              return;
+          }
+          const updatedDocs = documents.map(d => {
+              if (d.id !== doc.id) return d;
+              const currentMeta = d.metadata || {};
+              const mergedMeta = isFlightDoc ? {
+                  ...currentMeta,
+                  bookingReference: data.bookingReference || currentMeta.bookingReference,
+                  outboundCheckInCode: data.outbound?.checkInCode || currentMeta.outboundCheckInCode,
+                  outboundPassengers: data.outbound?.passengers || currentMeta.outboundPassengers,
+                  outboundRoute: data.outbound?.route || currentMeta.outboundRoute,
+                  outboundDestination: data.outbound?.destination || currentMeta.outboundDestination,
+                  outboundDuration: data.outbound?.duration || currentMeta.outboundDuration,
+                  returnCheckInCode: data.return?.checkInCode || currentMeta.returnCheckInCode,
+                  returnPassengers: data.return?.passengers || currentMeta.returnPassengers,
+                  returnRoute: data.return?.route || currentMeta.returnRoute,
+                  returnDestination: data.return?.destination || currentMeta.returnDestination,
+                  returnDuration: data.return?.duration || currentMeta.returnDuration
+              } : {
+                  ...currentMeta,
+                  hotelName: data.propertyName || currentMeta.hotelName,
+                  hostName: data.hostName || currentMeta.hostName,
+                  bookingReference: data.bookingReference || currentMeta.bookingReference,
+                  checkInDate: data.checkInDate || currentMeta.checkInDate,
+                  checkOutDate: data.checkOutDate || currentMeta.checkOutDate,
+                  address: data.address || currentMeta.address,
+                  whatsappNumber: data.whatsappNumber || currentMeta.whatsappNumber,
+                  guestName: data.guestName || currentMeta.guestName,
+                  totalPrice: data.totalPrice || currentMeta.totalPrice
+              };
+              return { ...d, metadata: mergedMeta };
+          });
+          updateTrip({ ...trip, documents: updatedDocs });
+          // Update on-screen metadata if re-extracting current category
+          if ((uploadType || '').toLowerCase() === docTypeLower) {
+              const mergedForScreen = (updatedDocs.find(x => x.id === doc.id)?.metadata) || {};
+              setMetadata(mergedForScreen);
+              const newAuto = new Set<string>();
+              if (isFlightDoc) {
+                  if (data.bookingReference) newAuto.add('bookingReference');
+                  if (data.outbound?.checkInCode) newAuto.add('outboundCheckInCode');
+                  if (data.outbound?.passengers) newAuto.add('outboundPassengers');
+                  if (data.outbound?.route) newAuto.add('outboundRoute');
+                  if (data.outbound?.destination) newAuto.add('outboundDestination');
+                  if (data.outbound?.duration) newAuto.add('outboundDuration');
+                  if (data.return?.checkInCode) newAuto.add('returnCheckInCode');
+                  if (data.return?.passengers) newAuto.add('returnPassengers');
+                  if (data.return?.route) newAuto.add('returnRoute');
+                  if (data.return?.destination) newAuto.add('returnDestination');
+                  if (data.return?.duration) newAuto.add('returnDuration');
+              } else {
+                  if (data.propertyName) newAuto.add('hotelName');
+                  if (data.hostName) newAuto.add('hostName');
+                  if (data.bookingReference) newAuto.add('bookingReference');
+                  if (data.checkInDate) newAuto.add('checkInDate');
+                  if (data.checkOutDate) newAuto.add('checkOutDate');
+                  if (data.address) newAuto.add('address');
+                  if (data.whatsappNumber) newAuto.add('whatsappNumber');
+                  if (data.guestName) newAuto.add('guestName');
+                  if (data.totalPrice) newAuto.add('totalPrice');
+              }
+              setAutoMetaKeys(newAuto);
+          }
+          if (showToast) showToast('Extracción completada.', 'success');
+      } catch (e) {
+          console.warn('Re-extracción falló:', e);
+          if (showToast) showToast('Falló la re-extracción.', 'error');
+      }
+  };
+
   const handleSaveDocEdit = () => {
       if (!docToEdit) return;
       const updatedDoc = {
@@ -346,7 +516,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
   // ... (rest of the rendering logic remains the same)
   const lowerType = uploadType.toLowerCase();
-  const isLodging = lowerType.includes('hotel') || lowerType.includes('airbnb') || lowerType.includes('lodging');
+    const isLodging = lowerType.includes('airbnb');
   const isFlight = lowerType.includes('flight') || lowerType.includes('vuelo') || lowerType === 'flight';
 
   const filteredDocuments = useMemo(() => {
@@ -466,68 +636,236 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 {/* Metadata Fields */}
                 {isLodging && (
                     <div className="grid grid-cols-2 gap-3 p-3 bg-panel border border-border rounded-xl animate-fade-in">
-                        <div className="col-span-2">
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.hotelName}</label>
-                             <input type="text" placeholder="PROPERTY NAME..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hotelName || ''} onChange={e => setMetadata({...metadata, hotelName: e.target.value})} />
+                        {/* Navigator for Airbnb metadata when multiple PDFs exist */}
+                        {uploadType.toLowerCase().includes('airbnb') && airbnbDocs.length > 1 && (
+                            <div className="col-span-2 flex items-center justify-between mb-1">
+                                <span className="font-mono text-[10px] text-text uppercase tracking-widest">Datos de documento {airbnbMetaIndex + 1}/{airbnbDocs.length}</span>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => {
+                                            const next = (airbnbMetaIndex - 1 + airbnbDocs.length) % airbnbDocs.length;
+                                            setAirbnbMetaIndex(next);
+                                            const m = airbnbDocs[next].metadata || {};
+                                            setMetadata({
+                                                ...metadata,
+                                                hotelName: m.hotelName || metadata.hotelName,
+                                                hostName: m.hostName || metadata.hostName,
+                                                bookingReference: m.bookingReference || metadata.bookingReference,
+                                                checkInDate: m.checkInDate || metadata.checkInDate,
+                                                checkOutDate: m.checkOutDate || metadata.checkOutDate,
+                                                address: m.address || metadata.address,
+                                                whatsappNumber: m.whatsappNumber || metadata.whatsappNumber,
+                                                guestName: m.guestName || metadata.guestName,
+                                                totalPrice: m.totalPrice || metadata.totalPrice
+                                            });
+                                        }}
+                                        className="px-3 py-2 border border-text bg-panel rounded-full text-[11px] font-mono text-text hover:bg-text hover:text-obsidian transition-colors shadow-sm"
+                                        title="Anterior"
+                                    >
+                                        ‹
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const next = (airbnbMetaIndex + 1) % airbnbDocs.length;
+                                            setAirbnbMetaIndex(next);
+                                            const m = airbnbDocs[next].metadata || {};
+                                            setMetadata({
+                                                ...metadata,
+                                                hotelName: m.hotelName || metadata.hotelName,
+                                                hostName: m.hostName || metadata.hostName,
+                                                bookingReference: m.bookingReference || metadata.bookingReference,
+                                                checkInDate: m.checkInDate || metadata.checkInDate,
+                                                checkOutDate: m.checkOutDate || metadata.checkOutDate,
+                                                address: m.address || metadata.address,
+                                                whatsappNumber: m.whatsappNumber || metadata.whatsappNumber,
+                                                guestName: m.guestName || metadata.guestName,
+                                                totalPrice: m.totalPrice || metadata.totalPrice
+                                            });
+                                        }}
+                                        className="px-3 py-2 border border-text bg-panel rounded-full text-[11px] font-mono text-text hover:bg-text hover:text-obsidian transition-colors shadow-sm"
+                                        title="Siguiente"
+                                    >
+                                        ›
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                            <div className="col-span-2">
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">{t.hotelName}
+                                                             {/* AUTO badge removed */}
+                                </label>
+                             <input type="text" placeholder="PROPERTY NAME..." className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hotelName || ''} onChange={e => setMetadata({...metadata, hotelName: e.target.value})} />
                         </div>
-                        <div className="col-span-2">
-                            <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.host || 'Host (Anfitrión)'}</label>
+                                                <div className="col-span-2">
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">{t.host || 'Host (Anfitrión)'}
+                                                            {/* AUTO badge removed */}
+                                                        </label>
                             <input type="text" placeholder="HOST NAME..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hostName || ''} onChange={e => setMetadata({...metadata, hostName: e.target.value})} />
                         </div>
-                        <div className="col-span-2">
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.bookingRef}</label>
+                            <div className="col-span-2">
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">{t.bookingRef}
+                                                             {/* AUTO badge removed */}
+                                </label>
                              <input type="text" placeholder="#123456" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.bookingReference || ''} onChange={e => setMetadata({...metadata, bookingReference: e.target.value})} />
                         </div>
-                        <div>
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.checkIn}</label>
-                             <input type="date" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.checkInDate || ''} onChange={e => setMetadata({...metadata, checkInDate: e.target.value})} />
+                            <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">{t.checkIn}
+                                                             {/* AUTO badge removed */}
+                                </label>
+                             <input type="date" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.checkInDate || ''} onChange={e => setMetadata({...metadata, checkInDate: e.target.value})} />
                         </div>
-                        <div>
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.checkOut}</label>
-                             <input type="date" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.checkOutDate || ''} onChange={e => setMetadata({...metadata, checkOutDate: e.target.value})} />
+                            <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">{t.checkOut}
+                                                             {/* AUTO badge removed */}
+                                </label>
+                             <input type="date" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.checkOutDate || ''} onChange={e => setMetadata({...metadata, checkOutDate: e.target.value})} />
                         </div>
-                        <div className="col-span-2">
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">Address</label>
+                            <div className="col-span-2">
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Address
+                                                             {/* AUTO badge removed */}
+                                </label>
                              <input type="text" placeholder="FULL ADDRESS..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.address || ''} onChange={e => setMetadata({...metadata, address: e.target.value})} />
                         </div>
-                        <div className="col-span-2">
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">WhatsApp Number</label>
-                             <input type="text" placeholder="+1 234 567 8900" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.whatsappNumber || ''} onChange={e => setMetadata({...metadata, whatsappNumber: e.target.value})} />
+                            <div className="col-span-2">
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">WhatsApp Number
+                                                             {/* AUTO badge removed */}
+                                </label>
+                             <input type="text" placeholder="+1 234 567 8900" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.whatsappNumber || ''} onChange={e => setMetadata({...metadata, whatsappNumber: e.target.value})} />
                         </div>
                     </div>
                 )}
                 
                 {isFlight && (
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-panel border border-border rounded-xl animate-fade-in">
-                        <div>
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.airline}</label>
-                             <input type="text" placeholder="AIRLINE..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.airline || ''} onChange={e => setMetadata({...metadata, airline: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-panel border border-border rounded-xl animate-fade-in">
+                        <div className="col-span-2 flex items-center justify-between mb-2">
+                            <span className="font-mono text-[9px] text-text uppercase tracking-widest">{flightMetaView === 'outbound' ? 'Vuelo de IDA' : 'Vuelo de Vuelta'}</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setFlightMetaView('outbound')}
+                                    className={`px-2.5 py-1.5 border rounded-full text-[10px] font-mono transition-colors ${flightMetaView === 'outbound' ? 'bg-text text-obsidian border-text' : 'bg-panel text-text border-border hover:border-text'}`}
+                                    title="IDA"
+                                >
+                                    ‹
+                                </button>
+                                <button
+                                    onClick={() => setFlightMetaView('return')}
+                                    className={`px-2.5 py-1.5 border rounded-full text-[10px] font-mono transition-colors ${flightMetaView === 'return' ? 'bg-text text-obsidian border-text' : 'bg-panel text-text border-border hover:border-text'}`}
+                                    title="VUELTA"
+                                >
+                                    ›
+                                </button>
+                            </div>
                         </div>
-                         <div>
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.flightNumber}</label>
-                             <input type="text" placeholder="AB1234" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.flightNumber || ''} onChange={e => setMetadata({...metadata, flightNumber: e.target.value})} />
+                            <div className="col-span-2 grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Número de Reserva</label>
+                                    <input type="text" placeholder="#ABC123" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.bookingReference || ''} onChange={e => setMetadata({...metadata, bookingReference: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Aerolínea</label>
+                                    <input type="text" placeholder="Compañía / código" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundAirline || '') : (metadata.returnAirline || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundAirline: e.target.value } : { ...metadata, returnAirline: e.target.value })} />
+                                </div>
+                            </div>
+                                                <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Aerolínea
+                                                             {/* AUTO badge removed */}
+                                                         </label>
+                                                         <input type="text" placeholder="Compañía / código" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundAirline || '') : (metadata.returnAirline || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundAirline: e.target.value } : { ...metadata, returnAirline: e.target.value })} />
+                                                </div>
+                                                <div className="col-span-2 grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Fecha de salida</label>
+                                                        <input type="date" className="bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDepartureDate || '') : (metadata.returnDepartureDate || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundDepartureDate: e.target.value } : { ...metadata, returnDepartureDate: e.target.value })} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Horario de salida</label>
+                                                        <input type="time" className="bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDepartureTime || '') : (metadata.returnDepartureTime || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundDepartureTime: e.target.value } : { ...metadata, returnDepartureTime: e.target.value })} />
+                                                    </div>
+                                                </div>
+                                                <div className="col-span-2 grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Fecha de llegada</label>
+                                                        <input type="date" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundArrivalDate || '') : (metadata.returnArrivalDate || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundArrivalDate: e.target.value } : { ...metadata, returnArrivalDate: e.target.value })} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Horario de llegada</label>
+                                                        <input type="time" className="w-full bg-surface border border-border p-2 text:[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundArrivalTime || '') : (metadata.returnArrivalTime || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundArrivalTime: e.target.value } : { ...metadata, returnArrivalTime: e.target.value })} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Código de Check-in
+                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundCheckInCode') : hasAuto('returnCheckInCode')) && (
+                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                             )}
+                                                         </label>
+                             <input type="text" placeholder="XXXX" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundCheckInCode || '') : (metadata.returnCheckInCode || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundCheckInCode: e.target.value} : {...metadata, returnCheckInCode: e.target.value})} />
                         </div>
-                        <div>
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.departureAirport}</label>
-                             <input type="text" placeholder="JFK" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.departureAirport || ''} onChange={e => setMetadata({...metadata, departureAirport: e.target.value})} />
+                                                <div className="col-span-2">
+                                                                            <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Pasajeros (uno por línea)
+                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundPassengers') : hasAuto('returnPassengers')) && (
+                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                             )}
+                                                         </label>
+                                                         <textarea placeholder="Nombre\\nNombre 2" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg h-18 resize-y" value={(flightMetaView === 'outbound' ? (metadata.outboundPassengers || []) : (metadata.returnPassengers || [])).join('\\n')} onChange={e => setMetadata(
+                                                                flightMetaView === 'outbound'
+                                                                ? { ...metadata, outboundPassengers: e.target.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean) }
+                                                                : { ...metadata, returnPassengers: e.target.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean) }
+                                                         )} />
+                                                </div>
+                                                                                                <div>
+                                                                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Aeropuerto de escala
+                                                                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundLayoverAirport') : hasAuto('returnLayoverAirport')) && (
+                                                                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                                                                             )}
+                                                                                                         </label>
+                                                                                                        <input type="text" placeholder="IATA/ciudad" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundLayoverAirport || '') : (metadata.returnLayoverAirport || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundLayoverAirport: e.target.value } : { ...metadata, returnLayoverAirport: e.target.value })} />
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Tiempo de espera
+                                                                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundLayoverWait') : hasAuto('returnLayoverWait')) && (
+                                                                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                                                                             )}
+                                                                                                         </label>
+                                                                                                        <input type="text" placeholder="2h 30m" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundLayoverWait || '') : (metadata.returnLayoverWait || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundLayoverWait: e.target.value } : { ...metadata, returnLayoverWait: e.target.value })} />
+                                                                                                </div>
+                                                <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Trayecto
+                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundRoute') : hasAuto('returnRoute')) && (
+                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                             )}
+                                                         </label>
+                             <input type="text" placeholder="EZE → MIA" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundRoute || '') : (metadata.returnRoute || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundRoute: e.target.value} : {...metadata, returnRoute: e.target.value})} />
                         </div>
-                        <div>
-                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.arrivalAirport}</label>
-                             <input type="text" placeholder="LHR" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.arrivalAirport || ''} onChange={e => setMetadata({...metadata, arrivalAirport: e.target.value})} />
+                                                <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Destino
+                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundDestination') : hasAuto('returnDestination')) && (
+                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                             )}
+                                                         </label>
+                             <input type="text" placeholder="IATA/ciudad" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDestination || '') : (metadata.returnDestination || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundDestination: e.target.value} : {...metadata, returnDestination: e.target.value})} />
+                        </div>
+                                                <div>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Duración
+                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundDuration') : hasAuto('returnDuration')) && (
+                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
+                                                             )}
+                                                         </label>
+                             <input type="text" placeholder="9h 45m" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDuration || '') : (metadata.returnDuration || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundDuration: e.target.value} : {...metadata, returnDuration: e.target.value})} />
                         </div>
                     </div>
                 )}
 
                 {/* Drop Zones */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-dim bg-panel hover:bg-surface hover:border-acid h-32 flex flex-col items-center justify-center cursor-pointer transition-colors group rounded-2xl relative overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-text bg-panel hover:bg-surface hover:border-acid h-36 flex flex-col items-center justify-center cursor-pointer transition-colors group rounded-2xl relative overflow-hidden shadow-md">
                         <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" multiple accept="image/*,.pdf" />
-                        <Upload className="text-dim mb-2 group-hover:text-acid transition-colors" size={28} />
-                        <span className="font-mono text-[10px] text-dim uppercase group-hover:text-text transition-colors">{t.selectFiles}</span>
-                        <span className="text-[8px] text-dim/50 mt-1">IMG, PDF (MAX 10MB)</span>
+                        <Upload className="text-text mb-2 group-hover:text-acid transition-colors" size={32} />
+                        <span className="font-mono text-[11px] text-text uppercase group-hover:text-acid transition-colors">{t.selectFiles}</span>
+                        <span className="text-[9px] text-dim mt-1">IMG, PDF (MAX 10MB)</span>
+                        
                     </div>
                     
-                    <div onClick={() => cameraInputRef.current?.click()} className="border-2 border-dashed border-dim bg-panel hover:bg-surface hover:border-acid h-32 flex flex-col items-center justify-center cursor-pointer transition-colors group rounded-2xl">
+                    <div onClick={() => cameraInputRef.current?.click()} className="border-2 border-dashed border-text bg-panel hover:bg-surface hover:border-acid h-36 flex flex-col items-center justify-center cursor-pointer transition-colors group rounded-2xl shadow-md">
                         <input 
                             type="file" 
                             ref={cameraInputRef} 
@@ -536,10 +874,11 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                             accept="image/*" 
                             capture="environment" 
                         />
-                        <Camera className="text-dim mb-2 group-hover:text-acid transition-colors" size={28} />
-                        <span className="font-mono text-[10px] text-dim uppercase group-hover:text-text transition-colors">{t.cameraCapture}</span>
+                        <Camera className="text-text mb-2 group-hover:text-acid transition-colors" size={32} />
+                        <span className="font-mono text-[11px] text-text uppercase group-hover:text-acid transition-colors">{t.cameraCapture}</span>
                     </div>
                 </div>
+                {/* Removed auto-optimized/max size notice */}
 
                 {/* Staged Files List */}
                 {selectedFiles.length > 0 && (
@@ -574,16 +913,13 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                         </div>
                     </div>
                 )}
+
+                {/* Airbnb quick upload removed as requested */}
             </div>
             
             <div className="space-y-4">
-                <div>
-                    <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-2 block">Tags</label>
-                    <input type="text" placeholder="TAGS (COMMA SEPARATED)" className="w-full bg-panel border border-border p-3 text-sm text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={tagsInput} onChange={e => setTagsInput(e.target.value)} />
-                </div>
-                
+                {/* Right column simplified: removed Tags and manual Execute Upload */}
                 <div className="flex flex-col gap-2 mt-auto">
-                    {/* Status Message */}
                     {uploadStatus && (
                         <div className={`p-3 rounded-xl flex items-center gap-2 text-xs font-mono ${uploadStatus.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'} animate-fade-in`}>
                             {uploadStatus.type === 'success' ? <CheckCircle2 size={14}/> : <AlertCircle size={14}/>}
@@ -599,15 +935,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                             ></div>
                         </div>
                     )}
-                    <button onClick={handleAddDocuments} disabled={selectedFiles.length === 0 || isUploading} className="w-full py-3 bg-text text-obsidian hover:bg-acid font-mono text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50 flex items-center justify-center gap-2 rounded-lg shadow-md">
-                        {isUploading ? <Loader2 className="animate-spin" size={18}/> : <Upload size={18}/>}
-                        {isUploading 
-                            ? `${t.processing} (${uploadProgress?.current || 0}/${uploadProgress?.total || 0})` 
-                            : t.executeUpload}
-                    </button>
-                    <div className="text-[9px] text-dim text-center font-mono opacity-60">
-                        Auto-optimized images (800px). Max PDF size 10MB.
-                    </div>
+                    {/* Removed auto-optimized/max size notice */}
                 </div>
             </div>
         </div>
@@ -696,10 +1024,15 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                             </div>
                         </div>
 
-                        <div className="flex gap-2 mt-4 pt-4 border-t border-border/50 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                <div className="flex gap-2 mt-4 pt-4 border-t border-border/50 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button onClick={(e) => { e.stopPropagation(); setPreviewDoc(doc); }} className="flex-1 py-2 border border-border bg-surface text-[10px] font-mono text-dim hover:text-text hover:border-text transition-colors uppercase flex items-center justify-center gap-2 rounded-full">
                                 <Eye size={12} /> View
                             </button>
+                            {((doc.type || '').toLowerCase().includes('flight') || (doc.type || '').toLowerCase().includes('airbnb')) ? (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleReextract(doc); }} className="flex-1 py-2 border border-border bg-surface text-[10px] font-mono text-dim hover:text-acid hover:border-acid transition-colors uppercase flex items-center justify-center gap-2 rounded-full">
+                                                                Reintentar extracción
+                                                            </button>
+                                                        ) : null}
                             <button onClick={(e) => { e.stopPropagation(); initEdit(doc); }} className="w-10 py-2 border border-border bg-surface text-dim hover:text-acid hover:border-acid transition-colors flex items-center justify-center rounded-full" title="Edit Details">
                                 <Edit2 size={12} />
                             </button>

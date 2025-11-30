@@ -95,6 +95,7 @@ export interface Trip {
   checklist: { id: string; task: string; completed: boolean; dueDate?: string }[];
   documents: TripDocument[];
   documentCategories?: string[]; // Custom categories for documents
+  passengers?: string[]; // Passenger names for display
 }
 
 export interface AppState {

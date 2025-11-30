@@ -353,8 +353,9 @@ export const generateBudgetSuggestion = async (destination: string, duration: nu
 // PDF DATA EXTRACTION SERVICE
 export const extractPDFData = async (base64Data: string, documentType: string): Promise<any> => {
   try {
-    const prompt = `
-      Extract structured data from this ${documentType} document.
+    const isFlight = (documentType || '').toLowerCase().includes('flight') || (documentType || '').toLowerCase().includes('vuelo');
+    const lodgingPrompt = `
+      Extract structured data from this ${documentType} document (Airbnb or Lodging).
       
       Extract the following fields if available:
       - Property Name / Hotel Name
@@ -381,14 +382,87 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
       }
     `;
 
-    // Remove data URL prefix if present
-    const cleanBase64 = base64Data.replace(/^data:application\/pdf;base64,/, '');
+    const flightPrompt = `
+      Extract structured flight data from this reservation document.
+      
+      Global fields:
+      - Booking Reference / Confirmation Number
+      
+      Outbound (Vuelo de IDA):
+      - checkInCode
+      - passengers (array of names)
+      - airline (e.g., Aerolíneas Argentinas, AA)
+      - departureDate (YYYY-MM-DD)
+      - departureTime (HH:MM)
+      - route (e.g., EZE → MIA)
+      - destination (IATA code or city)
+      - duration (e.g., 9h 45m)
+      - layover: airport (IATA or city) and waitDuration (e.g., 2h 30m), if applicable
+      
+      Return (Vuelo de Vuelta):
+      - checkInCode
+      - passengers (array of names)
+      - airline (e.g., Aerolíneas Argentinas, AA)
+      - departureDate (YYYY-MM-DD)
+      - departureTime (HH:MM)
+      - route (e.g., MIA → EZE)
+      - destination (IATA code or city)
+      - duration (e.g., 9h 30m)
+      - layover: airport (IATA or city) and waitDuration (e.g., 1h 15m), if applicable
+      
+      Return strictly a JSON object. Use null when unavailable:
+      {
+        "bookingReference": "string or null",
+        "outbound": {
+          "checkInCode": "string or null",
+          "passengers": ["string"] | null,
+          "airline": "string or null",
+          "departureDate": "YYYY-MM-DD or null",
+          "departureTime": "HH:MM or null",
+          "route": "string or null",
+          "destination": "string or null",
+          "duration": "string or null",
+          "layover": { "airport": "string or null", "waitDuration": "string or null" } | null
+        },
+        "return": {
+          "checkInCode": "string or null",
+          "passengers": ["string"] | null,
+          "airline": "string or null",
+          "departureDate": "YYYY-MM-DD or null",
+          "departureTime": "HH:MM or null",
+          "route": "string or null",
+          "destination": "string or null",
+          "duration": "string or null",
+          "layover": { "airport": "string or null", "waitDuration": "string or null" } | null
+        }
+      }
+    `;
+
+    // Robustly strip any data URL prefix (pdf or octet-stream) and extract the base64 payload
+    let cleanBase64 = base64Data;
+    try {
+      if (cleanBase64.startsWith('data:')) {
+        const commaIdx = cleanBase64.indexOf(',');
+        if (commaIdx !== -1) {
+          cleanBase64 = cleanBase64.slice(commaIdx + 1);
+        }
+      }
+      // Fallback specific replacement for common mime types
+      cleanBase64 = cleanBase64
+        .replace(/^data:application\/pdf;base64,/, '')
+        .replace(/^data:application\/octet-stream;base64,/, '');
+    } catch {}
+
+    // Basic diagnostics
+    try {
+      console.log('[PDF Extract] Type:', documentType, 'isFlight:', isFlight, 'payloadLen:', cleanBase64?.length || 0);
+    } catch {}
 
     const response = await getAi().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: {
         parts: [
-          { text: prompt },
+          { text: isFlight ? flightPrompt : lodgingPrompt },
           { 
             inlineData: {
               mimeType: 'application/pdf',
@@ -399,11 +473,73 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
       },
       config: {
         responseMimeType: "application/json",
+        responseSchema: isFlight ? {
+          type: Type.OBJECT,
+          properties: {
+            bookingReference: { type: Type.STRING },
+            outbound: {
+              type: Type.OBJECT,
+              properties: {
+                checkInCode: { type: Type.STRING },
+                passengers: { type: Type.ARRAY, items: { type: Type.STRING } },
+                airline: { type: Type.STRING },
+                departureDate: { type: Type.STRING },
+                departureTime: { type: Type.STRING },
+                route: { type: Type.STRING },
+                destination: { type: Type.STRING },
+                duration: { type: Type.STRING },
+                layover: {
+                  type: Type.OBJECT,
+                  properties: {
+                    airport: { type: Type.STRING },
+                    waitDuration: { type: Type.STRING }
+                  }
+                }
+              }
+            },
+            return: {
+              type: Type.OBJECT,
+              properties: {
+                checkInCode: { type: Type.STRING },
+                passengers: { type: Type.ARRAY, items: { type: Type.STRING } },
+                airline: { type: Type.STRING },
+                departureDate: { type: Type.STRING },
+                departureTime: { type: Type.STRING },
+                route: { type: Type.STRING },
+                destination: { type: Type.STRING },
+                duration: { type: Type.STRING },
+                layover: {
+                  type: Type.OBJECT,
+                  properties: {
+                    airport: { type: Type.STRING },
+                    waitDuration: { type: Type.STRING }
+                  }
+                }
+              }
+            }
+          }
+        } : {
+          type: Type.OBJECT,
+          properties: {
+            propertyName: { type: Type.STRING },
+            hostName: { type: Type.STRING },
+            bookingReference: { type: Type.STRING },
+            checkInDate: { type: Type.STRING },
+            checkOutDate: { type: Type.STRING },
+            address: { type: Type.STRING },
+            whatsappNumber: { type: Type.STRING },
+            guestName: { type: Type.STRING },
+            totalPrice: { type: Type.STRING }
+          }
+        }
       }
     });
 
     const text = response.text?.replace(/```json|```/g, '').trim();
-    if (!text) return null;
+    if (!text) {
+      console.warn('[PDF Extract] Empty response text');
+      return null;
+    }
     
     return JSON.parse(text);
   } catch (error) {

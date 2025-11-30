@@ -499,6 +499,16 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     ) : (
                         <span className="text-[10px] font-mono text-dim mt-1">Weather unavailable</span>
                     )}
+
+                    {/* Passengers section */}
+                    <div className="mt-3 space-y-1">
+                        { (trip.passengers && trip.passengers.length > 0 ? trip.passengers : ['PASAJERO 1', 'PASAJERO 2']).map((p, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-panel border border-border px-3 py-2 rounded-xl">
+                                <span className="text-[10px] font-mono text-dim uppercase tracking-widest">{p}</span>
+                                <span className="text-[10px] font-mono text-text uppercase">—</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {currentDay && (
