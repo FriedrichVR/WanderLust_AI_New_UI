@@ -433,10 +433,10 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
     const totalRemainingSlots = remainingImageSlots();
 
   return (
-    <div className="animate-fade-in pt-6">
+    <div className="animate-fade-in pt-3 md:pt-6">
       
       {/* Day Nav */}
-      <div className="relative group/nav mb-8">
+      <div className="relative group/nav mb-4 md:mb-8">
          <button 
             onClick={() => scrollNav('left')} 
             className="hidden md:flex absolute left-0 top-0 bottom-4 z-20 w-10 items-center justify-center bg-obsidian border border-border text-dim hover:text-white transition-colors rounded-xl shadow-md hover:border-acid/50"
@@ -444,7 +444,7 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
              <ChevronLeft size={24} />
          </button>
          
-         <div ref={scrollRef} className="flex overflow-x-auto gap-2 md:gap-3 pb-4 scroll-smooth custom-scrollbar px-1 md:px-12 no-scrollbar">
+         <div ref={scrollRef} className="flex overflow-x-auto gap-2 md:gap-3 pb-2 md:pb-4 scroll-smooth custom-scrollbar px-1 md:px-12 no-scrollbar">
             {trip.itinerary.map((day, index) => {
                 const date = new Date(day.date);
                 const isActive = activeDayId === day.id;
@@ -452,7 +452,7 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     <button
                         key={day.id}
                         onClick={() => setActiveDayId(day.id)}
-                        className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 flex flex-col items-center justify-center border transition-all duration-300 relative overflow-hidden rounded-xl md:rounded-2xl ${
+                        className={`flex-shrink-0 w-14 h-16 md:w-20 md:h-24 flex flex-col items-center justify-center border transition-all duration-300 relative overflow-hidden rounded-lg md:rounded-2xl ${
                             isActive ? 'bg-text text-obsidian border-text scale-105 font-bold shadow-lg' : 'bg-surface border-border text-dim hover:border-dim hover:bg-panel'
                         }`}
                     >
@@ -462,8 +462,8 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     </button>
                 );
             })}
-            <button onClick={handleAddDay} className="flex-shrink-0 w-16 h-20 md:w-20 md:h-24 flex items-center justify-center border border-dashed border-dim text-dim hover:text-white hover:border-white transition-colors bg-transparent rounded-xl md:rounded-2xl">
-                <Plus size={20} className="md:hidden" />
+            <button onClick={handleAddDay} className="flex-shrink-0 w-14 h-16 md:w-20 md:h-24 flex items-center justify-center border border-dashed border-dim text-dim hover:text-white hover:border-white transition-colors bg-transparent rounded-lg md:rounded-2xl">
+                <Plus size={16} className="md:hidden" />
                 <Plus size={24} className="hidden md:block" />
             </button>
          </div>
@@ -476,13 +476,13 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
          </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         
         {/* Timeline */}
-        <div key={activeDayId} className="lg:col-span-2 space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center flex-wrap gap-3 md:gap-4 bg-surface p-3 md:p-4 rounded-xl md:rounded-2xl border border-border">
+        <div key={activeDayId} className="lg:col-span-2 space-y-3 md:space-y-6 animate-fade-in">
+            <div className="flex justify-between items-center flex-wrap gap-2 md:gap-4 bg-surface p-2 md:p-4 rounded-lg md:rounded-2xl border border-border">
                 <div className="flex flex-col">
-                    <h3 className="font-display text-base md:text-xl text-text uppercase tracking-tight">
+                    <h3 className="font-display text-sm md:text-xl text-text uppercase tracking-tight">
                         {currentDay ? new Date(currentDay.date).toLocaleDateString(lang, { weekday: 'long', month: 'long', day: 'numeric' }) : 'No Selection'}
                     </h3>
                     {loadingWeather ? (
@@ -502,11 +502,11 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     )}
 
                     {/* Passengers section */}
-                    <div className="mt-2 md:mt-3 space-y-1">
+                    <div className="mt-1.5 md:mt-3 space-y-1">
                         { (trip.passengers && trip.passengers.length > 0 ? trip.passengers : ['PASAJERO 1', 'PASAJERO 2']).map((p, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-panel border border-border px-2 py-1.5 md:px-3 md:py-2 rounded-lg md:rounded-xl">
-                                <span className="text-[9px] md:text-[10px] font-mono text-dim uppercase tracking-widest">{p}</span>
-                                <span className="text-[9px] md:text-[10px] font-mono text-text uppercase">—</span>
+                            <div key={idx} className="flex items-center justify-between bg-panel border border-border px-2 py-1 md:px-3 md:py-2 rounded-md md:rounded-xl">
+                                <span className="text-[8px] md:text-[10px] font-mono text-dim uppercase tracking-widest">{p}</span>
+                                <span className="text-[8px] md:text-[10px] font-mono text-text uppercase">—</span>
                             </div>
                         ))}
                     </div>
@@ -536,15 +536,15 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
             {/* Day Log */}
             {currentDay && (
-                <div className="space-y-4 md:space-y-6">
-                    <div className="bg-surface border border-border p-3 md:p-6 rounded-2xl md:rounded-3xl">
+                <div className="space-y-3 md:space-y-6">
+                    <div className="bg-surface border border-border p-2 md:p-6 rounded-xl md:rounded-3xl">
                         <div className="flex flex-col gap-3 md:gap-4">
                             <div className="space-y-1.5 md:space-y-2">
                                 <label className="font-mono text-[9px] md:text-[10px] text-acid uppercase tracking-widest">{t.dayLog}</label>
                                 <textarea 
                                     value={currentDay.notes || ''} 
                                     onChange={e => handleUpdateDayLog({ notes: e.target.value })}
-                                    className="w-full bg-panel border border-border p-3 md:p-4 text-xs md:text-sm text-text focus:border-acid outline-none min-h-[80px] md:min-h-[100px] transition-colors rounded-lg md:rounded-xl resize-y"
+                                    className="w-full bg-panel border border-border p-2 md:p-4 text-[10px] md:text-sm text-text focus:border-acid outline-none min-h-[60px] md:min-h-[100px] transition-colors rounded-lg md:rounded-xl resize-y"
                                     placeholder="// Write your notes here..."
                                 />
                             </div>
@@ -554,14 +554,14 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                     type="text" 
                                     value={currentDay.location || ''}
                                     onChange={e => handleUpdateDayLog({ location: e.target.value })}
-                                    className="w-full bg-panel border border-border p-2.5 md:p-3 text-xs md:text-sm text-text focus:border-acid outline-none mb-1.5 md:mb-2 transition-colors rounded-lg md:rounded-xl"
+                                    className="w-full bg-panel border border-border p-2 md:p-3 text-[10px] md:text-sm text-text focus:border-acid outline-none mb-1.5 md:mb-2 transition-colors rounded-lg md:rounded-xl"
                                     placeholder="City or Hotel..."
                                 />
-                                <div className="flex gap-3 overflow-x-auto py-2 custom-scrollbar">
+                                <div className="flex gap-2 md:gap-3 overflow-x-auto py-1.5 md:py-2 custom-scrollbar">
                                     {currentDay.images?.map((img, i) => (
                                         <div 
                                             key={i} 
-                                            className="relative group flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden cursor-move"
+                                            className="relative group flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden cursor-move"
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, i, 'dayImage')}
                                             onDragOver={handleDragOver}
@@ -582,8 +582,9 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                             </button>
                                         </div>
                                     ))}
-                                    <button onClick={() => triggerImageUpload(null)} disabled={totalRemainingSlots === 0} className={`flex-shrink-0 w-20 h-20 border border-dashed border-dim flex items-center justify-center text-dim hover:text-white hover:border-white transition-colors rounded-xl ${totalRemainingSlots === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
-                                        <ImageIcon size={24} />
+                                    <button onClick={() => triggerImageUpload(null)} disabled={totalRemainingSlots === 0} className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 border border-dashed border-dim flex items-center justify-center text-dim hover:text-white hover:border-white transition-colors rounded-lg md:rounded-xl ${totalRemainingSlots === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                        <ImageIcon size={18} className="md:hidden" />
+                                        <ImageIcon size={24} className="hidden md:block" />
                                     </button>
                                 </div>
                             </div>
@@ -592,7 +593,7 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
                     {/* Info Blocks */}
                     {currentDay.infoBlocks?.map(block => (
-                        <div key={block.id} className="bg-surface border border-border p-3 md:p-6 relative group animate-fade-in rounded-2xl md:rounded-3xl">
+                        <div key={block.id} className="bg-surface border border-border p-2 md:p-6 relative group animate-fade-in rounded-xl md:rounded-3xl">
                             <button 
                                 onClick={() => setBlockToDelete(block.id)}
                                 className="absolute top-2 right-2 md:top-4 md:right-4 text-dim hover:text-danger opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity p-1.5 md:p-2"
@@ -615,16 +616,16 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                 <textarea 
                                     value={block.content}
                                     onChange={e => handleUpdateInfoBlock(block.id, 'content', e.target.value)}
-                                    className="w-full bg-panel border border-border p-3 md:p-4 text-xs md:text-sm text-text focus:border-acid outline-none min-h-[80px] md:min-h-[100px] transition-colors rounded-lg md:rounded-xl"
+                                    className="w-full bg-panel border border-border p-2 md:p-4 text-[10px] md:text-sm text-text focus:border-acid outline-none min-h-[60px] md:min-h-[100px] transition-colors rounded-lg md:rounded-xl"
                                     placeholder="Content details..."
                                 />
                                 
                                 <div className="space-y-2">
-                                     <div className="flex gap-3 overflow-x-auto py-2 custom-scrollbar">
+                                     <div className="flex gap-2 md:gap-3 overflow-x-auto py-1.5 md:py-2 custom-scrollbar">
                                         {block.images?.map((img, i) => (
                                             <div 
                                                 key={i} 
-                                                className="relative group/img flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden cursor-move"
+                                                className="relative group/img flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden cursor-move"
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, i, 'blockImage', block.id)}
                                                 onDragOver={handleDragOver}
@@ -645,8 +646,9 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                                 </button>
                                             </div>
                                         ))}
-                                        <button onClick={() => triggerImageUpload(block.id)} disabled={totalRemainingSlots === 0} className={`flex-shrink-0 w-20 h-20 border border-dashed border-dim flex items-center justify-center text-dim hover:text-white hover:border-white transition-colors rounded-xl ${totalRemainingSlots === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
-                                            <ImageIcon size={24} />
+                                        <button onClick={() => triggerImageUpload(block.id)} disabled={totalRemainingSlots === 0} className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 border border-dashed border-dim flex items-center justify-center text-dim hover:text-white hover:border-white transition-colors rounded-lg md:rounded-xl ${totalRemainingSlots === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                            <ImageIcon size={18} className="md:hidden" />
+                                            <ImageIcon size={24} className="hidden md:block" />
                                         </button>
                                     </div>
                                 </div>
@@ -656,25 +658,26 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
                     <button 
                         onClick={handleAddInfoBlock}
-                        className="w-full py-4 border border-dashed border-dim text-dim hover:text-acid hover:border-acid hover:bg-acid/5 font-mono text-xs uppercase transition-all flex items-center justify-center gap-2 group rounded-2xl"
+                        className="w-full py-2.5 md:py-4 border border-dashed border-dim text-dim hover:text-acid hover:border-acid hover:bg-acid/5 font-mono text-[10px] md:text-xs uppercase transition-all flex items-center justify-center gap-1.5 md:gap-2 group rounded-xl md:rounded-2xl"
                     >
-                        <Plus size={14} className="group-hover:scale-110 transition-transform" /> {t.addInfoBlock}
+                        <Plus size={12} className="md:hidden group-hover:scale-110 transition-transform" />
+                        <Plus size={14} className="hidden md:block group-hover:scale-110 transition-transform" /> {t.addInfoBlock}
                     </button>
                 </div>
             )}
 
-            <div className="relative border-l-2 border-border ml-2 md:ml-4 pl-4 md:pl-8 space-y-6 md:space-y-8 py-3 md:py-4 mt-6 md:mt-8">
+            <div className="relative border-l-2 border-border ml-1.5 md:ml-4 pl-3 md:pl-8 space-y-4 md:space-y-8 py-2 md:py-4 mt-4 md:mt-8">
                 {!currentDay || currentDay.activities.length === 0 ? (
-                    <div className="text-dim font-mono text-[10px] md:text-xs uppercase tracking-widest pl-2">{t.timelineEmpty}</div>
+                    <div className="text-dim font-mono text-[9px] md:text-xs uppercase tracking-widest pl-2">{t.timelineEmpty}</div>
                 ) : (
                     currentDay.activities.map((activity) => (
                         <div key={activity.id} className="relative group">
                             {/* Dot */}
-                            <div className="absolute -left-[21px] md:-left-[41px] top-4 md:top-6 w-4 h-4 md:w-6 md:h-6 bg-surface border-2 md:border-4 border-border group-hover:border-acid rounded-full transition-colors z-10"></div>
+                            <div className="absolute -left-[15px] md:-left-[41px] top-3 md:top-6 w-3 h-3 md:w-6 md:h-6 bg-surface border-2 md:border-4 border-border group-hover:border-acid rounded-full transition-colors z-10"></div>
                             
-                            <div className="bg-surface border border-border p-3 md:p-6 hover:border-dim transition-colors group rounded-2xl md:rounded-3xl shadow-sm relative">
-                                <div className="flex justify-between items-start mb-2 md:mb-3">
-                                    <div className="font-mono text-[10px] md:text-xs font-bold text-acid bg-acid/10 px-2 py-0.5 md:px-3 md:py-1 rounded-full">{activity.startTime}</div>
+                            <div className="bg-surface border border-border p-2 md:p-6 hover:border-dim transition-colors group rounded-xl md:rounded-3xl shadow-sm relative">
+                                <div className="flex justify-between items-start mb-1.5 md:mb-3">
+                                    <div className="font-mono text-[9px] md:text-xs font-bold text-acid bg-acid/10 px-2 py-0.5 md:px-3 md:py-1 rounded-full">{activity.startTime}</div>
                                     <button 
                                         onClick={() => {
                                             const updated = trip.itinerary.map(d => d.id === activeDayId ? {...d, activities: d.activities.filter(a => a.id !== activity.id)} : d);
@@ -686,17 +689,17 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                                         <Trash2 size={16} className="hidden md:block" />
                                     </button>
                                 </div>
-                                <h4 className="font-bold text-base md:text-lg text-text mb-1">{activity.title}</h4>
+                                <h4 className="font-bold text-sm md:text-lg text-text mb-1">{activity.title}</h4>
                                 <button 
                                     onClick={() => openSearchForActivity(activity)}
-                                    className="text-[10px] md:text-xs text-dim hover:text-acid font-mono mb-3 md:mb-4 flex items-center gap-1 transition-colors text-left group/loc"
+                                    className="text-[9px] md:text-xs text-dim hover:text-acid font-mono mb-2 md:mb-4 flex items-center gap-1 transition-colors text-left group/loc"
                                     title={t.locateTarget}
                                 >
-                                    <MapPin size={11} className="md:hidden group-hover/loc:scale-110 transition-transform" />
+                                    <MapPin size={10} className="md:hidden group-hover/loc:scale-110 transition-transform" />
                                     <MapPin size={12} className="hidden md:block group-hover/loc:scale-110 transition-transform" /> 
                                     {activity.locationAddress || 'Set Location'}
                                 </button>
-                                <p className="text-xs md:text-sm text-gray-400 leading-relaxed">{activity.description}</p>
+                                <p className="text-[10px] md:text-sm text-gray-400 leading-relaxed">{activity.description}</p>
                             </div>
                         </div>
                     ))
@@ -705,27 +708,28 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
         </div>
 
         {/* Checklist */}
-        <div className="bg-surface border border-border h-fit sticky top-20 md:top-24 rounded-2xl md:rounded-3xl shadow-lg overflow-hidden">
-            <div className="p-3 md:p-5 border-b border-border bg-panel/50">
-                <h3 className="font-mono text-[10px] md:text-xs text-acid uppercase tracking-widest flex items-center gap-1.5 md:gap-2">
-                    <CheckCircle2 size={14} className="md:hidden" />
+        <div className="bg-surface border border-border h-fit sticky top-20 md:top-24 rounded-xl md:rounded-3xl shadow-lg overflow-hidden">
+            <div className="p-2 md:p-5 border-b border-border bg-panel/50">
+                <h3 className="font-mono text-[9px] md:text-xs text-acid uppercase tracking-widest flex items-center gap-1.5 md:gap-2">
+                    <CheckCircle2 size={12} className="md:hidden" />
                     <CheckCircle2 size={16} className="hidden md:block" /> {t.logisticsCheck}
                 </h3>
             </div>
-            <div className="p-1.5 md:p-2 max-h-[300px] md:max-h-[400px] overflow-y-auto custom-scrollbar">
+            <div className="p-1 md:p-2 max-h-[250px] md:max-h-[400px] overflow-y-auto custom-scrollbar">
                 {trip.checklist.map(item => (
-                    <div key={item.id} className="flex items-start gap-3 p-3 hover:bg-panel transition-colors group border-b border-border/30 last:border-0 rounded-xl">
+                    <div key={item.id} className="flex items-start gap-2 md:gap-3 p-2 md:p-3 hover:bg-panel transition-colors group border-b border-border/30 last:border-0 rounded-lg md:rounded-xl">
                         <div 
-                            className={`w-5 h-5 mt-0.5 border flex items-center justify-center transition-colors shrink-0 cursor-pointer rounded-md ${item.completed ? 'bg-acid border-acid text-black' : 'border-dim'}`}
+                            className={`w-4 h-4 md:w-5 md:h-5 mt-0.5 border flex items-center justify-center transition-colors shrink-0 cursor-pointer rounded-md ${item.completed ? 'bg-acid border-acid text-black' : 'border-dim'}`}
                             onClick={() => {
                                 const updatedChecklist = trip.checklist.map(c => c.id === item.id ? {...c, completed: !c.completed} : c);
                                 updateTrip({...trip, checklist: updatedChecklist});
                             }}
                         >
-                            {item.completed && <CheckCircle2 size={14} />}
+                            {item.completed && <CheckCircle2 size={12} className="md:hidden" />}
+                            {item.completed && <CheckCircle2 size={14} className="hidden md:block" />}
                         </div>
                         <div className="flex-1">
-                             <div className={`text-sm font-medium mb-1 ${item.completed ? 'text-dim line-through' : 'text-text'}`}>{item.task}</div>
+                             <div className={`text-[11px] md:text-sm font-medium mb-0.5 md:mb-1 ${item.completed ? 'text-dim line-through' : 'text-text'}`}>{item.task}</div>
                              <div className="flex items-center gap-2">
                                  <div className="flex items-center gap-1.5 bg-panel/50 hover:bg-panel border border-transparent hover:border-border px-2 py-1 rounded-lg transition-all cursor-pointer group/date">
                                      <Calendar size={10} className={item.dueDate ? "text-acid" : "text-dim group-hover/date:text-text"} />
@@ -752,27 +756,28 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
                     </div>
                 ))}
             </div>
-            <div className="p-4 border-t border-border bg-panel/30">
-                <div className="flex flex-col gap-2">
+            <div className="p-2 md:p-4 border-t border-border bg-panel/30">
+                <div className="flex flex-col gap-1.5 md:gap-2">
                     <input 
                         type="text" 
                         placeholder={t.addTask}
                         value={taskInput}
                         onChange={(e) => setTaskInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-                        className="w-full bg-surface border border-border px-4 py-2.5 text-sm text-text focus:border-acid outline-none rounded-xl transition-colors" 
+                        className="w-full bg-surface border border-border px-2 md:px-4 py-1.5 md:py-2.5 text-[10px] md:text-sm text-text focus:border-acid outline-none rounded-lg md:rounded-xl transition-colors" 
                     />
-                    <div className="flex gap-2">
-                        <div className="flex-1 bg-surface border border-border px-3 py-2 rounded-xl flex items-center gap-2">
-                            <Calendar size={14} className="text-dim" />
+                    <div className="flex gap-1.5 md:gap-2">
+                        <div className="flex-1 bg-surface border border-border px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl flex items-center gap-1.5 md:gap-2">
+                            <Calendar size={12} className="text-dim md:hidden" />
+                            <Calendar size={14} className="text-dim hidden md:block" />
                             <input 
                                 type="date"
                                 value={taskDueDate}
                                 onChange={(e) => setTaskDueDate(e.target.value)}
-                                className="w-full bg-transparent text-xs text-dim focus:text-text outline-none"
+                                className="w-full bg-transparent text-[10px] md:text-xs text-dim focus:text-text outline-none"
                             />
                         </div>
-                        <button onClick={handleAddTask} disabled={!taskInput.trim()} className="bg-text text-obsidian px-4 py-2 text-xs font-bold hover:bg-acid transition-colors uppercase rounded-xl">{t.add}</button>
+                        <button onClick={handleAddTask} disabled={!taskInput.trim()} className="bg-text text-obsidian px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold hover:bg-acid transition-colors uppercase rounded-lg md:rounded-xl">{t.add}</button>
                     </div>
                 </div>
             </div>
@@ -781,25 +786,28 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-surface w-full max-w-lg border border-border shadow-2xl p-8 rounded-3xl">
-                <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
-                    <h3 className="font-display text-xl text-text uppercase tracking-wide">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4">
+            <div className="bg-surface w-full max-w-lg border border-border shadow-2xl p-4 md:p-8 rounded-2xl md:rounded-3xl">
+                <div className="flex justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-border">
+                    <h3 className="font-display text-base md:text-xl text-text uppercase tracking-wide">
                         {activityEditingLocation ? 'Update Location' : t.locateTarget}
                     </h3>
-                    <button onClick={() => { setShowAddModal(false); setActivityEditingLocation(null); }} className="text-dim hover:text-text"><X size={24} /></button>
+                    <button onClick={() => { setShowAddModal(false); setActivityEditingLocation(null); }} className="text-dim hover:text-text">
+                        <X size={18} className="md:hidden" />
+                        <X size={24} className="hidden md:block" />
+                    </button>
                 </div>
-                <div className="flex gap-2 mb-6">
+                <div className="flex gap-1.5 md:gap-2 mb-4 md:mb-6">
                     <input 
                         type="text" 
                         placeholder={t.searchQuery}
-                        className="flex-1 bg-panel border border-border px-4 py-3 text-sm text-text font-mono focus:border-acid outline-none rounded-xl"
+                        className="flex-1 bg-panel border border-border px-3 md:px-4 py-2 md:py-3 text-[11px] md:text-sm text-text font-mono focus:border-acid outline-none rounded-lg md:rounded-xl"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                         autoFocus
                     />
-                    <button onClick={handleSearch} disabled={isSearching} className="bg-acid text-black px-6 font-bold text-xs uppercase tracking-widest hover:bg-white transition-colors rounded-xl">
+                    <button onClick={handleSearch} disabled={isSearching} className="bg-acid text-black px-4 md:px-6 font-bold text-[10px] md:text-xs uppercase tracking-widest hover:bg-white transition-colors rounded-lg md:rounded-xl">
                         {isSearching ? t.scanning : t.scan}
                     </button>
                 </div>
@@ -829,18 +837,19 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
       {/* Delete Day Modal */}
       {dayToDelete && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
-                <div className="flex items-center gap-3 mb-4 text-danger">
-                    <AlertTriangle size={28} />
-                    <h3 className="font-display text-lg uppercase">Confirm Delete</h3>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4">
+            <div className="bg-surface w-full max-w-sm border border-border p-4 md:p-8 shadow-2xl rounded-2xl md:rounded-3xl">
+                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 text-danger">
+                    <AlertTriangle size={20} className="md:hidden" />
+                    <AlertTriangle size={28} className="hidden md:block" />
+                    <h3 className="font-display text-sm md:text-lg uppercase">Confirm Delete</h3>
                 </div>
-                <p className="text-sm text-dim font-mono mb-8">
+                <p className="text-[10px] md:text-sm text-dim font-mono mb-4 md:mb-8">
                     {t.confirmDeleteDayMsg}
                 </p>
-                <div className="flex justify-end gap-3">
-                    <button onClick={() => setDayToDelete(null)} className="px-5 py-2.5 border border-border text-dim hover:text-text text-xs uppercase rounded-xl">{t.cancel}</button>
-                    <button onClick={handleDeleteDay} className="px-5 py-2.5 bg-danger text-white hover:bg-red-600 text-xs font-bold uppercase rounded-xl">{t.purge}</button>
+                <div className="flex justify-end gap-2 md:gap-3">
+                    <button onClick={() => setDayToDelete(null)} className="px-3 md:px-5 py-1.5 md:py-2.5 border border-border text-dim hover:text-text text-[10px] md:text-xs uppercase rounded-lg md:rounded-xl">{t.cancel}</button>
+                    <button onClick={handleDeleteDay} className="px-3 md:px-5 py-1.5 md:py-2.5 bg-danger text-white hover:bg-red-600 text-[10px] md:text-xs font-bold uppercase rounded-lg md:rounded-xl">{t.purge}</button>
                 </div>
             </div>
         </div>
@@ -848,18 +857,19 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
       {/* Delete Task Modal */}
       {taskToDelete && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
-                <div className="flex items-center gap-3 mb-4 text-danger">
-                    <AlertTriangle size={28} />
-                    <h3 className="font-display text-lg uppercase">{t.confirmDeleteTaskTitle}</h3>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4">
+            <div className="bg-surface w-full max-w-sm border border-border p-4 md:p-8 shadow-2xl rounded-2xl md:rounded-3xl">
+                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 text-danger">
+                    <AlertTriangle size={20} className="md:hidden" />
+                    <AlertTriangle size={28} className="hidden md:block" />
+                    <h3 className="font-display text-sm md:text-lg uppercase">{t.confirmDeleteTaskTitle}</h3>
                 </div>
-                <p className="text-sm text-dim font-mono mb-8">
+                <p className="text-[10px] md:text-sm text-dim font-mono mb-4 md:mb-8">
                     {t.confirmDeleteTaskMsg}
                 </p>
-                <div className="flex justify-end gap-3">
-                    <button onClick={() => setTaskToDelete(null)} className="px-5 py-2.5 border border-border text-dim hover:text-text text-xs uppercase rounded-xl">{t.cancel}</button>
-                    <button onClick={handleDeleteTask} className="px-5 py-2.5 bg-danger text-white hover:bg-red-600 text-xs font-bold uppercase rounded-xl">{t.purge}</button>
+                <div className="flex justify-end gap-2 md:gap-3">
+                    <button onClick={() => setTaskToDelete(null)} className="px-3 md:px-5 py-1.5 md:py-2.5 border border-border text-dim hover:text-text text-[10px] md:text-xs uppercase rounded-lg md:rounded-xl">{t.cancel}</button>
+                    <button onClick={handleDeleteTask} className="px-3 md:px-5 py-1.5 md:py-2.5 bg-danger text-white hover:bg-red-600 text-[10px] md:text-xs font-bold uppercase rounded-lg md:rounded-xl">{t.purge}</button>
                 </div>
             </div>
         </div>
@@ -867,18 +877,19 @@ const TripItinerary: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) =
 
       {/* Delete Image Modal */}
       {imageDeletionTarget && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
-                <div className="flex items-center gap-3 mb-4 text-danger">
-                    <AlertTriangle size={28} />
-                    <h3 className="font-display text-lg uppercase">{t.confirmDeleteImageTitle}</h3>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 animate-fade-in">
+            <div className="bg-surface w-full max-w-sm border border-border p-4 md:p-8 shadow-2xl rounded-2xl md:rounded-3xl">
+                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 text-danger">
+                    <AlertTriangle size={20} className="md:hidden" />
+                    <AlertTriangle size={28} className="hidden md:block" />
+                    <h3 className="font-display text-sm md:text-lg uppercase">{t.confirmDeleteImageTitle}</h3>
                 </div>
-                <p className="text-sm text-dim font-mono mb-8">
+                <p className="text-[10px] md:text-sm text-dim font-mono mb-4 md:mb-8">
                     {t.confirmDeleteImageMsg}
                 </p>
-                <div className="flex justify-end gap-3">
-                    <button onClick={() => setImageDeletionTarget(null)} className="px-5 py-2.5 border border-border text-dim hover:text-text text-xs uppercase rounded-xl">{t.cancel}</button>
-                    <button onClick={confirmDeleteImage} className="px-5 py-2.5 bg-danger text-white hover:bg-red-600 text-xs font-bold uppercase rounded-xl">{t.purge}</button>
+                <div className="flex justify-end gap-2 md:gap-3">
+                    <button onClick={() => setImageDeletionTarget(null)} className="px-3 md:px-5 py-1.5 md:py-2.5 border border-border text-dim hover:text-text text-[10px] md:text-xs uppercase rounded-lg md:rounded-xl">{t.cancel}</button>
+                    <button onClick={confirmDeleteImage} className="px-3 md:px-5 py-1.5 md:py-2.5 bg-danger text-white hover:bg-red-600 text-[10px] md:text-xs font-bold uppercase rounded-lg md:rounded-xl">{t.purge}</button>
                 </div>
             </div>
         </div>

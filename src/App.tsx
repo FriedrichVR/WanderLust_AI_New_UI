@@ -308,7 +308,7 @@ const TripDetailView: React.FC<{
     return (
         <div className="animate-fade-in pb-20">
             {/* Header with Cover Image */}
-            <div className="relative m-1 rounded-3xl overflow-hidden group mb-6 shadow-2xl h-[200px] md:h-[280px]">
+            <div className="relative m-1 overflow-hidden group mb-6 shadow-2xl h-[200px] md:h-[280px]">
                 <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
                 <div className={`absolute inset-0 bg-gradient-to-t ${isLight ? 'from-white/90 via-white/30 to-transparent' : 'from-black/90 via-black/20 to-transparent'}`}></div>
 
@@ -414,19 +414,15 @@ const TripDetailView: React.FC<{
 
             {/* Tab Content - natural height (no internal scroll) */}
             <div className="relative">
-                <div>
                 <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin text-acid" size={32} /></div>}>
                     {activeTab === 'overview' && (
-                        <div className="animate-fade-in px-0 md:px-0">
-                            <div className="grid grid-cols-1 gap-4 justify-items-center">
-                                {/* Left Column: Visual Diary & Mission Notes with Tabs (60% width - 3 cols) */}
-                                <div>
-                                    <div className={`backdrop-blur-sm border rounded-2xl shadow-lg h-full flex flex-col w-[1000px] mx-auto ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
-                                        <div className={`px-3 pt-3 pb-2 border-b ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
-                                            <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Overview Panel</h4>
-                                        </div>
-                                        <div className="p-3">
-                                        {/* Tab Buttons */}
+                        <div className="animate-fade-in px-0 md:px-0 w-full">
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full flex flex-col w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
+                                    <div className={`px-3 pt-3 pb-2 border-b ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
+                                        <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Overview Panel</h4>
+                                    </div>
+                                    <div className="p-3 flex-1 flex flex-col">
                                         <div className="flex gap-2 mb-2 border-b border-border/60 pb-2">
                                             <button
                                                 onClick={() => setLeftPanelTab('diary')}
@@ -456,8 +452,6 @@ const TripDetailView: React.FC<{
                                                 <DollarSign size={14} /> Converter
                                             </button>
                                         </div>
-
-                                        {/* Visual Diary Tab Content */}
                                         {leftPanelTab === 'diary' && (
                                             <div className="flex-1 flex flex-col gap-3">
                                                 <div className="flex justify-end">
@@ -505,8 +499,6 @@ const TripDetailView: React.FC<{
                                                 </div>
                                             </div>
                                         )}
-
-                                        {/* Mission Notes Tab Content */}
                                         {leftPanelTab === 'notes' && (
                                             <div className="flex-1 flex flex-col gap-3">
                                                 <div className="flex justify-end">
@@ -527,8 +519,6 @@ const TripDetailView: React.FC<{
                                                 />
                                             </div>
                                         )}
-
-                                        {/* Currency Converter Tab Content */}
                                         {leftPanelTab === 'converter' && (
                                             <div className="flex-1 flex flex-col">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
@@ -545,18 +535,14 @@ const TripDetailView: React.FC<{
                                                 </div>
                                             </div>
                                         )}
-                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Right Column removed: Tracker moved into Converter tab */}
                             </div>
                         </div>
                     )}
-
                     {activeTab === 'itinerary' && (
-                        <div className="px-1 md:px-0">
-                            <div className={`backdrop-blur-sm border rounded-2xl shadow-lg h-full w-[1000px] mx-auto ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
+                        <div className="px-0 md:px-0 w-full">
+                            <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
                                 <div className={`px-3 pt-3 pb-2 border-b flex items-center justify-between ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
                                     <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Itinerary</h4>
                                     <div className="flex items-center gap-2">
@@ -577,8 +563,8 @@ const TripDetailView: React.FC<{
                         </div>
                     )}
                     {activeTab === 'budget' && (
-                        <div className="px-1 md:px-0">
-                            <div className={`backdrop-blur-sm border rounded-2xl shadow-lg h-full w-[1000px] mx-auto ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
+                        <div className="px-0 md:px-0 w-full">
+                            <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
                                 <div className={`px-3 pt-3 pb-2 border-b flex items-center justify-between ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
                                     <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Budget</h4>
                                     <div className="flex items-center gap-2">
@@ -599,8 +585,8 @@ const TripDetailView: React.FC<{
                         </div>
                     )}
                     {activeTab === 'documents' && (
-                        <div className="px-1 md:px-0">
-                            <div className={`backdrop-blur-sm border rounded-2xl shadow-lg h-full w-[1000px] mx-auto ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
+                        <div className="px-0 md:px-0 w-full">
+                            <div className={`backdrop-blur-sm border rounded-none md:rounded-2xl shadow-lg h-full w-full ${isLight ? 'bg-white border-neutral-300' : 'bg-surface/80 border-border'}`}>
                                 <div className={`px-3 pt-3 pb-2 border-b flex items-center justify-between ${isLight ? 'border-neutral-200 bg-neutral-100/50' : 'border-border/60'}`}>
                                     <h4 className={`text-[11px] font-mono uppercase tracking-widest ${isLight ? 'text-neutral-800 font-bold' : 'text-dim'}`}>Documents</h4>
                                     <div className="flex items-center gap-2">
@@ -620,7 +606,6 @@ const TripDetailView: React.FC<{
                         </div>
                     )}
                 </Suspense>
-                </div>
             </div>
 
 
@@ -1498,33 +1483,15 @@ const App: React.FC = () => {
                                 {/* New Trip Card */}
                                 <div
                                     onClick={handleCreateTrip}
-                                    className={`group relative h-[300px] md:h-[360px] border-2 border-dashed rounded-3xl overflow-hidden cursor-pointer hover:border-acid transition-all hover:-translate-y-1.5 flex flex-col items-center justify-center gap-4 w-[380px] ${settings.theme === 'light' ? 'bg-white border-neutral-400 hover:bg-neutral-50 shadow-[0_2px_8px_rgba(0,0,0,0.08)]' : 'bg-surface/50 border-dim/30 hover:bg-acid/5'}`}
-                                    title={t.initiateTrip}
-                                    aria-label={t.initiateTrip}
+                                    className={`group relative h-[300px] md:h-[360px] rounded-3xl overflow-hidden cursor-pointer transition-all hover:-translate-y-1.5 border flex flex-col w-[380px] ${settings.theme === 'light' ? 'bg-white border-neutral-300 shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.16)]' : 'bg-surface border-border shadow-xl hover:shadow-acid/20'}`}
                                 >
-                                    {/* Soft glow background on hover */}
-                                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[140%] h-64 bg-acid/10 blur-3xl rounded-full"></div>
+                                    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
+                                        <Plane size={48} className="text-acid animate-pulse" />
+                                        <h3 className="text-xl font-display font-bold uppercase tracking-tight">{t.initiateTrip}</h3>
+                                        <p className="text-[11px] font-mono uppercase tracking-widest text-dim">{t.createFirstTrip}</p>
+                                        <button className="px-4 py-2 border border-acid text-acid hover:bg-acid hover:text-black text-[10px] font-mono font-bold uppercase rounded-lg transition-colors">{t.createFirstTrip}</button>
                                     </div>
-
-                                    <div className="relative w-20 h-20 rounded-2xl bg-surface border border-border flex items-center justify-center group-hover:scale-105 group-hover:border-acid transition-all shadow-lg">
-                                        {/* Centered vertical plane icon; rotates 90° clockwise on hover */}
-                                        <Plane
-                                            size={40}
-                                            className="text-acid drop-shadow-[0_0_8px_rgba(0,0,0,0.6)] transition-transform duration-500 ease-out rotate-[-90deg] group-hover:rotate-0"
-                                            aria-hidden="true"
-                                        />
-                                    </div>
-
-                                    <div className="text-center">
-                                        <h3 className={`text-lg font-display font-bold uppercase tracking-tight mb-1 group-hover:text-acid transition-colors ${settings.theme === 'light' ? 'text-neutral-900' : 'text-text'}`}>{t.initiateTrip}</h3>
-                                        <p className={`text-[11px] font-mono uppercase tracking-widest ${settings.theme === 'light' ? 'text-neutral-700' : 'text-dim'}`}>{t.createFirstTrip}</p>
-                                    </div>
-
-                                    {/* Removed previous flight keyframes; using simple hover rotation */}
                                 </div>
-
-                                {/* Trip Cards Only - No Sidebar */}
                                 {filteredTrips.map(trip => (
                                     <div
                                         key={trip.id}

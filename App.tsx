@@ -271,7 +271,7 @@ const TripDetailView: React.FC<{
     return (
         <div className="animate-fade-in pb-20">
             {/* Header with Cover Image */}
-            <div className="relative m-1 rounded-2xl md:rounded-3xl overflow-hidden group mb-6 md:mb-8 shadow-2xl h-[180px] md:h-[400px]">
+            <div className="relative m-1 overflow-hidden group mb-6 md:mb-8 shadow-2xl h-[180px] md:h-[400px]">
                 <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 

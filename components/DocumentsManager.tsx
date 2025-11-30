@@ -7,6 +7,7 @@ import { ToastType } from './Toast';
 import Tooltip from './Tooltip';
 import LazyImage from './LazyImage';
 import { extractPDFData } from '../services/geminiService';
+import { extractFlightMetadataLocal, mergeFlightMeta } from '../utils/flightMetadataExtractor';
 
 interface Props {
   trip: Trip;
@@ -23,19 +24,15 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
   const [uploadType, setUploadType] = useState<string>('flight'); 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{current: number, total: number} | null>(null);
+    const [uploadProgress, setUploadProgress] = useState<{current: number, total: number} | null>(null);
   const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error', msg: string} | null>(null);
   const [tagsInput, setTagsInput] = useState('');
   const [metadata, setMetadata] = useState<any>({});
   const [autoMetaKeys, setAutoMetaKeys] = useState<Set<string>>(new Set());
-  const hasAuto = (key: string) => {
-      try {
-          return autoMetaKeys instanceof Set && autoMetaKeys.has(key);
-      } catch {
-          return false;
-      }
-  };
-  const [previewDoc, setPreviewDoc] = useState<TripDocument | null>(null);
+  // AUTO badges visually hidden per new requirement
+  const hasAuto = (_key: string) => false;
+    const [previewDoc, setPreviewDoc] = useState<TripDocument | null>(null);
+    const [isExtracting, setIsExtracting] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -148,51 +145,39 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
         if (firstPDF && (uploadType.toLowerCase().includes('airbnb') || uploadType.toLowerCase().includes('flight'))) {
             try {
                 if (showToast) showToast(`Extracting data from ${firstPDF.name}...`, 'info');
+            setIsExtracting(true);
                 
                 // Convert PDF to base64
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         const dataUrl = e.target?.result as string;
+                        // Local heuristic extraction first (only for flight)
+                        let localFlight: any = null;
+                        const isFlightCat = uploadType.toLowerCase().includes('flight') || uploadType.toLowerCase().includes('vuelo');
+                        if (isFlightCat) {
+                            localFlight = await extractFlightMetadataLocal(dataUrl);
+                        }
                         const pdfData = await extractPDFData(dataUrl, uploadType);
                         
                         if (pdfData) {
-                            const isFlightCat = uploadType.toLowerCase().includes('flight') || uploadType.toLowerCase().includes('vuelo');
-                            const mergedMeta = isFlightCat ? {
-                                ...metadata,
-                                bookingReference: pdfData.bookingReference || metadata.bookingReference,
-                                outboundCheckInCode: pdfData.outbound?.checkInCode || metadata.outboundCheckInCode,
-                                outboundPassengers: pdfData.outbound?.passengers || metadata.outboundPassengers,
-                                outboundAirline: pdfData.outbound?.airline || metadata.outboundAirline,
-                                outboundDepartureDate: pdfData.outbound?.departureDate || metadata.outboundDepartureDate,
-                                outboundDepartureTime: pdfData.outbound?.departureTime || metadata.outboundDepartureTime,
-                                outboundRoute: pdfData.outbound?.route || metadata.outboundRoute,
-                                outboundDestination: pdfData.outbound?.destination || metadata.outboundDestination,
-                                outboundDuration: pdfData.outbound?.duration || metadata.outboundDuration,
-                                outboundLayoverAirport: pdfData.outbound?.layover?.airport || metadata.outboundLayoverAirport,
-                                outboundLayoverWait: pdfData.outbound?.layover?.waitDuration || metadata.outboundLayoverWait,
-                                returnCheckInCode: pdfData.return?.checkInCode || metadata.returnCheckInCode,
-                                returnPassengers: pdfData.return?.passengers || metadata.returnPassengers,
-                                returnAirline: pdfData.return?.airline || metadata.returnAirline,
-                                returnDepartureDate: pdfData.return?.departureDate || metadata.returnDepartureDate,
-                                returnDepartureTime: pdfData.return?.departureTime || metadata.returnDepartureTime,
-                                returnRoute: pdfData.return?.route || metadata.returnRoute,
-                                returnDestination: pdfData.return?.destination || metadata.returnDestination,
-                                returnDuration: pdfData.return?.duration || metadata.returnDuration,
-                                returnLayoverAirport: pdfData.return?.layover?.airport || metadata.returnLayoverAirport,
-                                returnLayoverWait: pdfData.return?.layover?.waitDuration || metadata.returnLayoverWait
-                            } : {
-                                ...metadata,
-                                hotelName: pdfData.propertyName || metadata.hotelName,
-                                hostName: pdfData.hostName || metadata.hostName,
-                                bookingReference: pdfData.bookingReference || metadata.bookingReference,
-                                checkInDate: pdfData.checkInDate || metadata.checkInDate,
-                                checkOutDate: pdfData.checkOutDate || metadata.checkOutDate,
-                                address: pdfData.address || metadata.address,
-                                whatsappNumber: pdfData.whatsappNumber || metadata.whatsappNumber,
-                                guestName: pdfData.guestName || metadata.guestName,
-                                totalPrice: pdfData.totalPrice || metadata.totalPrice
-                            };
+                            let mergedMeta: any;
+                            if (isFlightCat) {
+                                mergedMeta = { ...metadata, ...mergeFlightMeta(metadata, localFlight, pdfData) };
+                            } else {
+                                mergedMeta = {
+                                    ...metadata,
+                                    hotelName: pdfData.propertyName || metadata.hotelName,
+                                    hostName: pdfData.hostName || metadata.hostName,
+                                    bookingReference: pdfData.bookingReference || metadata.bookingReference,
+                                    checkInDate: pdfData.checkInDate || metadata.checkInDate,
+                                    checkOutDate: pdfData.checkOutDate || metadata.checkOutDate,
+                                    address: pdfData.address || metadata.address,
+                                    whatsappNumber: pdfData.whatsappNumber || metadata.whatsappNumber,
+                                    guestName: pdfData.guestName || metadata.guestName,
+                                    totalPrice: pdfData.totalPrice || metadata.totalPrice
+                                };
+                            }
                             // Track which keys were auto-populated from extraction
                             const newAutoKeys = new Set<string>(autoMetaKeys);
                             if (isFlightCat) {
@@ -202,6 +187,8 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                 if (pdfData.outbound?.airline) newAutoKeys.add('outboundAirline');
                                 if (pdfData.outbound?.departureDate) newAutoKeys.add('outboundDepartureDate');
                                 if (pdfData.outbound?.departureTime) newAutoKeys.add('outboundDepartureTime');
+                                if (pdfData.outbound?.arrivalDate) newAutoKeys.add('outboundArrivalDate');
+                                if (pdfData.outbound?.arrivalTime) newAutoKeys.add('outboundArrivalTime');
                                 if (pdfData.outbound?.route) newAutoKeys.add('outboundRoute');
                                 if (pdfData.outbound?.destination) newAutoKeys.add('outboundDestination');
                                 if (pdfData.outbound?.duration) newAutoKeys.add('outboundDuration');
@@ -212,11 +199,18 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                 if (pdfData.return?.airline) newAutoKeys.add('returnAirline');
                                 if (pdfData.return?.departureDate) newAutoKeys.add('returnDepartureDate');
                                 if (pdfData.return?.departureTime) newAutoKeys.add('returnDepartureTime');
+                                if (pdfData.return?.arrivalDate) newAutoKeys.add('returnArrivalDate');
+                                if (pdfData.return?.arrivalTime) newAutoKeys.add('returnArrivalTime');
                                 if (pdfData.return?.route) newAutoKeys.add('returnRoute');
                                 if (pdfData.return?.destination) newAutoKeys.add('returnDestination');
                                 if (pdfData.return?.duration) newAutoKeys.add('returnDuration');
                                 if (pdfData.return?.layover?.airport) newAutoKeys.add('returnLayoverAirport');
                                 if (pdfData.return?.layover?.waitDuration) newAutoKeys.add('returnLayoverWait');
+                                // Also mark local extraction fields if AI missed them
+                                if (localFlight) {
+                                    const localKeys: Record<string, any> = mergeFlightMeta({}, localFlight, null);
+                                    Object.entries(localKeys).forEach(([k,v]) => { if (v && !newAutoKeys.has(k)) newAutoKeys.add(k); });
+                                }
                             } else {
                                 if (pdfData.propertyName) newAutoKeys.add('hotelName');
                                 if (pdfData.hostName) newAutoKeys.add('hostName');
@@ -230,17 +224,23 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                             }
                             setMetadata(mergedMeta);
                             setAutoMetaKeys(newAutoKeys);
-                            if (showToast) showToast(`Data extracted successfully!`, 'success');
+                            if (showToast) {
+                                const autoCount = Array.from(newAutoKeys).length;
+                                const localCount = localFlight ? Object.values(localFlight.outbound||{}).filter(Boolean).length : 0;
+                                showToast(`Datos extraídos (${autoCount} campos • local heurísticos: ${localCount})`, 'success');
+                            }
                             // After extraction, upload with enriched metadata
                             if (!isUploading) {
                                 handleAddDocuments(newFiles, mergedMeta);
                             }
+                            setIsExtracting(false);
                         } else {
                             console.warn('PDF extraction returned null for', firstPDF.name);
                             if (showToast) showToast('No se pudo extraer datos del PDF. Subido sin metadatos.', 'error');
                             if (!isUploading) {
                                 handleAddDocuments(newFiles);
                             }
+                            setIsExtracting(false);
                         }
                     } catch (error) {
                         console.warn('PDF extraction failed:', error);
@@ -248,6 +248,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                         if (!isUploading) {
                             handleAddDocuments(newFiles);
                         }
+                        setIsExtracting(false);
                     }
                 };
                 reader.readAsDataURL(firstPDF);
@@ -257,6 +258,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 if (!isUploading) {
                     handleAddDocuments(newFiles);
                 }
+                setIsExtracting(false);
             }
         } else {
             // No PDF extraction needed: upload immediately
@@ -559,13 +561,13 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
       // Preview for other formats: show icon, name, download
       return (
-          <div className="flex flex-col items-center justify-center h-full text-center p-12 bg-panel/50 border border-border rounded-3xl max-w-md mx-auto backdrop-blur-md">
+          <div className="flex flex-col items-center justify-center h-full text-center p-6 md:p-12 bg-panel/50 border border-border rounded-xl md:rounded-3xl max-w-md mx-auto backdrop-blur-md">
               <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 border border-border">
                 {getCategoryIcon(doc.type, 40)}
               </div>
-              <h3 className="text-2xl font-display font-bold text-white mb-2">{doc.name}</h3>
+              <h3 className="text-lg md:text-2xl font-display font-bold text-white mb-2">{doc.name}</h3>
               <p className="text-gray-400 font-mono text-xs mb-8">Format not supported for inline preview.</p>
-              <a href={doc.dataUrl} download={doc.name} className="px-8 py-4 bg-white text-black hover:bg-acid transition-colors font-bold font-mono uppercase text-xs flex items-center gap-2 rounded-full shadow-lg">
+              <a href={doc.dataUrl} download={doc.name} className="px-4 md:px-8 py-2.5 md:py-4 bg-white text-black hover:bg-acid transition-colors font-bold font-mono uppercase text-[10px] md:text-xs flex items-center gap-2 rounded-full shadow-lg">
                   <Download size={16} /> {t.download} / Open
               </a>
           </div>
@@ -573,26 +575,37 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
   };
 
   return (
-    <div className="animate-fade-in space-y-8 pt-6">
+    <div className="animate-fade-in space-y-4 md:space-y-8 pt-3 md:pt-6">
+            {isExtracting && (
+                <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-6">
+                        <Plane size={96} className="text-acid animate-spin" />
+                        <div className="font-mono text-[11px] md:text-xs uppercase tracking-widest text-acid">
+                            Analizando documento…
+                        </div>
+                    </div>
+                </div>
+            )}
       {/* Upload Section */}
-    <div className="bg-surface border border-border p-4 md:p-6 rounded-2xl shadow-sm">
-        <div className="flex justify-between items-center mb-8 border-b border-border pb-4">
-            <div className="font-mono text-xs text-acid uppercase tracking-widest">{t.uploadMatrix}</div>
+    <div className="bg-surface border border-border p-3 md:p-6 rounded-xl md:rounded-2xl shadow-sm">
+        <div className="flex justify-between items-center mb-4 md:mb-8 border-b border-border pb-2 md:pb-4">
+            <div className="font-mono text-[10px] md:text-xs text-acid uppercase tracking-widest">{t.uploadMatrix}</div>
             <button 
                 onClick={() => setIsManagingGroups(!isManagingGroups)} 
-                className={`flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest transition-all px-4 py-2 border rounded-full ${
+                className={`flex items-center gap-1.5 md:gap-2 text-[9px] md:text-[10px] font-mono uppercase tracking-widest transition-all px-2 md:px-4 py-1.5 md:py-2 border rounded-full ${
                     isManagingGroups 
                     ? 'bg-acid text-black border-acid font-bold' 
                     : 'bg-transparent border-dim text-dim hover:text-text hover:border-text'
                 }`}
             >
-                <Settings size={14} /> {isManagingGroups ? t.done : t.manageGroups}
+                <Settings size={12} className="md:hidden" />
+                <Settings size={14} className="hidden md:block" /> {isManagingGroups ? t.done : t.manageGroups}
             </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-6">
-                <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+            <div className="space-y-3 md:space-y-6">
+                <div className="flex flex-wrap gap-2 md:gap-3">
                     {categories.map((type) => (
                         <div key={type} className="relative group">
                             <button 
@@ -604,12 +617,13 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                         setUploadType(type);
                                     }
                                 }} 
-                                className={`py-2.5 px-4 text-xs font-mono uppercase border transition-colors truncate relative rounded-xl ${
+                                className={`py-1.5 md:py-2.5 px-2.5 md:px-4 text-[10px] md:text-xs font-mono uppercase border transition-colors truncate relative rounded-lg md:rounded-xl ${
                                     uploadType === type && !isManagingGroups ? 'bg-acid text-black border-acid font-bold shadow-lg' : 'border-border text-dim hover:text-text bg-panel hover:border-dim'
-                                } ${isManagingGroups ? 'pr-8 border-dashed hover:border-acid cursor-text' : ''}`}
+                                } ${isManagingGroups ? 'pr-7 md:pr-8 border-dashed hover:border-acid cursor-text' : ''}`}
                             >
                                 {getCategoryLabel(type)}
-                                {isManagingGroups && <Edit2 size={10} className="absolute top-1 right-1 text-acid opacity-70" />}
+                                {isManagingGroups && <Edit2 size={9} className="absolute top-1 right-1 text-acid opacity-70 md:hidden" />}
+                                {isManagingGroups && <Edit2 size={10} className="absolute top-1 right-1 text-acid opacity-70 hidden md:block" />}
                             </button>
                             
                             {isManagingGroups && (
@@ -625,22 +639,23 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                     {isManagingGroups && (
                         <button 
                             onClick={() => { setGroupNameInput(''); setGroupModal({ type: 'add' }); }}
-                            className="py-2.5 px-4 border border-dashed border-dim text-dim hover:text-acid hover:border-acid transition-colors flex items-center justify-center rounded-xl"
+                            className="py-1.5 md:py-2.5 px-2.5 md:px-4 border border-dashed border-dim text-dim hover:text-acid hover:border-acid transition-colors flex items-center justify-center rounded-lg md:rounded-xl"
                             title={t.createGroup}
                         >
-                            <Plus size={16} />
+                            <Plus size={14} className="md:hidden" />
+                            <Plus size={16} className="hidden md:block" />
                         </button>
                     )}
                 </div>
 
                 {/* Metadata Fields */}
                 {isLodging && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-panel border border-border rounded-xl animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-2 p-2 md:p-3 bg-panel border border-border rounded-lg md:rounded-xl animate-fade-in">
                         {/* Navigator for Airbnb metadata when multiple PDFs exist */}
                         {uploadType.toLowerCase().includes('airbnb') && airbnbDocs.length > 1 && (
-                            <div className="col-span-2 flex items-center justify-between mb-1">
-                                <span className="font-mono text-[10px] text-text uppercase tracking-widest">Datos de documento {airbnbMetaIndex + 1}/{airbnbDocs.length}</span>
-                                <div className="flex items-center gap-3">
+                            <div className="col-span-2 flex items-center justify-between mb-0.5 md:mb-1">
+                                <span className="font-mono text-[9px] md:text-[10px] text-text uppercase tracking-widest">Datos de documento {airbnbMetaIndex + 1}/{airbnbDocs.length}</span>
+                                <div className="flex items-center gap-2 md:gap-3">
                                     <button
                                         onClick={() => {
                                             const next = (airbnbMetaIndex - 1 + airbnbDocs.length) % airbnbDocs.length;
@@ -659,7 +674,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                                 totalPrice: m.totalPrice || metadata.totalPrice
                                             });
                                         }}
-                                        className="px-3 py-2 border border-text bg-panel rounded-full text-[11px] font-mono text-text hover:bg-text hover:text-obsidian transition-colors shadow-sm"
+                                        className="px-2 md:px-3 py-1 md:py-2 border border-text bg-panel rounded-full text-[10px] md:text-[11px] font-mono text-text hover:bg-text hover:text-obsidian transition-colors shadow-sm"
                                         title="Anterior"
                                     >
                                         ‹
@@ -787,19 +802,11 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                                     </div>
                                                 </div>
                                                 <div>
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Código de Check-in
-                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundCheckInCode') : hasAuto('returnCheckInCode')) && (
-                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                             )}
-                                                         </label>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Código de Check-in</label>
                              <input type="text" placeholder="XXXX" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundCheckInCode || '') : (metadata.returnCheckInCode || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundCheckInCode: e.target.value} : {...metadata, returnCheckInCode: e.target.value})} />
                         </div>
                                                 <div className="col-span-2">
-                                                                            <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Pasajeros (uno por línea)
-                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundPassengers') : hasAuto('returnPassengers')) && (
-                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                             )}
-                                                         </label>
+                                                                            <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Pasajeros (uno por línea)</label>
                                                          <textarea placeholder="Nombre\\nNombre 2" className="w-full bg-surface border border-border p-2.5 text-[12px] sm:text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg h-24 sm:h-20 resize-y" value={(flightMetaView === 'outbound' ? (metadata.outboundPassengers || []) : (metadata.returnPassengers || [])).join('\\n')} onChange={e => setMetadata(
                                                                 flightMetaView === 'outbound'
                                                                 ? { ...metadata, outboundPassengers: e.target.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean) }
@@ -807,43 +814,23 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                                          )} />
                                                 </div>
                                                                                                 <div>
-                                                                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Aeropuerto de escala
-                                                                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundLayoverAirport') : hasAuto('returnLayoverAirport')) && (
-                                                                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                                                                             )}
-                                                                                                         </label>
+                                                                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Aeropuerto de escala</label>
                                                                                                         <input type="text" placeholder="IATA/ciudad" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundLayoverAirport || '') : (metadata.returnLayoverAirport || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundLayoverAirport: e.target.value } : { ...metadata, returnLayoverAirport: e.target.value })} />
                                                                                                 </div>
                                                                                                 <div>
-                                                                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Tiempo de espera
-                                                                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundLayoverWait') : hasAuto('returnLayoverWait')) && (
-                                                                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                                                                             )}
-                                                                                                         </label>
+                                                                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Tiempo de espera</label>
                                                                                                         <input type="text" placeholder="2h 30m" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundLayoverWait || '') : (metadata.returnLayoverWait || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundLayoverWait: e.target.value } : { ...metadata, returnLayoverWait: e.target.value })} />
                                                                                                 </div>
                                                 <div>
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Trayecto
-                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundRoute') : hasAuto('returnRoute')) && (
-                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                             )}
-                                                         </label>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Trayecto</label>
                              <input type="text" placeholder="EZE → MIA" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundRoute || '') : (metadata.returnRoute || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundRoute: e.target.value} : {...metadata, returnRoute: e.target.value})} />
                         </div>
                                                 <div>
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Destino
-                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundDestination') : hasAuto('returnDestination')) && (
-                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                             )}
-                                                         </label>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Destino</label>
                              <input type="text" placeholder="IATA/ciudad" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDestination || '') : (metadata.returnDestination || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundDestination: e.target.value} : {...metadata, returnDestination: e.target.value})} />
                         </div>
                                                 <div>
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Duración
-                                                             {(flightMetaView === 'outbound' ? hasAuto('outboundDuration') : hasAuto('returnDuration')) && (
-                                                                 <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
-                                                             )}
-                                                         </label>
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Duración</label>
                              <input type="text" placeholder="9h 45m" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDuration || '') : (metadata.returnDuration || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? {...metadata, outboundDuration: e.target.value} : {...metadata, returnDuration: e.target.value})} />
                         </div>
                     </div>
@@ -980,13 +967,13 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
         
         {/* ... Grid and Modal rendering ... */}
         {filteredDocuments.length === 0 ? (
-            <div className="text-dim font-mono text-xs text-center py-16 border-2 border-dashed border-dim bg-panel/30 rounded-3xl">
+            <div className="text-dim font-mono text-[10px] md:text-xs text-center py-8 md:py-16 border-2 border-dashed border-dim bg-panel/30 rounded-xl md:rounded-3xl">
                 {documents.length === 0 ? t.noData : "// NO DOCUMENTS MATCH FILTER"}
             </div> 
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDocuments.map(doc => (
-                    <div key={doc.id} className={`bg-surface border p-4 relative group transition-all duration-300 hover:bg-panel rounded-3xl ${selectedIds.includes(doc.id) ? 'border-acid shadow-lg' : 'border-border hover:border-dim'}`}>
+                    <div key={doc.id} className={`bg-surface border p-3 md:p-4 relative group transition-all duration-300 hover:bg-panel rounded-xl md:rounded-3xl ${selectedIds.includes(doc.id) ? 'border-acid shadow-lg' : 'border-border hover:border-dim'}`}>
                         <div className="absolute top-3 right-3 cursor-pointer z-10 p-2 -m-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); toggleSelection(doc.id); }}>
                             {selectedIds.includes(doc.id) ? <CheckSquare size={18} className="text-acid" /> : <Square size={18} className="text-dim hover:text-text transition-colors" />}
                         </div>
@@ -1039,8 +1026,8 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
       {/* ... Modals (Delete, Groups, Edit, Preview) ... */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-4 animate-fade-in">
+            <div className="bg-surface w-full max-w-sm border border-border p-3 md:p-8 shadow-2xl rounded-xl md:rounded-3xl">
                 <div className="flex items-center gap-3 mb-4 text-danger">
                     <AlertTriangle size={32} />
                     <h3 className="font-display text-lg uppercase tracking-tight">{t.confirmDeleteDocsTitle}</h3>
@@ -1062,44 +1049,48 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
       {/* Group and Edit modals remain similar, possibly using showToast if needed */}
       {groupModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-surface w-full max-w-sm border border-border p-8 shadow-2xl rounded-3xl">
+            <div className="bg-surface w-full max-w-sm border border-border p-4 md:p-8 shadow-2xl rounded-2xl md:rounded-3xl">
                 {groupModal.type === 'delete' ? (
                     <>
-                        <div className="flex items-center gap-3 mb-4 text-danger">
-                            <AlertTriangle size={24} />
-                            <h3 className="font-display text-lg uppercase">{t.deleteGroup}</h3>
+                        <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 text-danger">
+                            <AlertTriangle size={18} className="md:hidden" />
+                            <AlertTriangle size={24} className="hidden md:block" />
+                            <h3 className="font-display text-sm md:text-lg uppercase">{t.deleteGroup}</h3>
                         </div>
-                        <p className="text-sm text-dim font-mono mb-6">
+                        <p className="text-[11px] md:text-sm text-dim font-mono mb-4 md:mb-6 leading-relaxed">
                             {t.confirmDeleteGroupMsg}
                         </p>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => setGroupModal(null)} className="px-4 py-2 border border-border text-dim hover:text-text text-xs uppercase rounded-xl">{t.cancel}</button>
-                            <button onClick={handleDeleteGroup} className="px-4 py-2 bg-danger text-white hover:bg-red-600 text-xs font-bold uppercase rounded-xl">{t.purge}</button>
+                        <div className="flex justify-end gap-2 md:gap-3">
+                            <button onClick={() => setGroupModal(null)} className="px-3 md:px-4 py-1.5 md:py-2 border border-border text-dim hover:text-text text-[10px] md:text-xs uppercase rounded-lg md:rounded-xl">{t.cancel}</button>
+                            <button onClick={handleDeleteGroup} className="px-3 md:px-4 py-1.5 md:py-2 bg-danger text-white hover:bg-red-600 text-[10px] md:text-xs font-bold uppercase rounded-lg md:rounded-xl">{t.purge}</button>
                         </div>
                     </>
                 ) : (
                     <>
-                        <div className="flex items-center justify-between mb-6 pb-2 border-b border-border">
-                            <h3 className="font-display text-lg text-text uppercase">{groupModal.type === 'add' ? t.createGroup : t.renameGroup}</h3>
-                            <button onClick={() => setGroupModal(null)} className="text-dim hover:text-text"><X size={20}/></button>
+                        <div className="flex items-center justify-between mb-4 md:mb-6 pb-2 border-b border-border">
+                            <h3 className="font-display text-sm md:text-lg text-text uppercase">{groupModal.type === 'add' ? t.createGroup : t.renameGroup}</h3>
+                            <button onClick={() => setGroupModal(null)} className="text-dim hover:text-text">
+                                <X size={16} className="md:hidden" />
+                                <X size={20} className="hidden md:block" />
+                            </button>
                         </div>
-                        <div className="mb-6">
-                            <label className="font-mono text-[10px] text-dim uppercase tracking-widest mb-2 block">{t.groupName}</label>
+                        <div className="mb-4 md:mb-6">
+                            <label className="font-mono text-[9px] md:text-[10px] text-dim uppercase tracking-widest mb-1.5 md:mb-2 block">{t.groupName}</label>
                             <input 
                                 type="text" 
                                 value={groupNameInput}
                                 onChange={e => setGroupNameInput(e.target.value)}
-                                className="w-full bg-panel border border-border p-3 text-text font-mono focus:border-acid outline-none transition-colors rounded-xl"
+                                className="w-full bg-panel border border-border p-2 md:p-3 text-[11px] md:text-sm text-text font-mono focus:border-acid outline-none transition-colors rounded-lg md:rounded-xl"
                                 placeholder="CATEGORY NAME..."
                                 autoFocus
                             />
                         </div>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => setGroupModal(null)} className="px-4 py-2 border border-border text-dim hover:text-text text-xs uppercase rounded-xl">{t.cancel}</button>
+                        <div className="flex justify-end gap-2 md:gap-3">
+                            <button onClick={() => setGroupModal(null)} className="px-3 md:px-4 py-1.5 md:py-2 border border-border text-dim hover:text-text text-[10px] md:text-xs uppercase rounded-lg md:rounded-xl">{t.cancel}</button>
                             <button 
                                 onClick={groupModal.type === 'add' ? handleCreateGroup : handleRenameGroup} 
                                 disabled={!groupNameInput.trim()}
-                                className="px-4 py-2 bg-text text-obsidian hover:bg-acid font-bold text-xs uppercase disabled:opacity-50 rounded-xl"
+                                className="px-3 md:px-4 py-1.5 md:py-2 bg-text text-obsidian hover:bg-acid font-bold text-[10px] md:text-xs uppercase disabled:opacity-50 rounded-lg md:rounded-xl"
                             >
                                 {t.saveChanges}
                             </button>
@@ -1112,7 +1103,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
       {docToEdit && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-              <div className="bg-surface w-full max-w-md border border-border p-8 shadow-2xl overflow-y-auto max-h-[90vh] rounded-3xl">
+              <div className="bg-surface w-full max-w-md border border-border p-4 md:p-8 shadow-2xl overflow-y-auto max-h-[90vh] rounded-2xl md:rounded-3xl">
                   <div className="flex items-center justify-between mb-6 pb-2 border-b border-border">
                       <h3 className="font-display text-lg text-text uppercase">Edit Document</h3>
                       <button onClick={() => setDocToEdit(null)} className="text-dim hover:text-text"><X size={20}/></button>

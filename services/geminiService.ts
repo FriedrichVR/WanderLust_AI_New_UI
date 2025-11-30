@@ -394,6 +394,8 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
       - airline (e.g., Aerolíneas Argentinas, AA)
       - departureDate (YYYY-MM-DD)
       - departureTime (HH:MM)
+      - arrivalDate (YYYY-MM-DD if different day, else same as departure)
+      - arrivalTime (HH:MM)
       - route (e.g., EZE → MIA)
       - destination (IATA code or city)
       - duration (e.g., 9h 45m)
@@ -405,6 +407,8 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
       - airline (e.g., Aerolíneas Argentinas, AA)
       - departureDate (YYYY-MM-DD)
       - departureTime (HH:MM)
+      - arrivalDate (YYYY-MM-DD)
+      - arrivalTime (HH:MM)
       - route (e.g., MIA → EZE)
       - destination (IATA code or city)
       - duration (e.g., 9h 30m)
@@ -419,6 +423,8 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
           "airline": "string or null",
           "departureDate": "YYYY-MM-DD or null",
           "departureTime": "HH:MM or null",
+          "arrivalDate": "YYYY-MM-DD or null",
+          "arrivalTime": "HH:MM or null",
           "route": "string or null",
           "destination": "string or null",
           "duration": "string or null",
@@ -430,6 +436,8 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
           "airline": "string or null",
           "departureDate": "YYYY-MM-DD or null",
           "departureTime": "HH:MM or null",
+          "arrivalDate": "YYYY-MM-DD or null",
+          "arrivalTime": "HH:MM or null",
           "route": "string or null",
           "destination": "string or null",
           "duration": "string or null",
@@ -485,6 +493,8 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
                 airline: { type: Type.STRING },
                 departureDate: { type: Type.STRING },
                 departureTime: { type: Type.STRING },
+                arrivalDate: { type: Type.STRING },
+                arrivalTime: { type: Type.STRING },
                 route: { type: Type.STRING },
                 destination: { type: Type.STRING },
                 duration: { type: Type.STRING },
@@ -505,6 +515,8 @@ export const extractPDFData = async (base64Data: string, documentType: string): 
                 airline: { type: Type.STRING },
                 departureDate: { type: Type.STRING },
                 departureTime: { type: Type.STRING },
+                arrivalDate: { type: Type.STRING },
+                arrivalTime: { type: Type.STRING },
                 route: { type: Type.STRING },
                 destination: { type: Type.STRING },
                 duration: { type: Type.STRING },
