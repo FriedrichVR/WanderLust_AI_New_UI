@@ -1760,8 +1760,8 @@ const App: React.FC = () => {
                                     <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]">{t.landingHeroTitle}</h1>
                                     <p className="mt-5 text-neutral-300 text-base md:text-lg max-w-xl">{t.landingHeroSubtitle}</p>
                                     <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                                        <button onClick={handleCreateTrip} className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">
-                                            <Plane size={16} /> {t.createFirstTrip}
+                                        <button onClick={handleCreateTrip} className="group inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">
+                                            <Plane size={16} className="transition-transform duration-300 group-hover:rotate-45" /> {t.createFirstTrip}
                                         </button>
                                         <button onClick={() => setShowStories(true)} className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">
                                             <Users size={16} /> {t.travelerStories}
@@ -1824,7 +1824,7 @@ const App: React.FC = () => {
                                     className={`group relative h-[300px] md:h-[360px] rounded-3xl overflow-hidden cursor-pointer transition-all hover:-translate-y-1.5 border flex flex-col w-[380px] ${settings.theme === 'light' ? 'bg-white border-neutral-300 shadow-[0_2px_8px_rgba(0,0,0,0.12)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.16)]' : 'bg-surface border-border shadow-xl hover:shadow-acid/20'}`}
                                 >
                                     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 text-center">
-                                        <Plane size={48} className="text-acid animate-pulse" />
+                                        <Plane size={48} className="text-acid animate-pulse transition-transform duration-300 group-hover:rotate-45" />
                                         <h3 className="text-xl font-display font-bold uppercase tracking-tight">{t.initiateTrip}</h3>
                                         <p className="text-[11px] font-mono uppercase tracking-widest text-dim">{t.createFirstTrip}</p>
                                         <button className="px-4 py-2 border border-acid text-acid hover:bg-acid hover:text-black text-[10px] font-mono font-bold uppercase rounded-lg transition-colors">{t.createFirstTrip}</button>
@@ -2025,6 +2025,8 @@ const App: React.FC = () => {
                     <TestimonialsRolodex onClose={() => setShowStories(false)} />
                 </Suspense>
             )}
+
+            {/* Plane hover micro-interaction handled on buttons */}
 
             {/* Pricing Modal */}
             {showPricing && (

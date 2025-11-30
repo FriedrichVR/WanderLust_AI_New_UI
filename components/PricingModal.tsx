@@ -10,7 +10,7 @@ interface Props {
 
 const PricingModal: React.FC<Props> = ({ onClose, onSelectFree }) => {
     return (
-        <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-sm overflow-y-auto animate-fade-in custom-scrollbar font-sans">
+        <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-2xl overflow-y-auto animate-fade-in custom-scrollbar font-sans">
             <div className="relative min-h-screen p-4 md:p-6">
                 {/* Close Button */}
                 <button
