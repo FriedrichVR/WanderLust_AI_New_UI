@@ -6,7 +6,7 @@ import { generateQuickSuggestion } from '../utils/aiTripSuggester';
 import { generateBudgetSuggestion } from '../services/geminiService';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
-    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal
+    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal, Unlock
 } from 'lucide-react';
 import { Trip, AppState, Currency, TripStatus, TripType, DayPlan } from '../types';
 import { loadSettings, saveSettings, getTrips, upsertTrip, deleteTripFromDb, getLocalCache, INITIAL_TRIPS } from '../services/storageService';
@@ -1638,10 +1638,10 @@ const App: React.FC = () => {
                     {/* Header styled to reference */}
                     <header className={`sticky top-0 z-50 backdrop-blur-sm ${settings.theme === 'light' ? 'bg-neutral-50/70 border-neutral-200' : 'bg-neutral-950/70 border-white/10'} border-b px-4 md:px-6 h-16 flex items-center justify-between`}>
                         <div className="flex items-center gap-3">
-                            <div className={`flex items-center justify-center w-9 h-9 rounded-md ${settings.theme === 'light' ? 'bg-neutral-100 ring-1 ring-neutral-300' : 'bg-neutral-900 ring-1 ring-white/10'}`}>
-                                <span className="text-emerald-400 font-semibold tracking-tight text-lg leading-none">WL</span>
+                            <div className={`${settings.theme === 'light' ? 'bg-neutral-100 ring-1 ring-neutral-300' : 'bg-neutral-900 ring-1 ring-white/10'} flex items-center justify-center w-9 h-9 rounded-md`}>
+                                <Plane size={18} className="text-emerald-400" />
                             </div>
-                            <span className={`hidden sm:inline text-sm ${settings.theme === 'light' ? 'text-neutral-600' : 'text-neutral-300'}`}>{t.smartPlanner}</span>
+                            <span className={`hidden sm:inline text-sm font-semibold ${settings.theme === 'light' ? 'text-neutral-700' : 'text-neutral-200'}`}>{t.appTitle}</span>
                         </div>
 
                         <nav className="hidden md:flex items-center gap-7 text-sm text-neutral-300">
@@ -1920,47 +1920,68 @@ const App: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Pricing Section */}
-                        <section className="relative mt-12 md:mt-16">
+                        {/* Freemium notice below trips */}
+                        <div className="p-2 md:p-4 text-center mt-8 md:mt-12">
+                            <Tooltip content={t.freemiumTooltip} position="top">
+                                <button
+                                    onClick={() => { setAuthInitialMode('signup'); setShowAuthModal(true); }}
+                                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-acid/20 bg-acid/5 text-acid text-[12px] font-mono uppercase tracking-widest cursor-pointer mx-auto w-fit"
+                                >
+                                    {t.freemiumNotice} <Info size={12} />
+                                </button>
+                            </Tooltip>
+                        </div>
+
+                        {/* Pricing Section (adjusted to reference, slightly smaller) */}
+                        <section className="relative mt-10 md:mt-14">
                             <div className="text-center max-w-2xl mx-auto">
-                                <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Elige tu ritmo</h2>
-                                <p className="mt-2 text-neutral-300 text-sm md:text-base">Empieza gratis. Mejora cuando quieras.</p>
+                                <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Elige tu ritmo</h2>
+                                <p className="mt-2 text-neutral-300 text-sm">Empieza gratis. Mejora cuando quieras.</p>
                             </div>
-                            <div className="mt-8 grid md:grid-cols-3 gap-6">
-                                <div className="rounded-2xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition flex flex-col">
-                                    <h3 className="text-lg font-semibold tracking-tight">Starter</h3>
-                                    <div className="mt-2 text-3xl font-semibold tracking-tight">$0<span className="text-sm text-neutral-400">/mo</span></div>
-                                    <ul className="mt-4 space-y-2 text-sm text-neutral-300">
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />3 viajes</li>
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Tracking básico</li>
-                                        <li className="flex items-center gap-2"><X className="text-neutral-500" size={16} />Comunidad</li>
+                            <div className="mt-6 grid md:grid-cols-3 gap-5">
+                                {/* FREE */}
+                                <div className="rounded-2xl p-5 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition flex flex-col relative">
+                                    <h3 className="mt-6 text-base md:text-lg font-semibold tracking-tight">FREE</h3>
+                                    <div className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight">$0 <span className="text-sm text-neutral-400">/ month</span></div>
+                                    <p className="mt-3 text-sm text-neutral-300">Mantené acceso a tus viajes guardados.</p>
+                                    <ul className="mt-3 space-y-1.5 text-[13px] text-neutral-300">
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Seguí explorando tus viajes guardados</li>
+                                        <li className="flex items-center gap-2"><X className="text-neutral-500" size={14} />No podés generar nuevos itinerarios</li>
                                     </ul>
-                                    <button onClick={() => setShowAuthModal(true)} className="mt-6 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">Comenzar</button>
+                                    <button onClick={() => setShowAuthModal(true)} className="mt-auto inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">GET STARTED</button>
                                 </div>
-                                <div className="relative rounded-2xl p-6 bg-neutral-800/60 ring-2 ring-emerald-500/40 hover:ring-emerald-400/60 transition flex flex-col">
-                                    <div className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-md bg-emerald-500 text-neutral-950 px-2.5 py-1 text-[11px] font-medium">Más popular</div>
-                                    <h3 className="text-lg font-semibold tracking-tight">Pro</h3>
-                                    <div className="mt-2 text-3xl font-semibold tracking-tight">$19<span className="text-sm text-neutral-300">/mo</span></div>
-                                    <ul className="mt-4 space-y-2 text-sm text-neutral-200">
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Ilimitado</li>
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Coaching IA</li>
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Comunidad</li>
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Analytics</li>
+
+                                {/* STANDARD */}
+                                <div className="relative rounded-2xl p-5 bg-neutral-900/70 ring-2 ring-emerald-500/30 hover:ring-emerald-400/60 transition flex flex-col">
+                                    <div className="absolute top-3 left-4 inline-flex items-center gap-1 rounded-md bg-neutral-800 text-neutral-300 px-2 py-0.5 text-[10px] font-mono uppercase"><Unlock size={12} /> DESBLOQUEAR 1 VIAJE</div>
+                                    <div className="absolute top-3 right-4 inline-flex items-center gap-1 rounded-md bg-cyan-500/20 text-cyan-300 px-2 py-0.5 text-[10px] font-mono uppercase">Popular</div>
+                                    <h3 className="mt-6 text-base md:text-lg font-semibold tracking-tight">STANDARD</h3>
+                                    <div className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight">$2.99 <span className="text-sm text-neutral-300">/ viaje</span></div>
+                                    <p className="mt-3 text-sm text-neutral-300">Ideal si solo necesitás un viaje puntual.</p>
+                                    <ul className="mt-3 space-y-1.5 text-[13px] text-neutral-200">
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Generás un viaje extra</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Guardado en tu cuenta</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Acceso completo al itinerario</li>
                                     </ul>
-                                    <button onClick={() => setShowPricing(true)} className="mt-6 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">Upgrade a Pro</button>
+                                    <button onClick={() => setShowPricing(true)} className="mt-auto inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">GET TRAVEL</button>
                                 </div>
-                                <div className="rounded-2xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition flex flex-col">
-                                    <h3 className="text-lg font-semibold tracking-tight">Elite</h3>
-                                    <div className="mt-2 text-3xl font-semibold tracking-tight">$49<span className="text-sm text-neutral-400">/mo</span></div>
-                                    <ul className="mt-4 space-y-2 text-sm text-neutral-300">
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />1:1 soporte</li>
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Personalización</li>
-                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={16} />Prioridad</li>
+
+                                {/* PRO */}
+                                <div className="rounded-2xl p-5 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition flex flex-col relative">
+                                    <h3 className="mt-6 text-base md:text-lg font-semibold tracking-tight">PRO</h3>
+                                    <div className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight">$4.99 <span className="text-sm text-neutral-400">/ month</span></div>
+                                    <p className="mt-3 text-sm text-neutral-300">La mejor opción si viajás seguido o querés planificar sin límites.</p>
+                                    <ul className="mt-3 space-y-1.5 text-[13px] text-neutral-300">
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Viajes ilimitados</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Itinerarios premium</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Descarga en PDF</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Recomendaciones avanzadas</li>
+                                        <li className="flex items-center gap-2"><Check className="text-emerald-400" size={14} />Prioridad en generación</li>
                                     </ul>
-                                    <button onClick={() => setShowPricing(true)} className="mt-6 inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm text-neutral-200 ring-1 ring-white/10 hover:ring-white/20 hover:bg-white/5 transition">Go Elite</button>
+                                    <button onClick={() => setShowPricing(true)} className="mt-auto inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-xs font-medium bg-white text-neutral-950 hover:bg-acid hover:text-black transition">UPGRADE NOW</button>
                                 </div>
                             </div>
-                            <div className="mx-auto max-w-7xl px-0 mt-8">
+                            <div className="mx-auto max-w-7xl px-0 mt-6">
                                 <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                             </div>
                         </section>
@@ -2002,17 +2023,7 @@ const App: React.FC = () => {
                         </section>
                     </div>
 
-                    {/* Freemium footer below trips */}
-                    <div className="p-2 md:p-4 text-center">
-                        <Tooltip content={t.freemiumTooltip} position="top">
-                            <button
-                                onClick={() => { setAuthInitialMode('signup'); setShowAuthModal(true); }}
-                                className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-acid/20 bg-acid/5 text-acid text-[12px] font-mono uppercase tracking-widest cursor-pointer mx-auto w-fit"
-                            >
-                                {t.freemiumNotice} <Info size={12} />
-                            </button>
-                        </Tooltip>
-                    </div>
+                    
 
                     {/* World Map Background Layer */}
                     <div className={`fixed inset-0 z-0 pointer-events-none ${settings.theme === 'light' ? 'opacity-[0.1] invert' : 'opacity-[0.02] dark:invert'}`}>
@@ -2192,34 +2203,6 @@ const App: React.FC = () => {
                     </div>
                 </div>
             )}
-
-            {/* Floating Quick Actions */}
-            {currentTripId && currentTrip && (
-                <div className="fixed bottom-6 right-6 z-[90]">
-                    <div className="rounded-full shadow-xl">
-                        <div className="group inline-flex items-center">
-                            <button className="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 hover:bg-emerald-400 flex items-center justify-center">
-                                <Plus size={20} />
-                            </button>
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-3 flex gap-2">
-                                <button onClick={() => {
-                                    const newDay = { id: crypto.randomUUID(), date: new Date().toISOString(), activities: [] } as DayPlan;
-                                    handleUpdateTrip({ ...currentTrip, itinerary: [...(currentTrip.itinerary||[]), newDay] });
-                                    showToast('Día agregado.', 'success');
-                                }} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Día</button>
-                                <button onClick={() => {
-                                    const exp = { id: crypto.randomUUID(), label: 'Nuevo gasto', amount: 0, category: 'other' } as any;
-                                    handleUpdateTrip({ ...currentTrip, expenses: [...(currentTrip.expenses||[]), exp] });
-                                    showToast('Gasto agregado.', 'success');
-                                }} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Gasto</button>
-                                {/* Removed invalid quick action referencing child tab state */}
-                                {/* Quick action AI resumen removed */}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
 
         </div>
     );

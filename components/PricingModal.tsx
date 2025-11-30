@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Unlock } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
 
 interface Props {
@@ -45,14 +45,12 @@ const PricingModal: React.FC<Props> = ({ onClose, onSelectFree }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start w-full max-w-7xl mx-auto">
             
-            {/* LIGHT PLAN */}
+            {/* FREE PLAN */}
             <div 
                 className="group relative p-8 bg-surface border border-border rounded-3xl flex flex-col shadow-lg hover:shadow-xl transition-all"
                 onMouseMove={handleMouseMove}
             >
-                <div className="flex justify-between items-start mb-6">
-                    <span className="px-3 py-1 border border-acid/30 text-[10px] font-mono font-bold uppercase tracking-widest bg-acid/10 text-acid rounded-lg">{t.freePlanBadge}</span>
-                </div>
+                <div className="h-6 mb-6" />
                 
                 <h3 className="text-2xl font-display font-bold text-white mb-2 uppercase">Free</h3>
                 <div className="mb-6">
@@ -79,20 +77,20 @@ const PricingModal: React.FC<Props> = ({ onClose, onSelectFree }) => {
                                 </button>
             </div>
 
-            {/* MOST POPULAR PLAN */}
+            {/* STANDARD PLAN */}
             <div 
                 className="group relative p-8 bg-surface border border-cyan-500/30 rounded-3xl flex flex-col shadow-lg hover:shadow-xl hover:shadow-cyan-500/20 transition-all md:scale-105 md:z-10"
                 onMouseMove={handleMouseMove}
             >
                 <div className="flex justify-between items-start mb-6">
-                    <span className="px-3 py-1 border border-cyan-500/40 text-[10px] font-mono font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-400 rounded-lg">{t.standardPlanBadge}</span>
+                    <span className="px-3 py-1 border border-cyan-500/40 text-[10px] font-mono font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-400 rounded-lg inline-flex items-center gap-1"><Unlock size={12} /> {t.standardPlanBadge}</span>
                     <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-[10px] font-mono font-bold rounded-lg">POPULAR</span>
                 </div>
                 
                 <h3 className="text-2xl font-display font-bold text-white mb-2 uppercase">Standard</h3>
                 <div className="mb-6">
                     <span className="text-4xl font-display font-bold text-white">${t.standardPlanPrice || '2.99'}</span>
-                    <span className="text-lg text-dim ml-2">/ {t.month || 'month'}</span>
+                    <span className="text-lg text-dim ml-2">/ viaje</span>
                 </div>
                 
                 <p className="text-sm text-dim mb-8 leading-relaxed font-mono">{t.standardPlanDesc}</p>
@@ -116,9 +114,7 @@ const PricingModal: React.FC<Props> = ({ onClose, onSelectFree }) => {
                 className="group relative p-8 bg-surface border border-border rounded-3xl flex flex-col shadow-lg hover:shadow-xl transition-all"
                 onMouseMove={handleMouseMove}
             >
-                <div className="flex justify-between items-start mb-6">
-                    <span className="px-3 py-1 border border-white/30 text-[10px] font-mono font-bold uppercase tracking-widest bg-white/10 text-white/80 rounded-lg">{t.proPlanBadge}</span>
-                </div>
+                <div className="h-6 mb-6" />
                 
                 <h3 className="text-2xl font-display font-bold text-white mb-2 uppercase">Pro</h3>
                 <div className="mb-6">
