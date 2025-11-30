@@ -299,48 +299,50 @@ const TripDetailView: React.FC<{
                 </div>
 
                 {/* Refactored Header Content for Layout Stability */}
-                <div className="absolute bottom-0 left-0 w-full p-2 md:p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-1.5 md:gap-4">
-                    <div className="flex items-center gap-2 md:gap-3">
-                        <button
-                            onClick={() => setShowEditModal(true)}
-                            className={`px-2.5 md:px-3 py-0.5 md:py-1 font-mono text-[9px] md:text-[10px] uppercase tracking-widest rounded-full backdrop-blur-md border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/30' :
-                                trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/30' : 'bg-black/60 text-violet-400 border-violet-500/30'
-                                }`}>
-                            {trip.status}
-                        </button>
-
-                        <div className="opacity-0 md:opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 md:gap-2">
-                            <button onClick={() => setShowEditModal(true)} className="p-1 md:p-1.5 bg-white/10 hover:bg-white hover:text-black text-white rounded-full backdrop-blur-md transition-colors" title={t.editParams}>
-                                <Edit2 size={12} className="md:hidden" />
-                                <Edit2 size={14} className="hidden md:block" />
+                <div className="absolute bottom-0 left-0 w-full p-2 md:p-8 z-20 flex justify-start">
+                    <div className="w-full md:max-w-4xl bg-gradient-to-tr from-black/85 via-black/70 to-black/40 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.65)] p-3 md:p-6 flex flex-col gap-1.5 md:gap-4">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                            <button
+                                onClick={() => setShowEditModal(true)}
+                                className={`px-2.5 md:px-3 py-0.5 md:py-1 font-mono text-[9px] md:text-[10px] uppercase tracking-widest rounded-full border shadow-lg hover:scale-105 transition-transform ${trip.status === 'Completed' ? 'bg-black/70 text-emerald-400 border-emerald-500/30' :
+                                    trip.status === 'Booked' ? 'bg-black/70 text-cyan-400 border-cyan-500/30' : 'bg-black/70 text-violet-400 border-violet-500/30'
+                                    }`}>
+                                {trip.status}
                             </button>
-                            <button onClick={() => setShowDeleteTripConfirm(true)} className="p-1 md:p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-full backdrop-blur-md transition-colors" title={t.deleteMission}>
-                                <Trash2 size={12} className="md:hidden" />
-                                <Trash2 size={14} className="hidden md:block" />
+
+                            <div className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 md:gap-2">
+                                <button onClick={() => setShowEditModal(true)} className="p-1 md:p-1.5 bg-white/10 hover:bg-white hover:text-black text-white rounded-full backdrop-blur-md transition-colors" title={t.editParams}>
+                                    <Edit2 size={12} className="md:hidden" />
+                                    <Edit2 size={14} className="hidden md:block" />
+                                </button>
+                                <button onClick={() => setShowDeleteTripConfirm(true)} className="p-1 md:p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-full backdrop-blur-md transition-colors" title={t.deleteMission}>
+                                    <Trash2 size={12} className="md:hidden" />
+                                    <Trash2 size={14} className="hidden md:block" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <h1
+                            onClick={() => setShowEditModal(true)}
+                            className="text-white text-lg md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.95)] cursor-pointer hover:text-acid transition-colors break-words leading-tight"
+                        >
+                            {trip.destination}
+                        </h1>
+
+                        <div className="flex flex-wrap gap-3 md:gap-6 text-white/90 font-mono text-[10px] md:text-xs">
+                            <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 md:gap-2 hover:text-acid transition-all cursor-pointer group/dates">
+                                <CalendarIcon size={12} className="md:hidden text-acid group-hover/dates:scale-110 transition-transform" />
+                                <CalendarIcon size={14} className="hidden md:block text-acid group-hover/dates:scale-110 transition-transform" />
+                                <span>
+                                    {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
+                                </span>
+                            </button>
+                            <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 md:gap-2 hover:text-acid transition-all cursor-pointer group/budget">
+                                <Wallet size={12} className="md:hidden text-acid group-hover/budget:scale-110 transition-transform" />
+                                <Wallet size={14} className="hidden md:block text-acid group-hover/budget:scale-110 transition-transform" />
+                                <span>{trip.currency} {trip.budget.toLocaleString()}</span>
                             </button>
                         </div>
-                    </div>
-
-                    <h1
-                        onClick={() => setShowEditModal(true)}
-                        className="text-white text-lg md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-xl cursor-pointer hover:text-acid transition-colors break-words leading-tight"
-                    >
-                        {trip.destination}
-                    </h1>
-
-                    <div className="flex flex-wrap gap-3 md:gap-6 text-white/80 font-mono text-[10px] md:text-xs">
-                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 md:gap-2 hover:text-acid transition-all cursor-pointer group/dates">
-                            <CalendarIcon size={12} className="md:hidden text-acid group-hover/dates:scale-110 transition-transform" />
-                            <CalendarIcon size={14} className="hidden md:block text-acid group-hover/dates:scale-110 transition-transform" />
-                            <span>
-                                {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()}
-                            </span>
-                        </button>
-                        <button onClick={() => setShowEditModal(true)} className="flex items-center gap-1.5 md:gap-2 hover:text-acid transition-all cursor-pointer group/budget">
-                            <Wallet size={12} className="md:hidden text-acid group-hover/budget:scale-110 transition-transform" />
-                            <Wallet size={14} className="hidden md:block text-acid group-hover/budget:scale-110 transition-transform" />
-                            <span>{trip.currency} {trip.budget.toLocaleString()}</span>
-                        </button>
                     </div>
                 </div>
             </div>

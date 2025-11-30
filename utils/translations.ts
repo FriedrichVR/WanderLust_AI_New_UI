@@ -2,6 +2,14 @@
 
 export const translations = {
   en: {
+      // Top Nav / Landing
+      smartPlanner: "Smart Travel Planner",
+      community: "Community",
+      demo: "Demo",
+      startFree: "Start Free",
+      openingTrip: "Opening trip…",
+      landingHeroTitle: "Explore further. Stress less.",
+      landingHeroSubtitle: "AI for itineraries, budget, documents and maps. Your trip, elegantly organized.",
     appTitle: "Wanderlust.ai",
     dashboard: "Dashboard",
     missionControl: "Mission Control",
@@ -41,6 +49,13 @@ export const translations = {
     overview: "Overview",
     itinerary: "Itinerary",
     documents: "Documents",
+    insights: "Insights",
+    docInsights: "Document Insights",
+    docInsightsDesc: "Capture and edit the structured data pulled from your uploads.",
+    docInsightsEmpty: "Upload documents to start storing extracted data.",
+    docInsightNotes: "Notes / Context",
+    docInsightMetaHint: "Auto extracted fields",
+    insightsSaved: "Document insights saved.",
 
     // Overview Tab
     telemetry: "Telemetry",
@@ -165,6 +180,8 @@ export const translations = {
     size: "Size",
     dragToPan: "Drag image to pan",
     clearSearch: "Clear search",
+    demoSimulationTitle: "Demo Simulation",
+    demoSimulationSubtitle: "Visualizing workflow...",
 
     // Pricing
     pricing: "Pricing",
@@ -241,6 +258,14 @@ export const translations = {
     guestAccess: "Guest Access // Demo",
   },
   es: {
+      // Top Nav / Landing
+      smartPlanner: "Planificador de viajes inteligente",
+      community: "Comunidad",
+      demo: "Demo",
+      startFree: "Empezar gratis",
+      openingTrip: "Abriendo viaje…",
+      landingHeroTitle: "Explorá más lejos. Sin estrés.",
+      landingHeroSubtitle: "IA para itinerarios, presupuesto, documentos y mapas. Tu viaje, organizado con estilo.",
     appTitle: "Wanderlust.ai",
     dashboard: "Tablero",
     missionControl: "Centro de Mando",
@@ -280,6 +305,13 @@ export const translations = {
     overview: "Resumen",
     itinerary: "Itinerario",
     documents: "Documentos",
+    insights: "Insights",
+    docInsights: "Datos extraídos",
+    docInsightsDesc: "Guardá y ajustá la información detectada en tus documentos.",
+    docInsightsEmpty: "Subí documentos para comenzar a guardar datos.",
+    docInsightNotes: "Notas / Contexto",
+    docInsightMetaHint: "Campos auto extraídos",
+    insightsSaved: "Datos de documentos guardados.",
 
     // Overview Tab
     telemetry: "Telemetría",
@@ -404,6 +436,8 @@ export const translations = {
     size: "Tamaño",
     dragToPan: "Arrastra para mover",
     clearSearch: "Limpiar búsqueda",
+    demoSimulationTitle: "Simulación de demo",
+    demoSimulationSubtitle: "Visualizando flujo...",
 
     // Pricing
     pricing: "Precios",

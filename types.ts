@@ -36,6 +36,7 @@ export interface TripDocument {
     checkOutDate?: string;
     bookingReference?: string;
   };
+  notes?: string;
 }
 
 export interface Expense {

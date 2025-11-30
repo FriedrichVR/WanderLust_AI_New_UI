@@ -70,6 +70,11 @@ interface GalleryImage {
     index?: number;   // for arrays (day/block images)
 }
 
+interface DocInsightDraft {
+    metadata: Record<string, string>;
+    notes: string;
+}
+
 // Helper to safely access API Key without crashing Vercel/Vite
 const getSafeApiKey = (): string => {
     let key = '';
@@ -168,11 +173,12 @@ const TripDetailView: React.FC<{
     initialTab?: 'overview' | 'itinerary' | 'budget' | 'documents';
     isAuthenticated: boolean;
 }> = ({ trip, updateTrip, goBack, lang, theme, onDeleteRequest, resizeImageUtil, handleCoverImageUploadUtil, allImages, onDeleteImage, apiKey, showToast, initialTab = 'overview', isAuthenticated }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'budget' | 'documents'>(initialTab);
+    const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'budget' | 'documents' | 'insights'>(initialTab);
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
     const [showImageEditor, setShowImageEditor] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [toolPanelTab, setToolPanelTab] = useState<'converter' | 'maps'>('maps');
     const [docFilter, setDocFilter] = useState<'all' | 'flight' | 'hotel' | 'airbnb' | 'food' | 'other'>('all');
     const [notesTab, setNotesTab] = useState<'notes' | 'gallery'>('gallery');
 
@@ -180,6 +186,7 @@ const TripDetailView: React.FC<{
     const [deleteImageTarget, setDeleteImageTarget] = useState<GalleryImage | null>(null);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const [showDeleteTripConfirm, setShowDeleteTripConfirm] = useState(false);
+    const [docInsightsDraft, setDocInsightsDraft] = useState<Record<string, DocInsightDraft>>({});
     const [leftPanelTab, setLeftPanelTab] = useState<'diary' | 'notes' | 'converter'>('diary');
     const [previewDoc, setPreviewDoc] = useState<any | null>(null);
     const [selectedAttraction, setSelectedAttraction] = useState<{ url: string; title: string; desc: string } | null>(null);
@@ -196,6 +203,22 @@ const TripDetailView: React.FC<{
             setEditForm({ ...trip });
         }
     }, [showEditModal, trip]);
+
+    useEffect(() => {
+        const initialDrafts: Record<string, DocInsightDraft> = {};
+        (trip.documents || []).forEach(doc => {
+            const normalizedMeta: Record<string, string> = {};
+            Object.entries(doc.metadata || {}).forEach(([key, value]) => {
+                if (value === undefined || value === null) return;
+                normalizedMeta[key] = typeof value === 'string' ? value : JSON.stringify(value);
+            });
+            initialDrafts[doc.id] = {
+                metadata: normalizedMeta,
+                notes: doc.notes || ''
+            };
+        });
+        setDocInsightsDraft(initialDrafts);
+    }, [trip.documents]);
 
     const performDeleteImage = () => {
         if (deleteImageTarget) {
@@ -286,29 +309,21 @@ const TripDetailView: React.FC<{
         // Use Picsum with seeded images to avoid Unavailable responses and hotlink issues
         return Array.from({ length: 9 }).map((_, i) => `https://picsum.photos/seed/${seed}-${i}/800/800`);
     }, [trip.destination]);
+    const mapsEmbedUrl = useMemo(() => {
+        if (!trip.destination) return 'https://www.google.com/maps?output=embed';
+        return `https://www.google.com/maps?q=${encodeURIComponent(trip.destination)}&output=embed`;
+    }, [trip.destination]);
 
     return (
         <div className="animate-fade-in pb-20">
             {/* New Trip Header — reference-inspired */}
             <section className="relative mx-auto max-w-7xl px-4 md:px-6 pt-6">
-                <div className="grid lg:grid-cols-12 gap-6 items-center">
-                    <div className="lg:col-span-6">
-                        <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-white/10 bg-white/5 text-xs text-neutral-300 mb-4">
-                            <Wand2 className="text-emerald-400" size={14} />
-                            {trip.type} • {trip.status}
-                        </div>
-                        <h1 onClick={() => setShowEditModal(true)} className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1] cursor-pointer">
-                            {trip.destination}
-                        </h1>
-                        <p className="mt-3 text-neutral-300 text-sm md:text-base">
-                            {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()} • {trip.currency} {trip.budget.toLocaleString()}
-                        </p>
-                        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                            <button onClick={goBack} className="inline-flex items-center gap-2 rounded-lg px-5 py-3 text-base font-semibold bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition shadow-lg">
-                                <ArrowLeft size={16} /> {t.dashboard}
-                            </button>
-                            <button onClick={() => setShowEditModal(true)} className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-400 text-neutral-900 hover:bg-emerald-300 transition">
-                                <Edit2 size={16} /> {t.editParams}
+                <div className="grid gap-6 md:grid-cols-2 items-stretch">
+                    <div className="rounded-2xl bg-neutral-950/70 ring-1 ring-white/10 p-5 md:p-8 flex flex-col gap-4 justify-between shadow-[0_12px_40px_rgba(0,0,0,0.45)] order-2 md:order-1 relative">
+                        <div className="absolute top-4 right-4 flex gap-1.5">
+                            <button onClick={() => setShowEditModal(true)} className="h-8 w-8 rounded-md border border-emerald-400 text-white hover:bg-white/10 transition flex items-center justify-center" title={t.editParams}>
+                                <Edit2 size={12} />
+                                <span className="sr-only">{t.editParams}</span>
                             </button>
                             <button
                                 onClick={() => {
@@ -317,37 +332,56 @@ const TripDetailView: React.FC<{
                                     if (expired) { showToast('Deletion window expired.', 'info'); return; }
                                     setShowDeleteTripConfirm(true);
                                 }}
-                                className="inline-flex items-center justify-center rounded-md p-2 text-red-300 ring-1 ring-red-500/30 hover:bg-red-500/10 transition"
+                                className="h-8 w-8 rounded-md border border-red-500/50 text-red-300 hover:bg-red-500/10 transition flex items-center justify-center"
                                 title={t.deleteMission}
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={12} />
                             </button>
-                            <DeletionCountdown createdAt={trip.createdAt} windowMs={DELETION_WINDOW_MS} variant="badge" />
+                        </div>
+
+                        <div className="space-y-3 pr-16">
+                            <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1 ring-white/10 bg-white/5 text-[11px] md:text-xs text-neutral-200 uppercase tracking-[0.25em]">
+                                <Wand2 className="text-emerald-400" size={14} />
+                                {trip.type} • {trip.status}
+                            </div>
+                            <div>
+                                <h1 onClick={() => setShowEditModal(true)} className="text-3xl md:text-5xl font-semibold tracking-tight leading-[1.1] cursor-pointer">
+                                    {trip.destination}
+                                </h1>
+                                <p className="mt-2 text-neutral-300 text-sm md:text-base font-mono">
+                                    {new Date(trip.startDate).toLocaleDateString()} — {new Date(trip.endDate).toLocaleDateString()} • {trip.currency} {trip.budget.toLocaleString()}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-3">
+                            <button onClick={goBack} className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm md:text-base font-semibold bg-white text-neutral-950 hover:bg-acid transition shadow-lg">
+                                <ArrowLeft size={16} /> {t.dashboard}
+                            </button>
                         </div>
                     </div>
 
-                    <div className="lg:col-span-6">
-                        <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-neutral-900/50">
-                            <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-64 md:h-[22rem] object-cover" />
-                            <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-neutral-950/90 via-neutral-950/60 to-transparent">
-                                <div className="flex items-center gap-4 text-xs text-neutral-300">
-                                    <span className="inline-flex items-center gap-1"><CalendarIcon size={12} /> {Math.max(1, Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime())/(1000*60*60*24)))} días</span>
-                                    <span className="inline-flex items-center gap-1"><Wallet size={12} /> {trip.currency} {trip.budget.toLocaleString()}</span>
-                                </div>
-                            </div>
-                            <div className="absolute top-4 right-4">
-                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 text-emerald-300 px-2 py-1 text-[11px] ring-1 ring-emerald-500/30">
-                                    <Compass size={12} /> {trip.type}
-                                </span>
-                            </div>
-                            <div className="absolute top-4 left-4 flex items-center gap-2">
-                                <button onClick={() => setShowImageEditor(true)} className="inline-flex items-center gap-1 rounded-md bg-white/10 text-white px-2 py-1 text-[11px] ring-1 ring-white/20 hover:bg-white/20 transition">
-                                    <Wand2 size={12} /> {t.editImage}
-                                </button>
-                                <button onClick={() => coverInputRef.current?.click()} className="inline-flex items-center gap-1 rounded-md bg-white/10 text-white px-2 py-1 text-[11px] ring-1 ring-white/20 hover:bg-white/20 transition">
-                                    <Upload size={12} /> {t.uploadImage}
-                                </button>
-                                <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={(e) => handleCoverImageUploadUtil(e, trip, updateTrip)} />
+                    <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 bg-neutral-900/50 h-[200px] md:h-[260px] lg:h-[270px] order-1 md:order-2">
+                        <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/80" />
+                        <div className="absolute top-4 right-4 z-10">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 text-emerald-300 px-2 py-1 text-[11px] ring-1 ring-emerald-500/30">
+                                <Compass size={12} /> {trip.type}
+                            </span>
+                        </div>
+                        <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+                            <button onClick={() => setShowImageEditor(true)} className="inline-flex items-center gap-1 rounded-md bg-white/10 text-white px-2 py-1 text-[11px] ring-1 ring-white/20 hover:bg-white/20 transition">
+                                <Wand2 size={12} /> {t.editImage}
+                            </button>
+                            <button onClick={() => coverInputRef.current?.click()} className="inline-flex items-center gap-1 rounded-md bg-white/10 text-white px-2 py-1 text-[11px] ring-1 ring-white/20 hover:bg-white/20 transition">
+                                <Upload size={12} /> {t.uploadImage}
+                            </button>
+                            <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={(e) => handleCoverImageUploadUtil(e, trip, updateTrip)} />
+                        </div>
+                        <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 bg-gradient-to-t from-neutral-950/90 via-neutral-950/50 to-transparent">
+                            <div className="flex flex-wrap gap-4 text-[11px] md:text-xs text-neutral-200 font-mono">
+                                <span className="inline-flex items-center gap-1"><CalendarIcon size={12} /> {Math.max(1, Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime())/(1000*60*60*24)))} días</span>
+                                <span className="inline-flex items-center gap-1"><Wallet size={12} /> {trip.currency} {trip.budget.toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -486,17 +520,48 @@ Ubicación aproximada: centro de la ciudad · Recomendado: tarde dorada`;
                                         )}
                                     </div>
                                     <div className="rounded-xl p-6 bg-neutral-900/60 ring-1 ring-white/10 hover:ring-white/20 transition">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30 flex items-center justify-center text-emerald-300">
-                                                <DollarSign className="w-5 h-5" />
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30 flex items-center justify-center text-emerald-300">
+                                                    <DollarSign className="w-5 h-5" />
+                                                </div>
+                                                <h3 className="text-lg font-semibold tracking-tight">Herramientas</h3>
                                             </div>
-                                            <h3 className="text-lg font-semibold tracking-tight">Converter</h3>
+                                            <div className="flex items-center gap-2 text-[11px] font-mono">
+                                                {[
+                                                    { id: 'maps', label: 'Maps' },
+                                                    { id: 'converter', label: 'Converter' }
+                                                ].map(tab => (
+                                                    <button
+                                                        key={tab.id}
+                                                        onClick={() => setToolPanelTab(tab.id as 'converter' | 'maps')}
+                                                        className={`px-3 py-1 rounded-full border transition ${toolPanelTab === tab.id ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10' : 'border-white/10 text-neutral-300 hover:border-emerald-400/60 hover:text-white'}`}
+                                                    >
+                                                        {tab.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <p className="mt-3 text-sm text-neutral-300">Convierte rápidamente a tu moneda.</p>
-                                        <div className="mt-4 grid grid-cols-1 gap-3">
-                                            <Suspense fallback={<div className="h-20 bg-neutral-950/60 ring-1 ring-white/10 rounded-lg animate-pulse"></div>}>
-                                                <CurrencyConverter lang={lang} />
-                                            </Suspense>
+                                        <p className="mt-3 text-sm text-neutral-300">
+                                            {toolPanelTab === 'maps' ? 'Visualiza el destino en Google Maps.' : 'Convierte rápidamente a tu moneda.'}
+                                        </p>
+                                        <div className="mt-4">
+                                            {toolPanelTab === 'maps' ? (
+                                                <div className="w-full overflow-hidden rounded-xl ring-1 ring-white/10 bg-neutral-950/60">
+                                                    <iframe
+                                                        title="Mapa del destino"
+                                                        src={mapsEmbedUrl}
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer-when-downgrade"
+                                                        className="w-full h-64 md:h-72"
+                                                        allowFullScreen
+                                                    ></iframe>
+                                                </div>
+                                            ) : (
+                                                <Suspense fallback={<div className="h-20 bg-neutral-950/60 ring-1 ring-white/10 rounded-lg animate-pulse"></div>}>
+                                                    <CurrencyConverter lang={lang} />
+                                                </Suspense>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1564,7 +1629,7 @@ const App: React.FC = () => {
                     <div className="absolute top-6 right-6">
                         <div className="flex items-center gap-2 bg-surface/80 border border-border rounded-xl px-3 py-2 shadow-2xl">
                             <Loader2 className="animate-spin text-acid" size={16} />
-                            <span className="text-[10px] font-mono text-dim">Abriendo viaje…</span>
+                            <span className="text-[10px] font-mono text-dim">{t.openingTrip}</span>
                         </div>
                     </div>
                 </div>
@@ -1576,13 +1641,13 @@ const App: React.FC = () => {
                             <div className={`flex items-center justify-center w-9 h-9 rounded-md ${settings.theme === 'light' ? 'bg-neutral-100 ring-1 ring-neutral-300' : 'bg-neutral-900 ring-1 ring-white/10'}`}>
                                 <span className="text-emerald-400 font-semibold tracking-tight text-lg leading-none">WL</span>
                             </div>
-                            <span className={`hidden sm:inline text-sm ${settings.theme === 'light' ? 'text-neutral-600' : 'text-neutral-300'}`}>Smart Travel Planner</span>
+                            <span className={`hidden sm:inline text-sm ${settings.theme === 'light' ? 'text-neutral-600' : 'text-neutral-300'}`}>{t.smartPlanner}</span>
                         </div>
 
                         <nav className="hidden md:flex items-center gap-7 text-sm text-neutral-300">
-                            <button onClick={() => setShowStories(true)} className="hover:text-white transition-colors">Community</button>
-                            <button onClick={() => setShowPricing(true)} className="hover:text-white transition-colors">Pricing</button>
-                            <button onClick={() => setShowDemo(true)} className="hover:text-white transition-colors">Demo</button>
+                            <button onClick={() => setShowStories(true)} className="hover:text-white transition-colors">{t.community}</button>
+                            <button onClick={() => setShowPricing(true)} className="hover:text-white transition-colors">{t.pricing}</button>
+                            <button onClick={() => setShowDemo(true)} className="hover:text-white transition-colors">{t.demo}</button>
                         </nav>
 
                         <div className="hidden md:flex flex-1 max-w-2xl mx-8 gap-3 items-center">
@@ -1609,7 +1674,7 @@ const App: React.FC = () => {
                                 onClick={() => setShowAuthModal(true)}
                                 className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 transition cursor-pointer"
                             >
-                                Start Free
+                                {t.startFree}
                             </a>
                         </div>
 
@@ -1691,12 +1756,8 @@ const App: React.FC = () => {
                                         <Wand2 className="text-emerald-400" size={14} />
                                         {t.heroSubtitle}
                                     </div>
-                                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]">
-                                        Explore further. Stress less.
-                                    </h1>
-                                    <p className="mt-5 text-neutral-300 text-base md:text-lg max-w-xl">
-                                        IA para itinerarios, presupuesto, documentos y mapas. Tu viaje, organizado con estilo.
-                                    </p>
+                                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]">{t.landingHeroTitle}</h1>
+                                    <p className="mt-5 text-neutral-300 text-base md:text-lg max-w-xl">{t.landingHeroSubtitle}</p>
                                     <div className="mt-8 flex flex-col sm:flex-row gap-3">
                                         <button onClick={handleCreateTrip} className="inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-medium bg-emerald-500 text-neutral-950 hover:bg-emerald-400 transition">
                                             <Plane size={16} /> {t.createFirstTrip}
@@ -1984,8 +2045,8 @@ const App: React.FC = () => {
                                     <div className="w-20 h-20 bg-acid/10 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <Play size={40} className="text-acid ml-1" />
                                     </div>
-                                    <h3 className="text-2xl font-display font-bold text-white mb-2">Demo Simulation</h3>
-                                    <p className="text-dim font-mono text-sm">Visualizing Workflow...</p>
+                                    <h3 className="text-2xl font-display font-bold text-white mb-2">{t.demoSimulationTitle}</h3>
+                                    <p className="text-dim font-mono text-sm">{t.demoSimulationSubtitle}</p>
                                 </div>
                             </div>
                         </div>
@@ -2151,7 +2212,7 @@ const App: React.FC = () => {
                                     handleUpdateTrip({ ...currentTrip, expenses: [...(currentTrip.expenses||[]), exp] });
                                     showToast('Gasto agregado.', 'success');
                                 }} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Gasto</button>
-                                <button onClick={() => setActiveTab('documents')} className="px-3 py-2 rounded-md bg-neutral-900/60 ring-1 ring-white/10 text-sm text-neutral-200">+ Doc</button>
+                                {/* Removed invalid quick action referencing child tab state */}
                                 {/* Quick action AI resumen removed */}
                             </div>
                         </div>
