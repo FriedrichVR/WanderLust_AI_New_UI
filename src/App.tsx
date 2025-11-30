@@ -1480,9 +1480,9 @@ const App: React.FC = () => {
                         </div>
 
                         {filteredTrips.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-dim/30 rounded-3xl bg-panel/20">
+                            <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-dim/30 rounded-3xl bg-panel/20 group">
                                 <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 shadow-xl border border-border">
-                                    <Compass size={48} className="text-acid animate-pulse-slow" />
+                                    <Plane size={48} className="text-acid animate-pulse-slow rotate-45 group-hover:rotate-[405deg] transition-transform duration-700" />
                                 </div>
                                 <h3 className={`text-2xl font-display font-bold uppercase mb-2 ${settings.theme === 'light' ? 'text-neutral-900' : 'text-white'}`}>{t.emptyStateTitle}</h3>
                                 <p className={`font-mono text-sm mb-8 ${settings.theme === 'light' ? 'text-neutral-700' : 'text-dim'}`}>{t.emptyStateDesc}</p>

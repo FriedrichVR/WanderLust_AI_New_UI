@@ -45,14 +45,18 @@ const LazyImage: React.FC<Props> = ({ src, alt, className, placeholder = DEFAULT
     if (!hasError) {
       setHasError(true);
       setCurrentSrc(placeholder);
-      setIsLoaded(true); 
+      setIsLoaded(true);
     }
   };
 
   const srcSet = generateSrcSet(currentSrc);
 
   return (
-    <div className={`relative w-full h-full overflow-hidden bg-panel ${className}`}>
+    <div className={`relative w-full h-full overflow-hidden bg-panel ${className}`}
+      role="img"
+      aria-label={alt}
+      tabIndex={0}
+    >
       {/* Enhanced Loading Skeleton - Less obtrusive for blur effect */}
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface z-10 overflow-hidden">
@@ -71,11 +75,11 @@ const LazyImage: React.FC<Props> = ({ src, alt, className, placeholder = DEFAULT
         decoding="async"
         onLoad={() => setIsLoaded(true)}
         onError={handleError}
-        className={`w-full h-full object-cover transition-all duration-700 ease-out ${
+        className={`w-full h-full object-cover transition-all duration-700 ease-out focus:outline-acid focus:ring-2 focus:ring-acid ${
             isLoaded ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-lg scale-105'
         }`}
       />
-      
+
       {/* Error State Overlay */}
       {hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-panel border border-border p-4 text-center z-20 opacity-90">

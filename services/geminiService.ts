@@ -350,6 +350,68 @@ export const generateBudgetSuggestion = async (destination: string, duration: nu
   }
 }
 
+// PDF DATA EXTRACTION SERVICE
+export const extractPDFData = async (base64Data: string, documentType: string): Promise<any> => {
+  try {
+    const prompt = `
+      Extract structured data from this ${documentType} document.
+      
+      Extract the following fields if available:
+      - Property Name / Hotel Name
+      - Host / Anfitrión Name
+      - Booking Reference / Confirmation Number
+      - Check-in Date
+      - Check-out Date
+      - Address / Location
+      - WhatsApp Number / Contact Number
+      - Guest Name
+      - Total Price
+      
+      Return strictly a JSON object with these fields (use null if not found):
+      {
+        "propertyName": "string or null",
+        "hostName": "string or null",
+        "bookingReference": "string or null",
+        "checkInDate": "YYYY-MM-DD or null",
+        "checkOutDate": "YYYY-MM-DD or null",
+        "address": "string or null",
+        "whatsappNumber": "string or null",
+        "guestName": "string or null",
+        "totalPrice": "string or null"
+      }
+    `;
+
+    // Remove data URL prefix if present
+    const cleanBase64 = base64Data.replace(/^data:application\/pdf;base64,/, '');
+
+    const response = await getAi().models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: {
+        parts: [
+          { text: prompt },
+          { 
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: cleanBase64
+            }
+          }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const text = response.text?.replace(/```json|```/g, '').trim();
+    if (!text) return null;
+    
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("PDF Extraction Error:", error);
+    return null;
+  }
+}
+
 // SPENDING PATTERN ANALYSIS SERVICE
 export const analyzeSpendingPatterns = async (expenses: any[], budget: number, currency: string): Promise<string> => {
   try {

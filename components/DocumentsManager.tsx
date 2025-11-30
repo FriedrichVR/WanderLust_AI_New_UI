@@ -6,6 +6,7 @@ import { translations, Language } from '../utils/translations';
 import { ToastType } from './Toast';
 import Tooltip from './Tooltip';
 import LazyImage from './LazyImage';
+import { extractPDFData } from '../services/geminiService';
 
 interface Props {
   trip: Trip;
@@ -15,8 +16,9 @@ interface Props {
 }
 
 const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const registryRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const [uploadType, setUploadType] = useState<string>('flight'); 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -122,12 +124,61 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
     });
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
         const newFiles = Array.from(event.target.files);
         setSelectedFiles(prev => [...prev, ...newFiles]);
         event.target.value = '';
         setUploadStatus(null);
+        // For non-PDF-only selections, upload will be triggered after optional extraction below.
+        
+        // Auto-extract metadata from first PDF file if it's hotel/airbnb/flight
+        const firstPDF = newFiles.find(f => (f.type && f.type.toLowerCase().includes('pdf')) || f.name.toLowerCase().endsWith('.pdf'));
+        if (firstPDF && (uploadType.toLowerCase().includes('hotel') || uploadType.toLowerCase().includes('airbnb') || uploadType.toLowerCase().includes('flight'))) {
+            try {
+                if (showToast) showToast(`Extracting data from ${firstPDF.name}...`, 'info');
+                
+                // Convert PDF to base64
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const dataUrl = e.target?.result as string;
+                        const pdfData = await extractPDFData(dataUrl, uploadType);
+                        
+                        if (pdfData) {
+                            const mergedMeta = {
+                                ...metadata,
+                                hotelName: pdfData.propertyName || metadata.hotelName,
+                                hostName: pdfData.hostName || metadata.hostName,
+                                bookingReference: pdfData.bookingReference || metadata.bookingReference,
+                                checkInDate: pdfData.checkInDate || metadata.checkInDate,
+                                checkOutDate: pdfData.checkOutDate || metadata.checkOutDate,
+                                address: pdfData.address || metadata.address,
+                                whatsappNumber: pdfData.whatsappNumber || metadata.whatsappNumber,
+                                guestName: pdfData.guestName || metadata.guestName,
+                                totalPrice: pdfData.totalPrice || metadata.totalPrice
+                            };
+                            setMetadata(mergedMeta);
+                            if (showToast) showToast(`Data extracted successfully!`, 'success');
+                            // After extraction, upload with enriched metadata
+                            if (!isUploading) {
+                                handleAddDocuments(newFiles, mergedMeta);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('PDF extraction failed:', error);
+                    }
+                };
+                reader.readAsDataURL(firstPDF);
+            } catch (error) {
+                console.warn('PDF processing error:', error);
+            }
+        } else {
+            // No PDF extraction needed: upload immediately
+            if (!isUploading) {
+                handleAddDocuments(newFiles);
+            }
+        }
     }
   };
 
@@ -135,17 +186,18 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
       setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddDocuments = async () => {
-    if (selectedFiles.length === 0) return;
+    const handleAddDocuments = async (files?: File[], metadataOverride?: any) => {
+        const filesToUpload = files && files.length > 0 ? files : selectedFiles;
+        if (filesToUpload.length === 0) return;
     setIsUploading(true);
-    setUploadProgress({ current: 0, total: selectedFiles.length });
+        setUploadProgress({ current: 0, total: filesToUpload.length });
     setUploadStatus(null);
     const newDocs: TripDocument[] = [];
     let errorCount = 0;
 
     try {
       let processedCount = 0;
-      for (const file of selectedFiles) {
+            for (const file of filesToUpload) {
         try {
             // Max size check for PDF/Documents: 10MB
             if (!file.type.startsWith('image/') && file.size > 10 * 1024 * 1024) {
@@ -155,29 +207,44 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
             }
 
             const dataUrl = await resizeImage(file);
+            
+            // Metadata is already extracted in handleFileSelect, just use current state
             newDocs.push({
                 id: crypto.randomUUID(), 
                 name: file.name, 
-                type: uploadType, 
+                type: (uploadType || '').toLowerCase(), 
                 dataUrl: dataUrl, 
                 dateAdded: new Date().toISOString(),
                 tags: tagsInput.split(',').map(tag => tag.trim()).filter(t => t), 
-                metadata: { ...metadata }
+                metadata: metadataOverride ? { ...metadataOverride } : { ...metadata }
             });
             processedCount++;
-            setUploadProgress({ current: processedCount, total: selectedFiles.length });
+            setUploadProgress({ current: processedCount, total: filesToUpload.length });
         } catch (e) {
             console.error("Error processing file", file.name, e);
             errorCount++;
         }
       }
 
-      if (newDocs.length > 0) {
-          updateTrip({ ...trip, documents: [...documents, ...newDocs] });
+            if (newDocs.length > 0) {
+          const updated = [...documents, ...newDocs];
+          updateTrip({ ...trip, documents: updated });
           
-          setSelectedFiles([]); 
-          setTagsInput(''); 
-          setMetadata({});
+          // Auto-focus File Registry on current category and highlight latest doc
+          setFilterCategory((uploadType || '').toLowerCase());
+                    // Do not auto-open viewer on upload; user can open manually
+
+                    // Ensure File Registry is visible
+                    try {
+                        registryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch {}
+          
+                    setSelectedFiles([]); 
+                    setTagsInput(''); 
+                    // Preserve metadata in state when override was used (it already contains extracted data)
+                    if (!metadataOverride) {
+                        setMetadata({});
+                    }
           
           const successMsg = `Successfully uploaded ${newDocs.length} file(s).`;
           setUploadStatus({ type: 'success', msg: successMsg });
@@ -284,7 +351,8 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
   const filteredDocuments = useMemo(() => {
       if (filterCategory === 'all') return documents;
-      return documents.filter(doc => doc.type === filterCategory);
+      const fc = (filterCategory || '').toLowerCase();
+      return documents.filter(doc => (doc.type || '').toLowerCase() === fc);
   }, [documents, filterCategory]);
 
   const renderPreviewContent = (doc: TripDocument) => {
@@ -307,6 +375,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                     src={doc.dataUrl} 
                     className="w-full h-full flex-1 bg-white"
                     title={doc.name}
+                    aria-label={doc.name}
                 >
                 </iframe>
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
@@ -318,6 +387,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
           );
       }
 
+      // Preview for other formats: show icon, name, download
       return (
           <div className="flex flex-col items-center justify-center h-full text-center p-12 bg-panel/50 border border-border rounded-3xl max-w-md mx-auto backdrop-blur-md">
               <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 border border-border">
@@ -335,7 +405,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
   return (
     <div className="animate-fade-in space-y-8 pt-6">
       {/* Upload Section */}
-      <div className="bg-surface border border-border p-6 md:p-8 rounded-3xl shadow-sm">
+    <div className="bg-surface border border-border p-4 md:p-6 rounded-2xl shadow-sm">
         <div className="flex justify-between items-center mb-8 border-b border-border pb-4">
             <div className="font-mono text-xs text-acid uppercase tracking-widest">{t.uploadMatrix}</div>
             <button 
@@ -350,7 +420,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
             </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-6">
                 <div className="flex flex-wrap gap-3">
                     {categories.map((type) => (
@@ -395,10 +465,14 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
                 {/* Metadata Fields */}
                 {isLodging && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-panel border border-border rounded-2xl animate-fade-in">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-panel border border-border rounded-xl animate-fade-in">
                         <div className="col-span-2">
                              <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.hotelName}</label>
                              <input type="text" placeholder="PROPERTY NAME..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hotelName || ''} onChange={e => setMetadata({...metadata, hotelName: e.target.value})} />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.host || 'Host (Anfitrión)'}</label>
+                            <input type="text" placeholder="HOST NAME..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hostName || ''} onChange={e => setMetadata({...metadata, hostName: e.target.value})} />
                         </div>
                         <div className="col-span-2">
                              <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.bookingRef}</label>
@@ -412,11 +486,19 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                              <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.checkOut}</label>
                              <input type="date" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.checkOutDate || ''} onChange={e => setMetadata({...metadata, checkOutDate: e.target.value})} />
                         </div>
+                        <div className="col-span-2">
+                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">Address</label>
+                             <input type="text" placeholder="FULL ADDRESS..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.address || ''} onChange={e => setMetadata({...metadata, address: e.target.value})} />
+                        </div>
+                        <div className="col-span-2">
+                             <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">WhatsApp Number</label>
+                             <input type="text" placeholder="+1 234 567 8900" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.whatsappNumber || ''} onChange={e => setMetadata({...metadata, whatsappNumber: e.target.value})} />
+                        </div>
                     </div>
                 )}
                 
                 {isFlight && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-panel border border-border rounded-2xl animate-fade-in">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-panel border border-border rounded-xl animate-fade-in">
                         <div>
                              <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 block">{t.airline}</label>
                              <input type="text" placeholder="AIRLINE..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.airline || ''} onChange={e => setMetadata({...metadata, airline: e.target.value})} />
@@ -437,7 +519,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 )}
 
                 {/* Drop Zones */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-dim bg-panel hover:bg-surface hover:border-acid h-32 flex flex-col items-center justify-center cursor-pointer transition-colors group rounded-2xl relative overflow-hidden">
                         <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" multiple accept="image/*,.pdf" />
                         <Upload className="text-dim mb-2 group-hover:text-acid transition-colors" size={28} />
@@ -468,7 +550,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                 <button onClick={() => setSelectedFiles([])} className="text-[9px] font-mono uppercase text-danger hover:underline">Clear All</button>
                             )}
                         </div>
-                        <div className="bg-panel border border-border rounded-2xl p-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                        <div className="bg-panel border border-border rounded-xl p-2 max-h-[160px] overflow-y-auto custom-scrollbar">
                             {selectedFiles.map((file, index) => (
                                 <div key={index} className="flex items-center justify-between p-3 bg-surface border border-border rounded-xl mb-2 last:mb-0 group">
                                     <div className="flex items-center gap-3 overflow-hidden">
@@ -494,10 +576,10 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 )}
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <div>
                     <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-2 block">Tags</label>
-                    <input type="text" placeholder="TAGS (COMMA SEPARATED)" className="w-full bg-panel border border-border p-4 text-sm text-text font-mono focus:border-acid outline-none transition-colors rounded-xl" value={tagsInput} onChange={e => setTagsInput(e.target.value)} />
+                    <input type="text" placeholder="TAGS (COMMA SEPARATED)" className="w-full bg-panel border border-border p-3 text-sm text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={tagsInput} onChange={e => setTagsInput(e.target.value)} />
                 </div>
                 
                 <div className="flex flex-col gap-2 mt-auto">
@@ -517,7 +599,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                             ></div>
                         </div>
                     )}
-                    <button onClick={handleAddDocuments} disabled={selectedFiles.length === 0 || isUploading} className="w-full py-4 bg-text text-obsidian hover:bg-acid font-mono text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50 flex items-center justify-center gap-2 rounded-xl shadow-lg">
+                    <button onClick={handleAddDocuments} disabled={selectedFiles.length === 0 || isUploading} className="w-full py-3 bg-text text-obsidian hover:bg-acid font-mono text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50 flex items-center justify-center gap-2 rounded-lg shadow-md">
                         {isUploading ? <Loader2 className="animate-spin" size={18}/> : <Upload size={18}/>}
                         {isUploading 
                             ? `${t.processing} (${uploadProgress?.current || 0}/${uploadProgress?.total || 0})` 
@@ -532,9 +614,9 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
       </div>
 
       {/* Documents Grid */}
-      <div className="space-y-4">
+    <div className="space-y-4">
         {/* ... (rest of the component structure, utilizing showToast for delete feedback where appropriate) ... */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-6">
+        <div ref={registryRef} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-border pb-4">
             <div className="flex items-center gap-4">
                 <div className="font-mono text-xs text-dim uppercase tracking-widest">{t.fileRegistry} ({filteredDocuments.length})</div>
                 {documents.length > 0 && (
@@ -544,7 +626,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 )}
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-2 md:pb-0 no-scrollbar">
+            <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 no-scrollbar">
                 <Filter size={14} className="text-dim shrink-0" />
                 <button 
                     onClick={() => setFilterCategory('all')}
@@ -580,7 +662,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 {documents.length === 0 ? t.noData : "// NO DOCUMENTS MATCH FILTER"}
             </div> 
         ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDocuments.map(doc => (
                     <div key={doc.id} className={`bg-surface border p-4 relative group transition-all duration-300 hover:bg-panel rounded-3xl ${selectedIds.includes(doc.id) ? 'border-acid shadow-lg' : 'border-border hover:border-dim'}`}>
                         <div className="absolute top-3 right-3 cursor-pointer z-10 p-2 -m-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); toggleSelection(doc.id); }}>
@@ -588,7 +670,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                         </div>
                         
                         <div className="flex flex-col gap-4 cursor-pointer" onClick={() => setPreviewDoc(doc)}>
-                            <div className="w-full aspect-[4/3] bg-panel border border-border text-dim flex items-center justify-center relative overflow-hidden shrink-0 rounded-2xl">
+                            <div className="w-full aspect-[3/2] bg-panel border border-border text-dim flex items-center justify-center relative overflow-hidden shrink-0 rounded-xl">
                                 {doc.dataUrl.startsWith('data:image') ? (
                                     <LazyImage 
                                         src={doc.dataUrl} 
