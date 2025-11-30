@@ -6,7 +6,7 @@ import { generateQuickSuggestion } from '../utils/aiTripSuggester';
 import { generateBudgetSuggestion } from '../services/geminiService';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
-    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign
+    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign, Files
 } from 'lucide-react';
 import { Trip, AppState, Currency, TripStatus, TripType, DayPlan } from '../types';
 import { loadSettings, saveSettings, getTrips, upsertTrip, deleteTripFromDb, getLocalCache, INITIAL_TRIPS } from '../services/storageService';
@@ -407,15 +407,19 @@ const TripDetailView: React.FC<{
                 <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin text-acid" size={32} /></div>}>
                     {activeTab === 'overview' && (
                         <div className="animate-fade-in px-0 md:px-0">
-                            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 md:gap-4">
+                            <div className="grid grid-cols-1 gap-4 justify-items-center">
                                 {/* Left Column: Visual Diary & Mission Notes with Tabs (60% width - 3 cols) */}
-                                <div className="lg:col-span-3">
-                                    <div className="bg-surface border border-border p-3 md:p-4 rounded-xl shadow-sm h-full flex flex-col">
+                                <div>
+                                    <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg h-full flex flex-col w-[1000px] mx-auto">
+                                        <div className="px-3 pt-3 pb-2 border-b border-border/60">
+                                            <h4 className="text-[11px] font-mono uppercase tracking-widest text-dim">Overview Panel</h4>
+                                        </div>
+                                        <div className="p-3">
                                         {/* Tab Buttons */}
-                                        <div className="flex gap-2 mb-3 border-b border-border pb-2">
+                                        <div className="flex gap-2 mb-2 border-b border-border/60 pb-2">
                                             <button
                                                 onClick={() => setLeftPanelTab('diary')}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'diary'
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'diary'
                                                     ? 'bg-acid text-black font-bold'
                                                     : 'text-dim hover:text-text hover:bg-panel'
                                                     }`}
@@ -424,7 +428,7 @@ const TripDetailView: React.FC<{
                                             </button>
                                             <button
                                                 onClick={() => setLeftPanelTab('notes')}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'notes'
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'notes'
                                                     ? 'bg-acid text-black font-bold'
                                                     : 'text-dim hover:text-text hover:bg-panel'
                                                     }`}
@@ -433,7 +437,7 @@ const TripDetailView: React.FC<{
                                             </button>
                                             <button
                                                 onClick={() => setLeftPanelTab('converter')}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'converter'
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono uppercase tracking-widest transition-all ${leftPanelTab === 'converter'
                                                     ? 'bg-acid text-black font-bold'
                                                     : 'text-dim hover:text-text hover:bg-panel'
                                                     }`}
@@ -444,21 +448,20 @@ const TripDetailView: React.FC<{
 
                                         {/* Visual Diary Tab Content */}
                                         {leftPanelTab === 'diary' && (
-                                            <div className="flex-1 flex flex-col">
-                                                <div className="flex justify-end mb-3">
+                                            <div className="flex-1 flex flex-col gap-3">
+                                                <div className="flex justify-end">
                                                     <button
                                                         onClick={handleGenImage}
                                                         disabled={isGeneratingImage}
-                                                        className="text-[9px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
+                                                        className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
                                                     >
                                                         {isGeneratingImage ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
                                                         {isGeneratingImage ? t.generating : t.regenVisual}
                                                     </button>
                                                 </div>
-
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 flex-1">
                                                     {diaryImages.length === 0 && (
-                                                        <div className="col-span-full py-12 text-center text-[10px] font-mono text-dim border border-dashed border-dim rounded-xl flex flex-col items-center justify-center gap-2">
+                                                        <div className="col-span-full py-10 text-center text-[10px] font-mono text-dim border border-dashed border-dim rounded-xl flex flex-col items-center justify-center gap-2">
                                                             <ImageIcon size={24} className="opacity-50" />
                                                             {t.galleryEmpty}
                                                         </div>
@@ -494,21 +497,21 @@ const TripDetailView: React.FC<{
 
                                         {/* Mission Notes Tab Content */}
                                         {leftPanelTab === 'notes' && (
-                                            <div className="flex-1 flex flex-col">
-                                                <div className="flex justify-end mb-2">
+                                            <div className="flex-1 flex flex-col gap-3">
+                                                <div className="flex justify-end">
                                                     <button
                                                         onClick={handleGenSummary}
                                                         disabled={isGeneratingSummary}
-                                                        className="text-[8px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
+                                                        className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
                                                     >
-                                                        {isGeneratingSummary ? <Loader2 className="animate-spin" size={8} /> : <Wand2 size={8} />}
+                                                        {isGeneratingSummary ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
                                                         {isGeneratingSummary ? t.generating : t.aiSummary}
                                                     </button>
                                                 </div>
                                                 <textarea
                                                     value={trip.notes || ''}
                                                     onChange={(e) => updateTrip({ ...trip, notes: e.target.value })}
-                                                    className="w-full flex-1 bg-panel border border-border p-3 rounded-lg outline-none text-text text-[10px] resize-none leading-relaxed placeholder-dim custom-scrollbar focus:border-acid transition-colors"
+                                                    className="w-full flex-1 bg-panel border border-border p-2 rounded-xl outline-none text-text text-[11px] resize-none leading-relaxed placeholder-dim custom-scrollbar focus:border-acid transition-colors"
                                                     placeholder="// Enter mission notes or generate summary..."
                                                 />
                                             </div>
@@ -517,40 +520,92 @@ const TripDetailView: React.FC<{
                                         {/* Currency Converter Tab Content */}
                                         {leftPanelTab === 'converter' && (
                                             <div className="flex-1">
-                                                <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
-                                                    <CurrencyConverter lang={lang} />
-                                                </Suspense>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <div className="bg-panel border border-border rounded-xl p-3">
+                                                        <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
+                                                            <CurrencyConverter lang={lang} />
+                                                        </Suspense>
+                                                    </div>
+                                                    <div className="bg-panel border border-border rounded-xl overflow-hidden">
+                                                        <Suspense fallback={<div className="h-[120px] bg-surface animate-pulse"></div>}>
+                                                            <WorldMapTracker />
+                                                        </Suspense>
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Right Column: Tracker Only (40% width - 2 cols) */}
-                                <div className="lg:col-span-2">
-                                    {/* World Map Tracker */}
-                                    <div className="bg-surface border border-border rounded-xl shadow-sm overflow-hidden h-full">
-                                        <Suspense fallback={<div className="h-[120px] bg-surface animate-pulse"></div>}>
-                                            <WorldMapTracker />
-                                        </Suspense>
-                                    </div>
-                                </div>
+                                {/* Right Column removed: Tracker moved into Converter tab */}
                             </div>
                         </div>
                     )}
 
                     {activeTab === 'itinerary' && (
                         <div className="px-1 md:px-0">
-                            <TripItinerary trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                            <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg h-full w-[1000px] mx-auto">
+                                <div className="px-3 pt-3 pb-2 border-b border-border/60 flex items-center justify-between">
+                                    <h4 className="text-[11px] font-mono uppercase tracking-widest text-dim">Itinerary</h4>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleGenSummary}
+                                            disabled={isGeneratingSummary}
+                                            className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
+                                        >
+                                            {isGeneratingSummary ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
+                                            {isGeneratingSummary ? t.generating : t.aiItinerary}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-3">
+                                    <TripItinerary trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                                </div>
+                            </div>
                         </div>
                     )}
                     {activeTab === 'budget' && (
                         <div className="px-1 md:px-0">
-                            <BudgetOverview trip={trip} addExpense={(e) => updateTrip({ ...trip, expenses: [...trip.expenses, e] })} removeExpense={(id) => updateTrip({ ...trip, expenses: trip.expenses.filter(e => e.id !== id) })} currencySymbol={trip.currency} lang={lang} theme={theme} />
+                            <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg h-full w-[1000px] mx-auto">
+                                <div className="px-3 pt-3 pb-2 border-b border-border/60 flex items-center justify-between">
+                                    <h4 className="text-[11px] font-mono uppercase tracking-widest text-dim">Budget</h4>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleGenSummary}
+                                            disabled={isGeneratingSummary}
+                                            className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors disabled:opacity-50 flex items-center gap-1"
+                                        >
+                                            {isGeneratingSummary ? <Loader2 className="animate-spin" size={10} /> : <Wand2 size={10} />}
+                                            {isGeneratingSummary ? t.generating : t.aiBudget}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-3">
+                                    <BudgetOverview trip={trip} addExpense={(e) => updateTrip({ ...trip, expenses: [...trip.expenses, e] })} removeExpense={(id) => updateTrip({ ...trip, expenses: trip.expenses.filter(e => e.id !== id) })} currencySymbol={trip.currency} lang={lang} theme={theme} />
+                                </div>
+                            </div>
                         </div>
                     )}
                     {activeTab === 'documents' && (
                         <div className="px-1 md:px-0">
-                            <DocumentsManager trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                            <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl shadow-lg h-full w-[1000px] mx-auto">
+                                <div className="px-3 pt-3 pb-2 border-b border-border/60 flex items-center justify-between">
+                                    <h4 className="text-[11px] font-mono uppercase tracking-widest text-dim">Documents</h4>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {}}
+                                            className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-acid hover:text-acid transition-colors flex items-center gap-1"
+                                        >
+                                            <Files size={10} />
+                                            {t.manageDocs}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-3">
+                                    <DocumentsManager trip={trip} updateTrip={updateTrip} lang={lang} showToast={showToast} />
+                                </div>
+                            </div>
                         </div>
                     )}
                 </Suspense>
@@ -573,7 +628,7 @@ const TripDetailView: React.FC<{
             {/* Edit Trip Metadata Modal */}
             {
                 showEditModal && (
-                    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4 animate-fade-in">
+                    <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex justify-center items-end md:items-center p-0 md:p-4 animate-fade-in">
                         <div className="bg-surface w-full md:max-w-2xl rounded-t-3xl md:rounded-3xl border border-border flex flex-col shadow-2xl overflow-hidden max-h-[90vh]">
                             <div className="p-6 border-b border-border flex justify-between items-center bg-panel/50">
                                 <h3 className="font-display text-xl text-text uppercase tracking-tight">{t.editParams}</h3>
@@ -1415,11 +1470,11 @@ const App: React.FC = () => {
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 justify-items-center">
                                 {/* New Trip Card */}
                                 <div
                                     onClick={handleCreateTrip}
-                                    className="group relative h-[380px] md:h-[450px] bg-surface/50 border-2 border-dashed border-dim/30 rounded-3xl overflow-hidden cursor-pointer hover:border-acid hover:bg-acid/5 transition-all hover:-translate-y-2 flex flex-col items-center justify-center gap-6"
+                                    className="group relative h-[300px] md:h-[360px] bg-surface/50 border-2 border-dashed border-dim/30 rounded-3xl overflow-hidden cursor-pointer hover:border-acid hover:bg-acid/5 transition-all hover:-translate-y-1.5 flex flex-col items-center justify-center gap-4 w-[1000px]"
                                     title={t.initiateTrip}
                                     aria-label={t.initiateTrip}
                                 >
@@ -1428,7 +1483,7 @@ const App: React.FC = () => {
                                         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[140%] h-64 bg-acid/10 blur-3xl rounded-full"></div>
                                     </div>
 
-                                    <div className="relative w-24 h-24 rounded-2xl bg-surface border border-border flex items-center justify-center group-hover:scale-110 group-hover:border-acid transition-all shadow-lg">
+                                    <div className="relative w-20 h-20 rounded-2xl bg-surface border border-border flex items-center justify-center group-hover:scale-105 group-hover:border-acid transition-all shadow-lg">
                                         {/* Centered vertical plane icon; rotates 90° clockwise on hover */}
                                         <Plane
                                             size={40}
@@ -1438,8 +1493,8 @@ const App: React.FC = () => {
                                     </div>
 
                                     <div className="text-center">
-                                        <h3 className="text-xl font-display font-bold text-text uppercase tracking-tight mb-2 group-hover:text-acid transition-colors">{t.initiateTrip}</h3>
-                                        <p className="text-xs font-mono text-dim uppercase tracking-widest">{t.createFirstTrip}</p>
+                                        <h3 className="text-lg font-display font-bold text-text uppercase tracking-tight mb-1 group-hover:text-acid transition-colors">{t.initiateTrip}</h3>
+                                        <p className="text-[11px] font-mono text-dim uppercase tracking-widest">{t.createFirstTrip}</p>
                                     </div>
 
                                     {/* Removed previous flight keyframes; using simple hover rotation */}
@@ -1450,7 +1505,7 @@ const App: React.FC = () => {
                                     <div
                                         key={trip.id}
                                         onClick={() => setCurrentTripId(trip.id)}
-                                        className="group relative h-[380px] md:h-[450px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-2 border border-border flex flex-col"
+                                        className="group relative h-[300px] md:h-[360px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-1.5 border border-border flex flex-col w-[1000px]"
                                     >
                                         <div className="h-[65%] relative overflow-hidden">
                                             <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -1497,24 +1552,24 @@ const App: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className={`flex-1 p-6 flex flex-col justify-between border-t border-border transition-colors ${settings.theme === 'light' ? 'bg-neutral-50 group-hover:bg-neutral-50' : 'bg-panel group-hover:bg-surface'}`}>
+                                        <div className={`flex-1 p-4 md:p-5 flex flex-col justify-between border-t border-border transition-colors ${settings.theme === 'light' ? 'bg-neutral-50 group-hover:bg-neutral-50' : 'bg-panel group-hover:bg-surface'}`}>
                                             <div className="space-y-4">
-                                                <div className="flex justify-between items-end border-b border-border/50 pb-4">
+                                                <div className="flex justify-between items-end border-b border-border/50 pb-3">
                                                     <div>
                                                         <span className={`text-[10px] font-mono uppercase tracking-widest block mb-1 ${settings.theme === 'light' ? 'text-neutral-500' : 'text-dim'}`}>{t.dates}</span>
-                                                        <div className={`text-xs font-bold flex items-center gap-2 ${settings.theme === 'light' ? 'text-neutral-900' : 'text-text'}`}>
+                                                        <div className={`text-[13px] font-bold flex items-center gap-2 ${settings.theme === 'light' ? 'text-neutral-900' : 'text-text'}`}>
                                                             {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <span className={`text-[10px] font-mono uppercase tracking-widest block mb-1 ${settings.theme === 'light' ? 'text-neutral-500' : 'text-dim'}`}>{t.budget}</span>
-                                                        <div className={`text-lg font-display font-bold ${settings.theme === 'light' ? 'text-neutral-900' : 'text-text'}`}>{trip.currency} {trip.budget}</div>
+                                                        <div className={`text-[18px] font-display font-bold ${settings.theme === 'light' ? 'text-neutral-900' : 'text-text'}`}>{trip.currency} {trip.budget}</div>
                                                     </div>
                                                 </div>
 
                                                 <div className={`flex justify-between items-center font-mono text-[10px] uppercase ${settings.theme === 'light' ? 'text-neutral-500' : 'text-dim'}`}>
                                                     <span className="flex items-center gap-1">
-                                                        <CalendarIcon size={12} />
+                                                        <CalendarIcon size={11} />
                                                         {Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 3600 * 24))} {t.days}
                                                     </span>
                                                     <span className={settings.theme === 'light' ? 'text-neutral-500' : ''}>ID: #{trip.id.substring(0, 4)}</span>
@@ -1527,7 +1582,7 @@ const App: React.FC = () => {
                                                         className={`flex items-center gap-1 transition-colors ${settings.theme === 'light' ? 'text-acid hover:text-neutral-900' : 'text-acid hover:text-white'}`}
                                                         title={t.documents}
                                                     >
-                                                        <FileText size={12} />
+                                                        <FileText size={11} />
                                                     </button>
                                                 </div>
                                             </div>
