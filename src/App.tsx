@@ -1474,7 +1474,7 @@ const App: React.FC = () => {
                                 {/* New Trip Card */}
                                 <div
                                     onClick={handleCreateTrip}
-                                    className="group relative h-[300px] md:h-[360px] bg-surface/50 border-2 border-dashed border-dim/30 rounded-3xl overflow-hidden cursor-pointer hover:border-acid hover:bg-acid/5 transition-all hover:-translate-y-1.5 flex flex-col items-center justify-center gap-4 w-[1000px]"
+                                    className="group relative h-[300px] md:h-[360px] bg-surface/50 border-2 border-dashed border-dim/30 rounded-3xl overflow-hidden cursor-pointer hover:border-acid hover:bg-acid/5 transition-all hover:-translate-y-1.5 flex flex-col items-center justify-center gap-4 w-[380px]"
                                     title={t.initiateTrip}
                                     aria-label={t.initiateTrip}
                                 >
@@ -1505,7 +1505,7 @@ const App: React.FC = () => {
                                     <div
                                         key={trip.id}
                                         onClick={() => setCurrentTripId(trip.id)}
-                                        className="group relative h-[300px] md:h-[360px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-1.5 border border-border flex flex-col w-[1000px]"
+                                        className="group relative h-[300px] md:h-[360px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-1.5 border border-border flex flex-col w-[380px]"
                                     >
                                         <div className="h-[65%] relative overflow-hidden">
                                             <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
