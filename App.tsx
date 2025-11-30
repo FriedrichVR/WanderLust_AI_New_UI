@@ -271,13 +271,13 @@ const TripDetailView: React.FC<{
     return (
         <div className="animate-fade-in pb-20">
             {/* Header with Cover Image */}
-            <div className="relative m-1 rounded-2xl md:rounded-3xl overflow-hidden group mb-6 md:mb-8 shadow-2xl h-[240px] md:h-[400px]">
+            <div className="relative m-1 rounded-2xl md:rounded-3xl overflow-hidden group mb-6 md:mb-8 shadow-2xl h-[180px] md:h-[400px]">
                 <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-                <div className="absolute top-4 md:top-6 left-4 md:left-6 z-20">
+                <div className="absolute top-3 md:top-6 left-3 md:left-6 z-20">
                     <button onClick={goBack} className="bg-black/40 hover:bg-white hover:text-black text-white p-2 md:p-3 rounded-full backdrop-blur-md border border-white/10 transition-all flex items-center gap-1.5 md:gap-2 group/back shadow-lg">
-                        <ArrowLeft size={18} className="md:hidden group-hover/back:-translate-x-1 transition-transform" />
+                        <ArrowLeft size={16} className="md:size-[18px] group-hover/back:-translate-x-1 transition-transform" />
                         <ArrowLeft size={20} className="hidden md:block group-hover/back:-translate-x-1 transition-transform" />
                         <span className="hidden md:inline font-mono text-xs uppercase tracking-widest">{t.dashboard}</span>
                     </button>
@@ -299,7 +299,7 @@ const TripDetailView: React.FC<{
                 </div>
 
                 {/* Refactored Header Content for Layout Stability */}
-                <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-2 md:gap-4">
+                <div className="absolute bottom-0 left-0 w-full p-2 md:p-8 z-20 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-1.5 md:gap-4">
                     <div className="flex items-center gap-2 md:gap-3">
                         <button
                             onClick={() => setShowEditModal(true)}
@@ -323,7 +323,7 @@ const TripDetailView: React.FC<{
 
                     <h1
                         onClick={() => setShowEditModal(true)}
-                        className="text-white text-2xl md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-xl cursor-pointer hover:text-acid transition-colors break-words"
+                        className="text-white text-lg md:text-6xl font-display font-bold uppercase tracking-tight drop-shadow-xl cursor-pointer hover:text-acid transition-colors break-words leading-tight"
                     >
                         {trip.destination}
                     </h1>
@@ -346,7 +346,7 @@ const TripDetailView: React.FC<{
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-1 md:gap-2 mb-6 md:mb-8 overflow-x-auto pb-2 no-scrollbar border-b border-border bg-obsidian pt-2 px-1 md:px-8">
+            <div className="flex items-center gap-1 md:gap-2 mb-4 md:mb-8 overflow-x-auto pb-2 no-scrollbar border-b border-border bg-obsidian pt-2 px-2 md:px-8">
                 {[
                     { id: 'overview', icon: Check, label: t.overview },
                     { id: 'itinerary', icon: MapIcon, label: t.itinerary },
@@ -356,7 +356,7 @@ const TripDetailView: React.FC<{
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-6 md:py-3 font-mono text-[10px] md:text-xs uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
+                        className={`flex items-center gap-1 md:gap-2 px-2 py-1.5 md:px-6 md:py-3 font-mono text-[9px] md:text-xs uppercase tracking-widest transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
                             ? 'border-acid text-acid font-bold'
                             : 'border-transparent text-dim hover:text-text hover:border-dim'
                             }`}
@@ -369,10 +369,10 @@ const TripDetailView: React.FC<{
             </div>
 
             {/* Tab Content - Suspense Wrapped */}
-            <div className="min-h-[400px]">
-                <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="animate-spin text-acid" size={32} /></div>}>
+            <div className="min-h-[300px] md:min-h-[400px] px-2 md:px-0">
+                <Suspense fallback={<div className="flex justify-center py-10 md:py-20"><Loader2 className="animate-spin text-acid" size={24} /></div>}>
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 animate-fade-in">
                             <div className="lg:col-span-3 flex flex-col gap-8">
                                 {/* Visual Diary */}
                                 <div className="bg-surface border border-border p-6 rounded-3xl shadow-sm">
@@ -428,7 +428,7 @@ const TripDetailView: React.FC<{
                                 {/* Split: Notes & Converter & Map */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
                                     {/* Mission Notes */}
-                                    <div className="bg-surface border border-border p-8 rounded-3xl relative overflow-hidden shadow-sm flex flex-col h-full min-h-[400px]">
+                                    <div className="bg-surface border border-border p-8 rounded-3xl relative overflow-hidden shadow-sm flex flex-col h-full min-h-[300px] md:min-h-[400px] px-2 md:px-0">
                                         <div className="flex justify-between items-start mb-4">
                                             <h3 className="font-mono text-xs text-acid uppercase tracking-widest flex items-center gap-2">
                                                 <FileText size={14} /> {t.missionNotes}
@@ -451,14 +451,14 @@ const TripDetailView: React.FC<{
                                     </div>
 
                                     {/* Currency Converter */}
-                                    <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm h-full min-h-[400px] flex flex-col">
+                                    <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm h-full min-h-[300px] md:min-h-[400px] px-2 md:px-0 flex flex-col">
                                         <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
                                             <CurrencyConverter lang={lang} />
                                         </Suspense>
                                     </div>
 
                                     {/* World Map Tracker */}
-                                    <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm h-full min-h-[400px] flex flex-col">
+                                    <div className="bg-surface border border-border rounded-3xl overflow-hidden shadow-sm h-full min-h-[300px] md:min-h-[400px] px-2 md:px-0 flex flex-col">
                                         <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
                                             <WorldMapTracker trip={trip} />
                                         </Suspense>
