@@ -1606,13 +1606,13 @@ const App: React.FC = () => {
                     </div>
 
                     {/* World Map Background Layer */}
-                    <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none dark:invert">
+                    <div className={`fixed inset-0 z-0 pointer-events-none ${settings.theme === 'light' ? 'opacity-[0.1] invert' : 'opacity-[0.02] dark:invert'}`}>
                         <img
                             src="https://static.vecteezy.com/system/resources/previews/020/997/828/non_2x/detailed-world-map-in-black-and-white-free-vector.jpg"
                             alt="World Map"
                             className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian"></div>
+                        <div className={`absolute inset-0 bg-gradient-to-t ${settings.theme === 'light' ? 'from-neutral-50 via-transparent to-neutral-50' : 'from-obsidian via-transparent to-obsidian'}`}></div>
                     </div>
                 </>
             )}
