@@ -977,12 +977,12 @@ const App: React.FC = () => {
             ) : (
                 <>
                     {/* Compact Navbar */}
-                    <div className="h-16 border-b border-border bg-obsidian/95 backdrop-blur-md sticky top-0 z-50 px-6 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-surface border border-border flex items-center justify-center rounded-lg shadow-sm">
-                                <Hexagon className="text-acid fill-acid/10" size={20} />
+                    <div className="h-14 md:h-16 border-b border-border bg-obsidian/95 backdrop-blur-md sticky top-0 z-50 px-3 md:px-6 flex items-center justify-between">
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <div className="w-8 h-8 md:w-9 md:h-9 bg-surface border border-border flex items-center justify-center rounded-lg shadow-sm">
+                                <Hexagon className="text-acid fill-acid/10" size={16} />
                             </div>
-                            <span className="font-display font-bold text-lg tracking-tight text-text">
+                            <span className="font-display font-bold text-base md:text-lg tracking-tight text-text">
                                 WanderLust<span className="text-dim">AI</span>
                             </span>
                         </div>
@@ -995,7 +995,7 @@ const App: React.FC = () => {
                                     placeholder={t.searchQuery}
                                     value={globalSearch}
                                     onChange={(e) => setGlobalSearch(e.target.value)}
-                                    className="w-full bg-surface border border-border rounded-2xl py-2 pl-12 pr-4 text-xs font-mono focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-dim"
+                                    className="w-full bg-surface border border-border rounded-xl md:rounded-2xl py-1.5 md:py-2 pl-10 md:pl-12 pr-3 md:pr-4 text-[10px] md:text-xs font-mono focus:border-acid focus:ring-1 focus:ring-acid outline-none transition-all placeholder-dim"
                                 />
                             </div>
                             <button
@@ -1013,9 +1013,9 @@ const App: React.FC = () => {
                                     setSettings({ ...settings, theme: newTheme });
                                     saveSettings({ ...settings, theme: newTheme });
                                 }}
-                                className="p-2 text-dim hover:text-text transition-colors"
+                                className="p-1.5 md:p-2 text-dim hover:text-text transition-colors"
                             >
-                                {settings.theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                                {settings.theme === 'light' ? <Moon size={16} className="md:size-[18px]" /> : <Sun size={16} className="md:size-[18px]" />}
                             </button>
                             <div className="h-4 w-px bg-border"></div>
                             <button onClick={() => {
@@ -1037,16 +1037,16 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-8 max-w-7xl mx-auto animate-fade-in relative z-10">
+                    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in relative z-10">
                         {/* HERO SECTION - REFACTORED TO LEFT ALIGN & HEADER STYLE */}
-                        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 pt-8">
+                        <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-16 gap-4 md:gap-6 pt-4 md:pt-8">
                             <div className="text-left">
                                 <h4 className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-dim mb-4 opacity-60">
                                     {t.authority}
                                 </h4>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <Hexagon className="text-acid" size={48} />
-                                    <h1 className="text-5xl md:text-7xl font-display font-bold uppercase tracking-tighter text-white">
+                                <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4">
+                                    <Hexagon className="text-acid w-8 h-8 md:w-12 md:h-12" />
+                                    <h1 className="text-3xl md:text-7xl font-display font-bold uppercase tracking-tighter text-white leading-tight">
                                         WanderLust<span className="text-dim">AI</span>
                                     </h1>
                                 </div>
@@ -1058,9 +1058,9 @@ const App: React.FC = () => {
                             <div className="flex flex-col gap-4 items-end">
                                 <button
                                     onClick={handleCreateTrip}
-                                    className="px-8 py-4 bg-white text-black hover:bg-acid hover:scale-105 transition-all rounded-xl font-mono text-sm font-bold uppercase tracking-widest flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] group"
+                                    className="px-5 py-3 md:px-8 md:py-4 bg-white text-black hover:bg-acid hover:scale-105 transition-all rounded-lg md:rounded-xl font-mono text-xs md:text-sm font-bold uppercase tracking-widest flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] group"
                                 >
-                                    <Plane size={20} className="group-hover:-rotate-45 transition-transform" /> {t.initiateTrip}
+                                    <Plane size={16} className="md:size-5 group-hover:-rotate-45 transition-transform" /> {t.initiateTrip}
                                 </button>
 
                                 <div className="flex items-center gap-4">
@@ -1104,20 +1104,20 @@ const App: React.FC = () => {
                             </div>
                         ) : (
                             <div className="w-full space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-10">
                                     {/* Trip Cards Only - No Sidebar */}
                                     {paginatedTrips.map(trip => (
                                         <div
                                             key={trip.id}
                                             onClick={() => setCurrentTripId(trip.id)}
-                                            className="group relative h-[450px] bg-surface rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-2 border border-border flex flex-col"
+                                            className="group relative h-[340px] md:h-[450px] bg-surface rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer shadow-xl hover:shadow-acid/20 transition-all hover:-translate-y-2 border border-border flex flex-col"
                                         >
                                             <div className="h-[65%] relative overflow-hidden">
                                                 <LazyImage src={trip.coverImage} alt={trip.destination} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
 
-                                                <div className="absolute top-4 right-4">
-                                                    <span className={`px-3 py-1 text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1.5 shadow-sm ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/50' :
+                                                <div className="absolute top-3 right-3 md:top-4 md:right-4">
+                                                    <span className={`px-2.5 py-1 md:px-3 md:py-1 text-[9px] md:text-[10px] font-mono uppercase font-bold rounded-full backdrop-blur-md border flex items-center gap-1 md:gap-1.5 shadow-sm ${trip.status === 'Completed' ? 'bg-black/60 text-emerald-400 border-emerald-500/50' :
                                                         trip.status === 'Booked' ? 'bg-black/60 text-cyan-400 border-cyan-500/50' :
                                                             'bg-black/60 text-amber-400 border-amber-500/50'
                                                         }`}>
@@ -1129,24 +1129,24 @@ const App: React.FC = () => {
                                                     </span>
                                                 </div>
 
-                                                <div className="absolute bottom-6 left-6 right-6">
-                                                    <h3 className="text-3xl md:text-5xl font-display font-bold text-white uppercase drop-shadow-lg truncate leading-none mb-2">{trip.destination}</h3>
-                                                    <p className="text-sm font-mono text-white/80 uppercase tracking-widest">{trip.type}</p>
+                                                <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6">
+                                                    <h3 className="text-2xl md:text-5xl font-display font-bold text-white uppercase drop-shadow-lg truncate leading-none mb-1.5 md:mb-2">{trip.destination}</h3>
+                                                    <p className="text-[10px] md:text-sm font-mono text-white/80 uppercase tracking-widest">{trip.type}</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex-1 bg-panel p-6 flex flex-col justify-between border-t border-border group-hover:bg-surface transition-colors">
-                                                <div className="space-y-4">
-                                                    <div className="flex justify-between items-end border-b border-border/50 pb-4">
+                                            <div className="flex-1 bg-panel p-4 md:p-6 flex flex-col justify-between border-t border-border group-hover:bg-surface transition-colors">
+                                                <div className="space-y-3 md:space-y-4">
+                                                    <div className="flex justify-between items-end border-b border-border/50 pb-3 md:pb-4">
                                                         <div>
-                                                            <span className="text-xs font-mono text-dim uppercase tracking-widest block mb-1">{t.dates}</span>
-                                                            <div className="text-sm font-bold text-text flex items-center gap-2">
+                                                            <span className="text-[10px] md:text-xs font-mono text-dim uppercase tracking-widest block mb-1">{t.dates}</span>
+                                                            <div className="text-xs md:text-sm font-bold text-text flex items-center gap-1 md:gap-2">
                                                                 {new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}
                                                             </div>
                                                         </div>
                                                         <div className="text-right">
-                                                            <span className="text-xs font-mono text-dim uppercase tracking-widest block mb-1">{t.budget}</span>
-                                                            <div className="text-xl font-display font-bold text-text">{trip.currency} {trip.budget}</div>
+                                                            <span className="text-[10px] md:text-xs font-mono text-dim uppercase tracking-widest block mb-1">{t.budget}</span>
+                                                            <div className="text-base md:text-xl font-display font-bold text-text">{trip.currency} {trip.budget}</div>
                                                         </div>
                                                     </div>
 
@@ -1165,13 +1165,13 @@ const App: React.FC = () => {
 
                                 {/* Pagination Controls */}
                                 {totalPages > 1 && (
-                                    <div className="flex items-center justify-center gap-2 mt-12 pb-10">
+                                    <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-6 md:mt-12 pb-6 md:pb-10">
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                             disabled={currentPage === 1}
-                                            className="p-2 border border-border rounded-lg hover:bg-panel disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            className="p-1.5 md:p-2 border border-border rounded-lg hover:bg-panel disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            <ChevronLeft size={20} className="text-text" />
+                                            <ChevronLeft size={18} className="md:size-5 text-text" />
                                         </button>
 
                                         <div className="flex items-center gap-1">
@@ -1179,7 +1179,7 @@ const App: React.FC = () => {
                                                 <button
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
-                                                    className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition-all ${currentPage === page
+                                                    className={`w-8 h-8 md:w-9 md:h-9 rounded-lg font-mono text-[10px] md:text-xs font-bold transition-all ${currentPage === page
                                                         ? 'bg-acid text-black'
                                                         : 'border border-border text-text hover:bg-panel'
                                                         }`}
