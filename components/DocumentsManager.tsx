@@ -635,7 +635,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
 
                 {/* Metadata Fields */}
                 {isLodging && (
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-panel border border-border rounded-xl animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-panel border border-border rounded-xl animate-fade-in">
                         {/* Navigator for Airbnb metadata when multiple PDFs exist */}
                         {uploadType.toLowerCase().includes('airbnb') && airbnbDocs.length > 1 && (
                             <div className="col-span-2 flex items-center justify-between mb-1">
@@ -697,16 +697,16 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                              <input type="text" placeholder="PROPERTY NAME..." className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hotelName || ''} onChange={e => setMetadata({...metadata, hotelName: e.target.value})} />
                         </div>
                                                 <div className="col-span-2">
-                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">{t.host || 'Host (Anfitrión)'}
+                                                        <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">{t.host || 'Host (Anfitrión)'}
                                                             {/* AUTO badge removed */}
                                                         </label>
-                            <input type="text" placeholder="HOST NAME..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hostName || ''} onChange={e => setMetadata({...metadata, hostName: e.target.value})} />
+                            <input type="text" placeholder="HOST NAME..." className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.hostName || ''} onChange={e => setMetadata({...metadata, hostName: e.target.value})} />
                         </div>
                             <div className="col-span-2">
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">{t.bookingRef}
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">{t.bookingRef}
                                                              {/* AUTO badge removed */}
                                 </label>
-                             <input type="text" placeholder="#123456" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.bookingReference || ''} onChange={e => setMetadata({...metadata, bookingReference: e.target.value})} />
+                             <input type="text" placeholder="#123456" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.bookingReference || ''} onChange={e => setMetadata({...metadata, bookingReference: e.target.value})} />
                         </div>
                             <div>
                                                          <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">{t.checkIn}
@@ -721,10 +721,10 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                              <input type="date" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.checkOutDate || ''} onChange={e => setMetadata({...metadata, checkOutDate: e.target.value})} />
                         </div>
                             <div className="col-span-2">
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Address
+                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Address
                                                              {/* AUTO badge removed */}
                                 </label>
-                             <input type="text" placeholder="FULL ADDRESS..." className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.address || ''} onChange={e => setMetadata({...metadata, address: e.target.value})} />
+                             <input type="text" placeholder="FULL ADDRESS..." className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.address || ''} onChange={e => setMetadata({...metadata, address: e.target.value})} />
                         </div>
                             <div className="col-span-2">
                                                          <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">WhatsApp Number
@@ -736,7 +736,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                 )}
                 
                 {isFlight && (
-                    <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-panel border border-border rounded-xl animate-fade-in">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-panel border border-border rounded-xl animate-fade-in">
                         <div className="col-span-2 flex items-center justify-between mb-2">
                             <span className="font-mono text-[9px] text-text uppercase tracking-widest">{flightMetaView === 'outbound' ? 'Vuelo de IDA' : 'Vuelo de Vuelta'}</span>
                             <div className="flex items-center gap-2">
@@ -756,7 +756,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                 </button>
                             </div>
                         </div>
-                            <div className="col-span-2 grid grid-cols-2 gap-2">
+                            <div className="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div>
                                     <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Número de Reserva</label>
                                     <input type="text" placeholder="#ABC123" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={metadata.bookingReference || ''} onChange={e => setMetadata({...metadata, bookingReference: e.target.value})} />
@@ -766,13 +766,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                     <input type="text" placeholder="Compañía / código" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundAirline || '') : (metadata.returnAirline || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundAirline: e.target.value } : { ...metadata, returnAirline: e.target.value })} />
                                 </div>
                             </div>
-                                                <div>
-                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-1 flex items-center gap-2">Aerolínea
-                                                             {/* AUTO badge removed */}
-                                                         </label>
-                                                         <input type="text" placeholder="Compañía / código" className="w-full bg-surface border border-border p-3 text-xs text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundAirline || '') : (metadata.returnAirline || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundAirline: e.target.value } : { ...metadata, returnAirline: e.target.value })} />
-                                                </div>
-                                                <div className="col-span-2 grid grid-cols-2 gap-2">
+                                                <div className="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Fecha de salida</label>
                                                         <input type="date" className="bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDepartureDate || '') : (metadata.returnDepartureDate || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundDepartureDate: e.target.value } : { ...metadata, returnDepartureDate: e.target.value })} />
@@ -782,7 +776,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                                         <input type="time" className="bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundDepartureTime || '') : (metadata.returnDepartureTime || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundDepartureTime: e.target.value } : { ...metadata, returnDepartureTime: e.target.value })} />
                                                     </div>
                                                 </div>
-                                                <div className="col-span-2 grid grid-cols-2 gap-2">
+                                                <div className="col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                     <div>
                                                         <label className="font-mono text-[9px] text-dim uppercase tracking-widest mb-0.5 flex items-center gap-2">Fecha de llegada</label>
                                                         <input type="date" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg" value={flightMetaView === 'outbound' ? (metadata.outboundArrivalDate || '') : (metadata.returnArrivalDate || '')} onChange={e => setMetadata(flightMetaView === 'outbound' ? { ...metadata, outboundArrivalDate: e.target.value } : { ...metadata, returnArrivalDate: e.target.value })} />
@@ -806,7 +800,7 @@ const DocumentsManager: React.FC<Props> = ({ trip, updateTrip, lang, showToast }
                                                                  <span className="px-2 py-0.5 bg-acid text-black text-[9px] rounded-full font-bold">AUTO</span>
                                                              )}
                                                          </label>
-                                                         <textarea placeholder="Nombre\\nNombre 2" className="w-full bg-surface border border-border p-2 text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg h-18 resize-y" value={(flightMetaView === 'outbound' ? (metadata.outboundPassengers || []) : (metadata.returnPassengers || [])).join('\\n')} onChange={e => setMetadata(
+                                                         <textarea placeholder="Nombre\\nNombre 2" className="w-full bg-surface border border-border p-2.5 text-[12px] sm:text-[11px] text-text font-mono focus:border-acid outline-none transition-colors rounded-lg h-24 sm:h-20 resize-y" value={(flightMetaView === 'outbound' ? (metadata.outboundPassengers || []) : (metadata.returnPassengers || [])).join('\\n')} onChange={e => setMetadata(
                                                                 flightMetaView === 'outbound'
                                                                 ? { ...metadata, outboundPassengers: e.target.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean) }
                                                                 : { ...metadata, returnPassengers: e.target.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean) }
