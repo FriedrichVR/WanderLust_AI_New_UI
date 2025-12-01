@@ -1802,6 +1802,9 @@ const App: React.FC = () => {
                             </div>
                         </section>
 
+                        {/* Trips Section with heading and extra spacing */}
+                        <div className="mt-20 md:mt-32">
+                            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-8 md:mb-10">Tus Viajes</h2>
                         {filteredTrips.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-dim/30 rounded-3xl bg-panel/20 group">
                                 <div className="w-24 h-24 bg-surface rounded-full flex items-center justify-center mb-6 shadow-xl border border-border">
@@ -1920,9 +1923,10 @@ const App: React.FC = () => {
                                 ))}
                             </div>
                         )}
+                        </div>
 
                         {/* Freemium notice below trips */}
-                        <div className="p-2 md:p-4 text-center mt-8 md:mt-12">
+                        <div className="p-2 md:p-4 text-center mt-24 md:mt-32">
                             <Tooltip content={t.freemiumTooltip} position="top">
                                 <button
                                     onClick={() => { setAuthInitialMode('signup'); setShowAuthModal(true); }}
@@ -1932,13 +1936,6 @@ const App: React.FC = () => {
                                 </button>
                             </Tooltip>
                         </div>
-
-                        {/* Pricing Section (adjusted to reference, slightly smaller) */}
-                        <PricingSection
-                            onStartFree={() => { setAuthInitialMode('signup'); setShowAuthModal(true); }}
-                            onStandard={() => setShowPricing(true)}
-                            onPro={() => setShowPricing(true)}
-                        />
 
                         {/* FAQ Section */}
                         <section className="relative mt-10 md:mt-14">
