@@ -6,7 +6,7 @@ import { generateQuickSuggestion } from '../utils/aiTripSuggester';
 import { generateBudgetSuggestion } from '../services/geminiService';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
-    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal, Unlock
+    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, PlaneTakeoff, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal, Unlock
 } from 'lucide-react';
 import PricingSection from '../components/PricingSection';
 import { Trip, AppState, Currency, TripStatus, TripType, DayPlan } from '../types';
@@ -182,6 +182,7 @@ const TripDetailView: React.FC<{
     const [toolPanelTab, setToolPanelTab] = useState<'converter' | 'maps'>('maps');
     const [docFilter, setDocFilter] = useState<'all' | 'flight' | 'hotel' | 'airbnb' | 'food' | 'other'>('all');
     const [notesTab, setNotesTab] = useState<'notes' | 'gallery'>('gallery');
+    const [docSubTab, setDocSubTab] = useState<'files' | 'insights'>('files');
 
     // Missing State Variables Added
     const [deleteImageTarget, setDeleteImageTarget] = useState<GalleryImage | null>(null);
@@ -390,19 +391,31 @@ const TripDetailView: React.FC<{
                 {/* Overview badges under header */}
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
-                        <div className="text-xs text-neutral-400">Días</div>
+                        <div className="flex items-center gap-2 text-xs text-neutral-400">
+                            <CalendarIcon className="w-4 h-4" />
+                            <span>Días</span>
+                        </div>
                         <div className="mt-1 text-lg font-semibold tracking-tight">{Math.max(1, Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime())/(1000*60*60*24)))}</div>
                     </div>
                     <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
-                        <div className="text-xs text-neutral-400">Gasto total</div>
+                        <div className="flex items-center gap-2 text-xs text-neutral-400">
+                            <CreditCard className="w-4 h-4" />
+                            <span>Gasto total</span>
+                        </div>
                         <div className="mt-1 text-lg font-semibold tracking-tight">{(trip.expenses?.reduce((s,e)=>s+(e.amount||0),0) || 0).toLocaleString()}</div>
                     </div>
                     <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
-                        <div className="text-xs text-neutral-400">Restante</div>
+                        <div className="flex items-center gap-2 text-xs text-neutral-400">
+                            <DollarSign className="w-4 h-4" />
+                            <span>Restante</span>
+                        </div>
                         <div className="mt-1 text-lg font-semibold tracking-tight">{Math.max(0, (trip.budget||0) - (trip.expenses?.reduce((s,e)=>s+(e.amount||0),0) || 0)).toLocaleString()}</div>
                     </div>
                     <div className="rounded-lg bg-neutral-900/60 ring-1 ring-white/10 p-3">
-                        <div className="text-xs text-neutral-400">Docs</div>
+                        <div className="flex items-center gap-2 text-xs text-neutral-400">
+                            <Files className="w-4 h-4" />
+                            <span>Docs</span>
+                        </div>
                         <div className="mt-1 text-lg font-semibold tracking-tight">{trip.documents?.length || 0}</div>
                     </div>
                 </div>
@@ -445,7 +458,75 @@ const TripDetailView: React.FC<{
                                                 </div>
                                                 <h3 className="text-lg font-semibold tracking-tight">{t.visualDiary}</h3>
                                             </div>
-                                            {/* Regenerar visual removed */}
+                                            <button
+                                                onClick={async () => {
+                                                    if (diaryImages.length === 0) {
+                                                        showToast('No hay fotos en la bitácora para exportar.', 'info');
+                                                        return;
+                                                    }
+                                                    try {
+                                                        // Crear PDF con jsPDF
+                                                        const { jsPDF } = await import('jspdf');
+                                                        const doc = new jsPDF();
+                                                        const pageWidth = doc.internal.pageSize.getWidth();
+                                                        const pageHeight = doc.internal.pageSize.getHeight();
+                                                        let yOffset = 20;
+
+                                                        // Título
+                                                        doc.setFontSize(18);
+                                                        doc.text(`Bitácora: ${trip.destination}`, pageWidth / 2, yOffset, { align: 'center' });
+                                                        yOffset += 15;
+
+                                                        // Agrupar imágenes por día
+                                                        const imagesByDay = new Map<string, typeof diaryImages>();
+                                                        diaryImages.forEach(img => {
+                                                            const dayDate = trip.itinerary.find(d => d.id === img.dayId)?.date || 'Sin fecha';
+                                                            if (!imagesByDay.has(dayDate)) imagesByDay.set(dayDate, []);
+                                                            imagesByDay.get(dayDate)!.push(img);
+                                                        });
+
+                                                        for (const [dayDate, images] of imagesByDay) {
+                                                            // Encabezado del día
+                                                            if (yOffset > pageHeight - 40) {
+                                                                doc.addPage();
+                                                                yOffset = 20;
+                                                            }
+                                                            doc.setFontSize(14);
+                                                            doc.text(`Día: ${new Date(dayDate).toLocaleDateString()}`, 15, yOffset);
+                                                            yOffset += 10;
+
+                                                            // Agregar imágenes del día
+                                                            for (const img of images) {
+                                                                if (yOffset > pageHeight - 80) {
+                                                                    doc.addPage();
+                                                                    yOffset = 20;
+                                                                }
+                                                                try {
+                                                                    const imgWidth = 80;
+                                                                    const imgHeight = 60;
+                                                                    doc.addImage(img.src, 'JPEG', 15, yOffset, imgWidth, imgHeight);
+                                                                    doc.setFontSize(10);
+                                                                    doc.text(img.label || 'Sin descripción', 100, yOffset + 10, { maxWidth: 90 });
+                                                                    yOffset += imgHeight + 10;
+                                                                } catch (err) {
+                                                                    console.warn('Error agregando imagen al PDF:', err);
+                                                                }
+                                                            }
+                                                            yOffset += 5;
+                                                        }
+
+                                                        doc.save(`bitacora-${trip.destination.replace(/\s+/g, '-')}.pdf`);
+                                                        showToast('PDF descargado exitosamente.', 'success');
+                                                    } catch (err) {
+                                                        console.error('Error generando PDF:', err);
+                                                        showToast('Error al generar el PDF.', 'error');
+                                                    }
+                                                }}
+                                                className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg text-emerald-300 transition-colors text-[10px] font-mono uppercase tracking-widest"
+                                                title="Descargar bitácora en PDF"
+                                            >
+                                                <ArrowDownCircle size={14} className="inline mr-1" /> PDF
+                                            </button>
                                         </div>
                                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                                             {diaryImages.length === 0 && (
@@ -655,7 +736,25 @@ Ubicación aproximada: centro de la ciudad · Recomendado: tarde dorada`;
                                     </aside>
                                     {/* Main content */}
                                     <div className="lg:col-span-9 rounded-xl p-5 bg-neutral-900/60 ring-1 ring-white/10">
-                                        <div className="flex items-center justify-between">
+                                        {/* Sub-tabs for Documents */}
+                                        <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-2">
+                                            <button
+                                                onClick={() => setDocSubTab?.('files')}
+                                                className={`px-3 py-1.5 text-xs rounded-lg transition-all ${(docSubTab || 'files') === 'files' ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30' : 'text-neutral-300 hover:bg-white/5'}`}
+                                            >
+                                                <Files size={12} className="inline mr-1" /> Archivos
+                                            </button>
+                                            <button
+                                                onClick={() => setDocSubTab?.('insights')}
+                                                className={`px-3 py-1.5 text-xs rounded-lg transition-all ${docSubTab === 'insights' ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30' : 'text-neutral-300 hover:bg-white/5'}`}
+                                            >
+                                                <Sparkles size={12} className="inline mr-1" /> Insights
+                                            </button>
+                                        </div>
+
+                                        {(!docSubTab || docSubTab === 'files') && (
+                                            <>
+                                        <div className="flex items-center justify-between mb-4">
                                             <h4 className="text-base font-semibold tracking-tight">{t.documents}</h4>
                                             <div className="flex items-center gap-2">
                                                 <label className="text-[10px] font-mono border border-dim px-2 py-1 rounded-full hover:border-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer">
@@ -867,6 +966,58 @@ Ubicación aproximada: centro de la ciudad · Recomendado: tarde dorada`;
                                                 </div>
                                             )}
                                         </div>
+                                            </>
+                                        )}
+
+                                        {docSubTab === 'insights' && (
+                                            <div className="space-y-4">
+                                                <div className="mb-4">
+                                                    <h4 className="text-base font-semibold tracking-tight mb-1">{t.docInsights}</h4>
+                                                    <p className="text-xs text-neutral-300">{t.docInsightsDesc}</p>
+                                                </div>
+
+                                                {trip.documents && trip.documents.length > 0 ? (
+                                                    <div className="space-y-3">
+                                                        {trip.documents.map((doc) => {
+                                                            const meta = (doc as any).extractedMetadata;
+                                                            if (!meta || Object.keys(meta).length === 0) return null;
+
+                                                            return (
+                                                                <div key={doc.id} className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 hover:ring-white/20 transition p-4">
+                                                                    <div className="flex items-start justify-between mb-3">
+                                                                        <div>
+                                                                            <h5 className="text-sm font-semibold text-white">{doc.name}</h5>
+                                                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-300 px-2 py-0.5 text-[10px] ring-1 ring-emerald-500/30 mt-1">{doc.category || 'other'}</span>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => setPreviewDoc(doc)}
+                                                                            className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-neutral-300 hover:text-white transition-colors"
+                                                                            title="Ver documento"
+                                                                        >
+                                                                            <ExternalLink size={14} />
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                                                        {Object.entries(meta).map(([key, value]) => (
+                                                                            <div key={key} className="flex flex-col gap-0.5">
+                                                                                <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                                                                <span className="text-neutral-100 font-medium">{String(value)}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-16 ring-1 ring-white/10 rounded-lg bg-neutral-950/60">
+                                                        <Files size={40} className="mx-auto mb-3 text-neutral-400" />
+                                                        <p className="text-xs text-neutral-300">{t.docInsightsEmpty}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </section>
@@ -1640,7 +1791,7 @@ const App: React.FC = () => {
                     <header className={`sticky top-0 z-50 backdrop-blur-sm ${settings.theme === 'light' ? 'bg-neutral-50/70 border-neutral-200' : 'bg-neutral-950/70 border-white/10'} border-b px-4 md:px-6 h-16 flex items-center justify-between`}>
                         <div className="flex items-center gap-3">
                             <div className={`${settings.theme === 'light' ? 'bg-neutral-100 ring-1 ring-neutral-300' : 'bg-neutral-900 ring-1 ring-white/10'} flex items-center justify-center w-9 h-9 rounded-md`}>
-                                <Plane size={18} className="text-emerald-400" />
+                                <PlaneTakeoff size={18} className="text-emerald-400" />
                             </div>
                             <span className={`hidden sm:inline text-sm font-semibold ${settings.theme === 'light' ? 'text-neutral-700' : 'text-neutral-200'}`}>{t.appTitle}</span>
                         </div>

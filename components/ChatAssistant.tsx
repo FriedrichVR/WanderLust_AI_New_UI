@@ -121,14 +121,14 @@ Provide budget-conscious recommendations and flag high spending categories. Be e
       {/* Floating Toggle Button */}
       <button 
         onClick={() => setIsOpen(true)} 
-        className={`fixed bottom-6 right-6 p-4 bg-acid text-obsidian hover:bg-white hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(34,211,238,0.3)] z-50 rounded-full group ${isOpen ? 'translate-y-24 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
+        className={`fixed bottom-6 right-6 p-4 bg-acid text-obsidian hover:bg-white hover:scale-105 transition-all duration-300 shadow-[0_0_20px_rgba(34,211,238,0.3)] z-[500] rounded-full group ${isOpen ? 'translate-y-24 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
         title="Open AI Assistant"
       >
         <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
       </button>
 
       {/* Main Chat Window */}
-      <div className={`fixed bottom-4 md:bottom-6 right-4 md:right-6 w-[calc(100vw-2rem)] md:w-[400px] h-[calc(100vh-6rem)] md:h-[600px] max-h-[85vh] bg-obsidian/95 backdrop-blur-xl border border-border flex flex-col z-50 transition-all duration-500 origin-bottom-right shadow-2xl rounded-[24px] md:rounded-[32px] overflow-hidden ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none translate-y-8'}`}>
+      <div className={`fixed bottom-4 md:bottom-6 right-4 md:right-6 w-[calc(100vw-2rem)] md:w-[400px] h-[calc(100vh-6rem)] md:h-[600px] max-h-[85vh] bg-obsidian/95 backdrop-blur-xl border border-border flex flex-col z-[500] transition-all duration-500 origin-bottom-right shadow-2xl rounded-[24px] md:rounded-[32px] overflow-hidden ${isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0 pointer-events-none translate-y-8'}`}>
         
         {/* Header */}
         <div className="p-3 md:p-5 border-b border-border bg-surface/50 flex justify-between items-center backdrop-blur-md">
