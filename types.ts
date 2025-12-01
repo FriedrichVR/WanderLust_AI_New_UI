@@ -23,6 +23,7 @@ export interface TripDocument {
   id: string;
   name: string;
   type: string; // Changed from union to string to support custom categories
+  category?: string; // For Insights filtering (flight, hotel, airbnb, etc.)
   dataUrl: string; // Base64 string for local storage display
   dateAdded: string;
   tags?: string[];
@@ -35,6 +36,44 @@ export interface TripDocument {
     checkInDate?: string;
     checkOutDate?: string;
     bookingReference?: string;
+  };
+  extractedMetadata?: {
+    // Flight metadata
+    bookingReference?: string;
+    outboundCheckInCode?: string;
+    outboundPassengers?: string[];
+    outboundAirline?: string;
+    outboundDepartureDate?: string;
+    outboundDepartureTime?: string;
+    outboundArrivalDate?: string;
+    outboundArrivalTime?: string;
+    outboundRoute?: string;
+    outboundDestination?: string;
+    outboundDuration?: string;
+    outboundLayoverAirport?: string;
+    outboundLayoverWait?: string;
+    returnCheckInCode?: string;
+    returnPassengers?: string[];
+    returnAirline?: string;
+    returnDepartureDate?: string;
+    returnDepartureTime?: string;
+    returnArrivalDate?: string;
+    returnArrivalTime?: string;
+    returnRoute?: string;
+    returnDestination?: string;
+    returnDuration?: string;
+    returnLayoverAirport?: string;
+    returnLayoverWait?: string;
+    // Hotel/Airbnb metadata
+    hotelName?: string;
+    hostName?: string;
+    checkInDate?: string;
+    checkOutDate?: string;
+    address?: string;
+    whatsappNumber?: string;
+    guestName?: string;
+    totalPrice?: string;
+    [key: string]: any;
   };
   notes?: string;
 }

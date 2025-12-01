@@ -6,7 +6,7 @@ import { generateQuickSuggestion } from '../utils/aiTripSuggester';
 import { generateBudgetSuggestion } from '../services/geminiService';
 import {
     Plus, Sun, Moon, Map as MapIcon, Wallet, Calendar as CalendarIcon,
-    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, PlaneTakeoff, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal, Unlock
+    ArrowLeft, Luggage, FileText, Globe, X, Image as ImageIcon, Upload, Wand2, Loader2, Info, LogOut, Share2, Check, Search, Trash2, AlertTriangle, Maximize2, ChevronLeft, ChevronRight, Edit2, Hexagon, PenTool, ExternalLink, Save, Terminal, ArrowDownCircle, ArrowRightLeft, Play, Plane, PlaneTakeoff, Compass, Users, CreditCard, DollarSign, Files, Sparkles, Goal, Unlock, Hotel, Home
 } from 'lucide-react';
 import PricingSection from '../components/PricingSection';
 import { Trip, AppState, Currency, TripStatus, TripType, DayPlan } from '../types';
@@ -221,6 +221,34 @@ const TripDetailView: React.FC<{
         });
         setDocInsightsDraft(initialDrafts);
     }, [trip.documents]);
+
+    // Migration effect: Copy metadata to extractedMetadata for old documents
+    useEffect(() => {
+        let needsMigration = false;
+        const migratedDocs = (trip.documents || []).map(doc => {
+            // If document has metadata but no extractedMetadata, migrate it
+            if (doc.metadata && Object.keys(doc.metadata).length > 0 && (!doc.extractedMetadata || Object.keys(doc.extractedMetadata).length === 0)) {
+                needsMigration = true;
+                console.log('[Migration] Copying metadata to extractedMetadata for:', doc.name);
+                return {
+                    ...doc,
+                    extractedMetadata: { ...doc.metadata },
+                    category: doc.category || doc.type // Ensure category is set
+                };
+            }
+            // If document has no category, set it from type
+            if (!doc.category && doc.type) {
+                needsMigration = true;
+                return { ...doc, category: doc.type };
+            }
+            return doc;
+        });
+
+        if (needsMigration) {
+            console.log('[Migration] Updating trip with migrated documents');
+            updateTrip({ ...trip, documents: migratedDocs });
+        }
+    }, [trip.id]); // Only run when trip changes
 
     const performDeleteImage = () => {
         if (deleteImageTarget) {
@@ -977,38 +1005,338 @@ Ubicación aproximada: centro de la ciudad · Recomendado: tarde dorada`;
                                                 </div>
 
                                                 {trip.documents && trip.documents.length > 0 ? (
-                                                    <div className="space-y-3">
-                                                        {trip.documents.map((doc) => {
-                                                            const meta = (doc as any).extractedMetadata;
-                                                            if (!meta || Object.keys(meta).length === 0) return null;
-
-                                                            return (
-                                                                <div key={doc.id} className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 hover:ring-white/20 transition p-4">
-                                                                    <div className="flex items-start justify-between mb-3">
-                                                                        <div>
-                                                                            <h5 className="text-sm font-semibold text-white">{doc.name}</h5>
-                                                                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-300 px-2 py-0.5 text-[10px] ring-1 ring-emerald-500/30 mt-1">{doc.category || 'other'}</span>
-                                                                        </div>
-                                                                        <button
-                                                                            onClick={() => setPreviewDoc(doc)}
-                                                                            className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-neutral-300 hover:text-white transition-colors"
-                                                                            title="Ver documento"
-                                                                        >
-                                                                            <ExternalLink size={14} />
-                                                                        </button>
-                                                                    </div>
-
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                                                                        {Object.entries(meta).map(([key, value]) => (
-                                                                            <div key={key} className="flex flex-col gap-0.5">
-                                                                                <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                                                                <span className="text-neutral-100 font-medium">{String(value)}</span>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
+                                                    <div className="space-y-6">
+                                                        {/* Flight Documents */}
+                                                        {trip.documents.filter(doc => {
+                                                            const meta = doc.extractedMetadata;
+                                                            const category = (doc.category || doc.type || '').toLowerCase();
+                                                            return (category.includes('flight') || category.includes('vuelo')) && meta && Object.keys(meta).length > 0;
+                                                        }).length > 0 && (
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <Plane size={18} className="text-acid" />
+                                                                    <h5 className="text-sm font-bold uppercase tracking-wider text-acid">Vuelos / Flights</h5>
                                                                 </div>
-                                                            );
-                                                        })}
+                                                                {trip.documents.filter(doc => {
+                                                                    const category = (doc.category || doc.type || '').toLowerCase();
+                                                                    return category.includes('flight') || category.includes('vuelo');
+                                                                }).map((doc) => {
+                                                                    const meta = doc.extractedMetadata;
+                                                                    if (!meta || Object.keys(meta).length === 0) return null;
+
+                                                                    return (
+                                                                        <div key={doc.id} className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 hover:ring-white/20 transition p-4">
+                                                                            <div className="flex items-start justify-between mb-3">
+                                                                                <div>
+                                                                                    <h5 className="text-sm font-semibold text-white">{doc.name}</h5>
+                                                                                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 text-blue-300 px-2 py-0.5 text-[10px] ring-1 ring-blue-500/30 mt-1">
+                                                                                        <Plane size={10} /> {doc.category || doc.type || 'flight'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <button
+                                                                                    onClick={() => setPreviewDoc(doc)}
+                                                                                    className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-neutral-300 hover:text-white transition-colors"
+                                                                                    title="Ver documento"
+                                                                                >
+                                                                                    <ExternalLink size={14} />
+                                                                                </button>
+                                                                            </div>
+
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                                                                {meta.bookingReference && (
+                                                                                    <div className="col-span-full flex flex-col gap-0.5 bg-white/5 p-2 rounded">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Booking Reference</span>
+                                                                                        <span className="text-neutral-100 font-bold">{meta.bookingReference}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                
+                                                                                {/* Outbound Flight */}
+                                                                                {(meta.outboundRoute || meta.outboundDepartureDate) && (
+                                                                                    <div className="col-span-full border-t border-white/10 pt-3 mt-2">
+                                                                                        <h6 className="text-[10px] font-mono uppercase text-acid mb-2 tracking-widest">↗ Ida / Outbound</h6>
+                                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                                            {meta.outboundRoute && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Ruta</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.outboundRoute}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.outboundAirline && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Aerolínea</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.outboundAirline}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.outboundDepartureDate && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Salida</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.outboundDepartureDate} {meta.outboundDepartureTime || ''}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.outboundArrivalDate && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Llegada</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.outboundArrivalDate} {meta.outboundArrivalTime || ''}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.outboundCheckInCode && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Check-in Code</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.outboundCheckInCode}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.outboundPassengers && Array.isArray(meta.outboundPassengers) && meta.outboundPassengers.length > 0 && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Pasajeros</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.outboundPassengers.join(', ')}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Return Flight */}
+                                                                                {(meta.returnRoute || meta.returnDepartureDate) && (
+                                                                                    <div className="col-span-full border-t border-white/10 pt-3 mt-2">
+                                                                                        <h6 className="text-[10px] font-mono uppercase text-purple-400 mb-2 tracking-widest">↙ Vuelta / Return</h6>
+                                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                                            {meta.returnRoute && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Ruta</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.returnRoute}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.returnAirline && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Aerolínea</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.returnAirline}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.returnDepartureDate && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Salida</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.returnDepartureDate} {meta.returnDepartureTime || ''}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.returnArrivalDate && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Llegada</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.returnArrivalDate} {meta.returnArrivalTime || ''}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.returnCheckInCode && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Check-in Code</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.returnCheckInCode}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {meta.returnPassengers && Array.isArray(meta.returnPassengers) && meta.returnPassengers.length > 0 && (
+                                                                                                <div className="flex flex-col gap-0.5">
+                                                                                                    <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Pasajeros</span>
+                                                                                                    <span className="text-neutral-100 font-medium">{meta.returnPassengers.join(', ')}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Hotel Documents */}
+                                                        {trip.documents.filter(doc => {
+                                                            const meta = doc.extractedMetadata;
+                                                            const category = (doc.category || doc.type || '').toLowerCase();
+                                                            return category.includes('hotel') && meta && Object.keys(meta).length > 0;
+                                                        }).length > 0 && (
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <Hotel size={18} className="text-acid" />
+                                                                    <h5 className="text-sm font-bold uppercase tracking-wider text-acid">Hotel</h5>
+                                                                </div>
+                                                                {trip.documents.filter(doc => {
+                                                                    const category = (doc.category || doc.type || '').toLowerCase();
+                                                                    return category.includes('hotel');
+                                                                }).map((doc) => {
+                                                                    const meta = doc.extractedMetadata;
+                                                                    if (!meta || Object.keys(meta).length === 0) return null;
+
+                                                                    return (
+                                                                        <div key={doc.id} className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 hover:ring-white/20 transition p-4">
+                                                                            <div className="flex items-start justify-between mb-3">
+                                                                                <div>
+                                                                                    <h5 className="text-sm font-semibold text-white">{doc.name}</h5>
+                                                                                    <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 text-purple-300 px-2 py-0.5 text-[10px] ring-1 ring-purple-500/30 mt-1">
+                                                                                        <Hotel size={10} /> {doc.category || doc.type || 'hotel'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <button
+                                                                                    onClick={() => setPreviewDoc(doc)}
+                                                                                    className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-neutral-300 hover:text-white transition-colors"
+                                                                                    title="Ver documento"
+                                                                                >
+                                                                                    <ExternalLink size={14} />
+                                                                                </button>
+                                                                            </div>
+
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                                                                {meta.hotelName && (
+                                                                                    <div className="col-span-full flex flex-col gap-0.5 bg-white/5 p-2 rounded">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Hotel Name</span>
+                                                                                        <span className="text-neutral-100 font-bold">{meta.hotelName}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.bookingReference && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Booking Reference</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.bookingReference}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.checkInDate && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Check-in</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.checkInDate}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.checkOutDate && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Check-out</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.checkOutDate}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.address && (
+                                                                                    <div className="col-span-full flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Address</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.address}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.guestName && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Guest Name</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.guestName}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.totalPrice && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Total Price</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.totalPrice}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Airbnb Documents */}
+                                                        {trip.documents.filter(doc => {
+                                                            const meta = doc.extractedMetadata;
+                                                            const category = (doc.category || doc.type || '').toLowerCase();
+                                                            return category.includes('airbnb') && meta && Object.keys(meta).length > 0;
+                                                        }).length > 0 && (
+                                                            <div className="space-y-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <Home size={18} className="text-acid" />
+                                                                    <h5 className="text-sm font-bold uppercase tracking-wider text-acid">Airbnb</h5>
+                                                                </div>
+                                                                {trip.documents.filter(doc => {
+                                                                    const category = (doc.category || doc.type || '').toLowerCase();
+                                                                    return category.includes('airbnb');
+                                                                }).map((doc) => {
+                                                                    const meta = doc.extractedMetadata;
+                                                                    if (!meta || Object.keys(meta).length === 0) return null;
+
+                                                                    return (
+                                                                        <div key={doc.id} className="rounded-lg bg-neutral-950/60 ring-1 ring-white/10 hover:ring-white/20 transition p-4">
+                                                                            <div className="flex items-start justify-between mb-3">
+                                                                                <div>
+                                                                                    <h5 className="text-sm font-semibold text-white">{doc.name}</h5>
+                                                                                    <span className="inline-flex items-center gap-1 rounded-full bg-pink-500/10 text-pink-300 px-2 py-0.5 text-[10px] ring-1 ring-pink-500/30 mt-1">
+                                                                                        <Home size={10} /> {doc.category || doc.type || 'airbnb'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <button
+                                                                                    onClick={() => setPreviewDoc(doc)}
+                                                                                    className="p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-neutral-300 hover:text-white transition-colors"
+                                                                                    title="Ver documento"
+                                                                                >
+                                                                                    <ExternalLink size={14} />
+                                                                                </button>
+                                                                            </div>
+
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                                                                {meta.hotelName && (
+                                                                                    <div className="col-span-full flex flex-col gap-0.5 bg-white/5 p-2 rounded">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Property Name</span>
+                                                                                        <span className="text-neutral-100 font-bold">{meta.hotelName}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.hostName && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Host</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.hostName}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.bookingReference && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Booking Reference</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.bookingReference}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.checkInDate && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Check-in</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.checkInDate}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.checkOutDate && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Check-out</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.checkOutDate}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.address && (
+                                                                                    <div className="col-span-full flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Address</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.address}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.whatsappNumber && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">WhatsApp</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.whatsappNumber}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.guestName && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Guest Name</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.guestName}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {meta.totalPrice && (
+                                                                                    <div className="flex flex-col gap-0.5">
+                                                                                        <span className="text-[9px] font-mono uppercase text-neutral-400 tracking-widest">Total Price</span>
+                                                                                        <span className="text-neutral-100 font-medium">{meta.totalPrice}</span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Empty state if no documents with metadata */}
+                                                        {trip.documents.filter(doc => doc.extractedMetadata && Object.keys(doc.extractedMetadata).length > 0).length === 0 && (
+                                                            <div className="text-center py-16 ring-1 ring-white/10 rounded-lg bg-neutral-950/60">
+                                                                <Files size={40} className="mx-auto mb-3 text-neutral-400" />
+                                                                <p className="text-xs text-neutral-300">{t.docInsightsEmpty}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <div className="text-center py-16 ring-1 ring-white/10 rounded-lg bg-neutral-950/60">
